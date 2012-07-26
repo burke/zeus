@@ -8,7 +8,10 @@ TODO: Write a gem description
 
 Install the gem.
 
-    gem install zeus
+    git clone git://github.com/burke/zeus.git
+    cd zeus
+    gem build zeus.gemspec
+    gem install zeus-*.gem
 
 Copy `examples/rails.rb` to `{your app}/.zeus.rb`
 
