@@ -1,8 +1,16 @@
 # Zeus
 
-WARNING: Nowhere near production-ready yet. Use only if you really like broken things.
+## What?
 
-TODO: Write a gem description
+Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests are faster.
+
+## Why?
+
+Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
+
+## When?
+
+Not yet. Zeus is nowhere near production-ready yet. Use only if you really like broken things.
 
 ## Installation
 
@@ -29,6 +37,16 @@ Run some commands:
     zeus generate model omg
     zeus rake -T
     zeus runner omg.rb
+
+## TODO
+
+* Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
+* (maybe) make .zeus.rb a DSL, so that syntax errors are more evident and other benefits.
+* Make the code less terrible
+* Support other frameworks?
+* Figure out how to run full test suites without multiple env loads
+* Always clean up processes -- right now some are left behind... sometimes.
+* Lots more...
 
 ## Contributing
 
