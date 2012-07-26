@@ -14,11 +14,11 @@ Copy `examples/rails.rb` to `{your app}/.zeus.rb`
 
 ## Usage
 
-1. Start the server:
+Start the server:
 
     zeus start
 
-2. Run some commands:
+Run some commands:
 
     zeus console
     zeus server
