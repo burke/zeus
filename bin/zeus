@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+
+zeus = File.expand_path("../../lib/", __FILE__)
+$:.unshift(zeus) unless $:.include?(zeus)
+
+if ARGV[0] == "start"
+  require 'zeus/server'
+  Zeus::Server.start!
+else
+  require 'zeus/client'
+  Zeus::Client.start!
+end
