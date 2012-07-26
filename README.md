@@ -40,6 +40,7 @@ Run some commands:
 
 ## TODO
 
+* Use fsevents to watch for file changes and kill off the highest nodes that have loaded that file
 * Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
 * (maybe) make .zeus.rb a DSL, so that syntax errors are more evident and other benefits.
 * Make the code less terrible
