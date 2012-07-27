@@ -43,7 +43,7 @@ module Zeus
           lost_files << event.watcher.path
         end
       end
-      puts "\x1b[37m#{event.watcher.path}\x1b[0m"
+      puts "\x1b[37m[zeus] dependency change: #{event.watcher.path}\x1b[0m"
       killall_with_file(event.watcher.path)
     end
 

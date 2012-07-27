@@ -12,6 +12,12 @@ Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
 
 Not yet. Zeus is nowhere near production-ready yet. Use only if you really like broken things.
 
+## Ugly bits
+
+* Probably crashes a lot
+* Creates a bunch of sockets
+* Uses an obscene number of file descriptors
+
 ## Installation
 
 Install the gem.
