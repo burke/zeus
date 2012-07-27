@@ -61,6 +61,11 @@ Run some commands:
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
 
+## Thanks...
+
+* To [Jesse Storimer](http://github.com/jstorimer) for spin, part of the inspiration for this project
+* To [Samuel Kadolph](http://github.com/samuelkadolph) for doing most of the cross-process pseudoterminal legwork.
+
 ## Doesn't work for you?
 
 Try these libraries instead:
