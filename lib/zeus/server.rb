@@ -1,6 +1,7 @@
 require 'json'
 require 'socket'
 
+require 'rb-kqueue'
 require 'zeus/process'
 
 module Zeus
@@ -11,10 +12,48 @@ module Zeus
     end
 
     def self.run
+      $0 = "zeus master"
       trap("INT") { exit 0 }
       at_exit { Process.killall_descendants(9) }
+
+      $r, $w = IO.pipe
+      $w.sync = true
+
       @@root_stage_pid = @@root.run
-      Process.waitall
+
+      queue = KQueue::Queue.new
+
+      notify = ->(event){
+        puts "GOT CHANGE IN #{event.watcher.path}"
+      }
+
+      files = {}
+      loop do
+        queue.poll
+
+        rs, _, _ = IO.select([$r], [], [], 1)
+        if rs && r = rs[0]
+          file = r.readline
+          if files[file] == nil
+            files[file] = true
+            begin
+              queue.watch_file(file.chomp, :attrib, &notify)
+            rescue Errno::EMFILE
+              print_ulimit_message
+              exit 1
+            rescue Errno::ENOENT
+              puts "No file found at #{file.chomp}"
+            end
+          end
+        end
+      end
+
+    end
+
+    def self.print_ulimit_message
+      puts "\x1b[31mNot enough available File Descriptors. Zeus eats a lot of them."
+      puts "To increase the number available, run:"
+      puts "\x1b[32mulimit -n 8192\x1b[0m"
     end
 
     class Stage
@@ -42,6 +81,9 @@ module Zeus
       def run
         fork {
           $0 = "zeus spawner: #{@name}"
+          $LOADED_FEATURES.each do |f|
+            $w.puts f + "\n"
+          end
           puts "\x1b[35m[zeus] starting spawner `#{@name}`\x1b[0m"
 
           @actions.each(&:call)
@@ -76,6 +118,9 @@ module Zeus
       def run
         fork {
           $0 = "zeus acceptor: #{@name}"
+          $LOADED_FEATURES.each do |f|
+            $w.puts f + "\n"
+          end
           puts "\x1b[35m[zeus] starting acceptor `#{@name}`\x1b[0m"
 
           File.unlink(@socket) rescue nil

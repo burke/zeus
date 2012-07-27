@@ -14,4 +14,6 @@ Gem::Specification.new do |gem|
   gem.name          = "zeus"
   gem.require_paths = ["lib"]
   gem.version       = Zeus::VERSION
+
+  gem.add_dependency "rb-kqueue-burke", "~> 0.1.0"
 end
