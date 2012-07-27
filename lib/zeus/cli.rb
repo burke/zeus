@@ -1,9 +1,13 @@
+require 'pathname'
+require 'FileUtils'
+
 module Zeus::Cli
   extend self
   BANNER = <<-BANNER
 usage: zeus <command> [<args>]
 
 Commands:
+  init
   start
   testrb
   console
@@ -37,6 +41,11 @@ Z\x1b[31mZeus may not running, try: 'zeus start'\x1b[0m
 ABORT
   end
 
+  def init
+    default_file_path = File.dirname(File.expand_path(__FILE__)) + "/../../examples/rails.rb"
+    FileUtils.cp default_file_path, '.zeus.rb'
+  end
+
   def start
     command = ARGV[0]
 
@@ -45,6 +54,8 @@ ABORT
       server
     elsif command =~ /h|help/i or ARGV.empty?
       banner
+    elsif command =~ /init/i or ARGV.empty?
+      init
     else
       client
     end
