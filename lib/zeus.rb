@@ -3,4 +3,5 @@ module Zeus
   autoload :Client,  'zeus/client'
   autoload :Server,  'zeus/server'
   autoload :Version, 'zeus/version'
+  autoload :Detector, 'zeus/detector'
 end

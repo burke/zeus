@@ -42,7 +42,8 @@ ABORT
   end
 
   def init
-    default_file_path = File.dirname(File.expand_path(__FILE__)) + "/../../examples/rails.rb"
+    file_name = "#{Zeus::Detector.detect}.rb"
+    default_file_path = File.join(File.dirname(File.expand_path(__FILE__)), "/../../examples/", file_name)
     FileUtils.cp default_file_path, '.zeus.rb'
   end
 
