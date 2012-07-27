@@ -4,6 +4,8 @@
 
 Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests are faster.
 
+[Mediocre screencast](http://burke.libbey.me/zeus.mov)
+
 ## Why?
 
 Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
