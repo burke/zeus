@@ -10,7 +10,7 @@ Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
 
 ## When?
 
-Not yet. Zeus is nowhere near production-ready yet. Use only if you really like broken things.
+Soon? You can use Zeus now, but don't expect it to be perfect. I'm working hard on it.
 
 ## Ugly bits
 
