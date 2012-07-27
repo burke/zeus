@@ -17,10 +17,12 @@ BANNER
     puts BANNER
   end
 
+
   def not_running(error)
     abort <<-ABORT
 [#{error}]
-Zeus may not running, try: 'zeus start'
+
+Z\x1b[31mZeus may not running, try: 'zeus start'\x1b[0m
 
 #{BANNER}
     ABORT
@@ -29,7 +31,7 @@ Zeus may not running, try: 'zeus start'
   def no_dot_zues(error)
     abort <<-ABORT
 [#{error}]
-Not .zues.rb found
+\x1b[31mNo .zues.rb found\x1b[0m
 
 #{BANNER}
 ABORT
