@@ -43,7 +43,7 @@ Run some commands:
 
 ## TODO (roughly prioritized)
 
-* Kill process when files are detected to have changed
+* zeus init command
 * Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
 * Make the code less terrible
 * Figure out how to run full test suites without multiple env loads
