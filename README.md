@@ -50,7 +50,7 @@ Run some commands:
 * Make the code less terrible
 * Figure out how to run full test suites without multiple env loads
 * Support other frameworks?
-* Use fsevents instead of kqueue to reduce the obscene number of file descriptors.
+* Use fsevent instead of kqueue to reduce the obscene number of file descriptors.
 * Support epoll on linux
 * Once it's really stable, transparently start the process in the background rather than requiring zeus start.
 * Handle connections for not-yet-started sockets
