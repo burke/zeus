@@ -58,3 +58,11 @@ Run some commands:
 3. Commit your changes (`git commit -am 'Added some feature'`)
 4. Push to the branch (`git push origin my-new-feature`)
 5. Create new Pull Request
+
+## Doesn't work for you?
+
+Try these libraries instead:
+
+* [spin](https://github.com/jstorimer/spin)
+* [spork](https://github.com/sporkrb/spork)
+* [guard](https://github.com/guard/guard)
