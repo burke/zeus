@@ -5,20 +5,4 @@ $:.unshift(zeus) unless $:.include?(zeus)
 
 require 'zeus'
 
-command = ARGV[0]
-
-if command == "start"
-  require './.zeus.rb'
-
-  begin
-    Zeus::Server.run
-  ensure
-    Zeus::Client.cleanup!
-  end
-
-elsif command =~ /h|help/i or ARGV.empty?
-  puts Zeus::Cli.banner
-
-else
-  Zeus::Client.run
-end
+Zeus::Cli.start
