@@ -4,7 +4,7 @@
 
 Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests are faster.
 
-[Mediocre screencast](http://burke.libbey.me/zeus.mov)
+[Mediocre screencast](http://burke.libbey.me/zeus.mov). Better one coming soon.
 
 ## Why?
 
@@ -45,6 +45,8 @@ Run some commands:
 
 ## TODO (roughly prioritized)
 
+* Better message when no config file is found
+* Try to detect what app we're in and use a stock config file
 * zeus init command
 * Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
 * Make the code less terrible
