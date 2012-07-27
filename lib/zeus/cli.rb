@@ -44,7 +44,12 @@ ABORT
   def init
     file_name = "#{Zeus::Detector.detect}.rb"
     default_file_path = File.join(File.dirname(File.expand_path(__FILE__)), "/../../examples/", file_name)
-    FileUtils.cp default_file_path, '.zeus.rb'
+
+    if File.exists?('.zeus.rb')
+      puts "Looks like you already have a .zeus.rb in this project. You need to remove it"
+    else
+      FileUtils.cp default_file_path, '.zeus.rb'
+    end
   end
 
   def start
