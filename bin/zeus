@@ -9,5 +9,5 @@ if ARGV[0] == "start"
   Zeus::Server.run
 else
   require 'zeus/client'
-  Zeus::Client.start!
+  Zeus::Client.run
 end

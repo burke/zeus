@@ -10,6 +10,7 @@ module Zeus
       "\x03" => "TERM",
       "\x1C" => "QUIT"
     }
+    SIGNAL_REGEX = Regexp.union(SIGNALS.keys)
 
     def self.maybe_raw(&b)
       if $stdout.tty?
@@ -19,10 +20,7 @@ module Zeus
       end
     end
 
-    def self.start!
-
-      ENV["RAILS_ENV"] ||= "test"
-
+    def self.run
       maybe_raw do
         PTY.open do |master, slave|
           $stdout.tty? and master.winsize = $stdout.winsize
@@ -30,30 +28,27 @@ module Zeus
           trap("WINCH") { winch_ << "\0" }
 
           case ARGV.shift
-          when 'testrb'
+          when 'testrb', 't'
             socket = UNIXSocket.new(".zeus.test_testrb.sock")
-          when 'console'
+          when 'console', 'c'
             socket = UNIXSocket.new(".zeus.dev_console.sock")
-          when 'server'
+          when 'server', 's'
             socket = UNIXSocket.new(".zeus.dev_server.sock")
           when 'rake'
             socket = UNIXSocket.new(".zeus.dev_rake.sock")
-          when 'runner'
+          when 'runner', 'r'
             socket = UNIXSocket.new(".zeus.dev_runner.sock")
-          when 'generate'
+          when 'generate', 'g'
             socket = UNIXSocket.new(".zeus.dev_generate.sock")
           end
           socket.send_io(slave)
-          socket << { arguments: ARGV, environment: ENV["RAILS_ENV"], tty: slave.path }.to_json << "\n"
+          socket << ARGV.to_json << "\n"
           slave.close
 
-          response = JSON.load(socket.gets.strip)
-          raise "server said no" unless response["status"] == "OK"
-          pid = response["pid"]
+          pid = socket.gets.strip.to_i
 
           begin
             buffer = ""
-            signals = Regexp.union(SIGNALS.keys)
 
             while ready = select([winch, master, $stdin])[0]
               if ready.include?(winch)
@@ -64,7 +59,9 @@ module Zeus
 
               if ready.include?($stdin)
                 input = $stdin.readpartial(4096, buffer)
-                input.scan(signals).each { |signal| Process.kill(SIGNALS[signal], pid) }
+                input.scan(SIGNAL_REGEX).each { |signal|
+                  Process.kill(SIGNALS[signal], pid)
+                }
                 master << input
               end
 

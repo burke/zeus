@@ -86,9 +86,9 @@ module Zeus
               ActiveSupport::Dependencies.clear
 
               terminal = client.recv_io
-              arguments = JSON.load(client.gets.strip)['arguments']
+              arguments = JSON.load(client.gets.strip)
 
-              client << {status: "OK", pid: $$}.to_json << "\n"
+              client << $$ << "\n"
               $stdin.reopen(terminal)
               $stdout.reopen(terminal)
               $stderr.reopen(terminal)
