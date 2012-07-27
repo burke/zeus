@@ -65,6 +65,7 @@ Run some commands:
 
 * To [Jesse Storimer](http://github.com/jstorimer) for spin, part of the inspiration for this project
 * To [Samuel Kadolph](http://github.com/samuelkadolph) for doing most of the cross-process pseudoterminal legwork.
+* To [Shopify](http://github.com/Shopify) for letting me spend (some of) my days working on this.
 
 ## Doesn't work for you?
 
