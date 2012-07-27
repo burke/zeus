@@ -45,9 +45,6 @@ Run some commands:
 
 ## TODO (roughly prioritized)
 
-* Better message when no config file is found
-* Try to detect what app we're in and use a stock config file
-* zeus init command
 * Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
 * Make the code less terrible
 * Figure out how to run full test suites without multiple env loads

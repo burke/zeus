@@ -33,6 +33,10 @@ module Zeus
       end
     end
 
+    def self.acceptor_names
+      @@root.acceptor_names
+    end
+
     def self.notify(event)
       if event.flags.include?(:delete)
         # file was deleted, so we need to close and reopen it.
@@ -186,6 +190,10 @@ module Zeus
         @stages, @actions = [], []
       end
 
+      def acceptor_names
+        @stages.map { |stage| stage.acceptor_names }.flatten
+      end
+
       def action(&b)
         @actions << b
       end
@@ -249,6 +257,10 @@ module Zeus
         @name = name
         @socket = socket
         @action = b
+      end
+
+      def acceptor_names
+        @name
       end
 
       def run

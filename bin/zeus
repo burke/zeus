@@ -1,12 +1,42 @@
 #!/usr/bin/env ruby
 
-zeus = File.expand_path("../../lib/", __FILE__)
-$:.unshift(zeus) unless $:.include?(zeus)
+require 'zeus'
+  require 'zeus/cli'
+  Zeus::CLI.start
 
-if ARGV[0] == "start"
+begin
+rescue Zeus::ZeusError => e
+  Zeus.ui.error e.message
+  Zeus.ui.debug e.backtrace.join("\n")
+  exit e.status_code
+rescue Interrupt => e
+  Zeus.ui.error e.message
+  Zeus.ui.debug e.backtrace.join("\n")
+  exit 1
+rescue SystemExit => e
+  exit e.status
+rescue Exception => e
+  Zeus.ui.error("A fatal error has occurred. Please see the github issues at:\n" \
+    "http://github.com/burke/zeus/issues")
+end
+exit 0
+
+
+case ARGV[0]
+when "start"
   require 'zeus/server'
-  require './.zeus.rb'
+  begin
+    require './.zeus.rb'
+  rescue LoadError
+    puts "\x1b[31mYour project is missing a config file (.zeus.rb), or you are not in the project root."
+    puts "You can run `zeus init` to generate a config file.\x1b[0m"
+    exit 1
+  end
   Zeus::Server.run
+when "init"
+  require 'zeus/init'
+  ARGV.shift # get "init" off the list
+  Zeus::Init.run(ARGV)
 else
   require 'zeus/client'
   Zeus::Client.run
