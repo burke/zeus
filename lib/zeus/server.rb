@@ -37,7 +37,7 @@ module Zeus
           if files[file] == nil
             files[file] = true
             begin
-              queue.watch_file(file.chomp, :attrib, &notify)
+              queue.watch_file(file.chomp, :write, :extend, &notify)
             rescue Errno::EMFILE
               print_ulimit_message
               exit 1
