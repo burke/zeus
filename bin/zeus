@@ -3,10 +3,18 @@
 zeus = File.expand_path("../../lib/", __FILE__)
 $:.unshift(zeus) unless $:.include?(zeus)
 
-if ARGV[0] == "start"
+require 'zeus'
+
+command = ARGV[0]
+
+if command == "start"
   require 'zeus/server'
   require './.zeus.rb'
   Zeus::Server.run
+
+elsif command =~ /h|help/i or ARGV.empty?
+  puts Zeus::Cli.banner
+
 else
   require 'zeus/client'
   Zeus::Client.run
