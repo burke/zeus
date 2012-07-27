@@ -5,7 +5,8 @@ $:.unshift(zeus) unless $:.include?(zeus)
 
 if ARGV[0] == "start"
   require 'zeus/server'
-  Zeus::Server.start!
+  require './.zeus.rb'
+  Zeus::Server.run
 else
   require 'zeus/client'
   Zeus::Client.start!
