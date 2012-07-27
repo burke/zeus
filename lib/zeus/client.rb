@@ -30,19 +30,19 @@ module Zeus
 
           command = ARGV.shift
 
-          case command
+          socket = case command
           when 'testrb', 't'
-            socket = UNIXSocket.new(".zeus.test_testrb.sock")
+            UNIXSocket.new(".zeus.test_testrb.sock")
           when 'console', 'c'
-            socket = UNIXSocket.new(".zeus.dev_console.sock")
+            UNIXSocket.new(".zeus.dev_console.sock")
           when 'server', 's'
-            socket = UNIXSocket.new(".zeus.dev_server.sock")
+            UNIXSocket.new(".zeus.dev_server.sock")
           when 'rake'
-            socket = UNIXSocket.new(".zeus.dev_rake.sock")
+            UNIXSocket.new(".zeus.dev_rake.sock")
           when 'runner', 'r'
-            socket = UNIXSocket.new(".zeus.dev_runner.sock")
+            UNIXSocket.new(".zeus.dev_runner.sock")
           when 'generate', 'g'
-            socket = UNIXSocket.new(".zeus.dev_generate.sock")
+            UNIXSocket.new(".zeus.dev_generate.sock")
           else
             raise ComandNotFound.new(command)
           end
