@@ -52,6 +52,9 @@ Run some commands:
 * Support other frameworks?
 * Use fsevents instead of kqueue to reduce the obscene number of file descriptors.
 * Support epoll on linux
+* Once it's really stable, transparently start the process in the background rather than requiring zeus start.
+* Handle connections for not-yet-started sockets
+* Don't replace a socket with changed deps until the new one is ready
 
 ## Contributing
 
