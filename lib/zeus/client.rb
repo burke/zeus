@@ -5,6 +5,7 @@ require "socket"
 
 module Zeus
   class Client
+    ComandNotFound = Class.new(Exception)
 
     SIGNALS = {
       "\x03" => "TERM",
@@ -27,7 +28,9 @@ module Zeus
           winch, winch_ = IO.pipe
           trap("WINCH") { winch_ << "\0" }
 
-          case ARGV.shift
+          command = ARGV.shift
+
+          case command
           when 'testrb', 't'
             socket = UNIXSocket.new(".zeus.test_testrb.sock")
           when 'console', 'c'
@@ -40,7 +43,10 @@ module Zeus
             socket = UNIXSocket.new(".zeus.dev_runner.sock")
           when 'generate', 'g'
             socket = UNIXSocket.new(".zeus.dev_generate.sock")
+          else
+            raise ComandNotFound.new(command)
           end
+
           socket.send_io(slave)
           socket << ARGV.to_json << "\n"
           slave.close
