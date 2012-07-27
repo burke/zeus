@@ -14,7 +14,7 @@ Soon? You can use Zeus now, but don't expect it to be perfect. I'm working hard 
 
 ## Ugly bits
 
-* Probably crashes a lot
+* Not battle-tested yet
 * Creates a bunch of sockets
 * Uses an obscene number of file descriptors
 
