@@ -207,9 +207,6 @@ module Zeus
           $0 = "zeus spawner: #{@name}"
           pid = Process.pid
           $w_pids.puts "#{pid}:#{Process.ppid}\n"
-          $LOADED_FEATURES.each do |f|
-            $w_features.puts "#{pid}:#{f}\n"
-          end
           puts "\x1b[35m[zeus] starting spawner `#{@name}`\x1b[0m"
           trap("INT") {
             puts "\x1b[35m[zeus] killing spawner `#{@name}`\x1b[0m"
@@ -218,18 +215,26 @@ module Zeus
 
           @actions.each(&:call)
 
+          $LOADED_FEATURES.each do |f|
+            $w_features.puts "#{pid}:#{f}\n"
+          end
+
           pids = {}
           @stages.each do |stage|
-            pids[stage] = stage.run
+            pids[stage.run] = stage
           end
 
           loop do
-            pid = Process.wait
+            begin
+              pid = Process.wait
+            rescue Errno::ECHILD
+              raise "Stage `#{@name}` has no children. All terminal nodes must be acceptors"
+            end
             if (status = $?.exitstatus) > 0
               exit status
             else # restart the stage that died.
               stage = pids[pid]
-              pids[stage] = stage.run
+              pids[stage.run] = stage
             end
           end
 
