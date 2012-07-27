@@ -9,10 +9,41 @@ module Zeus
     def self.define!(&b)
       @@root = Stage.new("(root)")
       @@root.instance_eval(&b)
+      @@files = {}
+    end
+
+    def self.pid_has_file(pid, file)
+      @@files[file] ||= []
+      @@files[file] << pid
+    end
+
+    def self.killall_with_file(file)
+      pids = @@files[file]
+      puts "\x1b[31mNot implemented: Here's the part where we'd kill any process that's required that file...\x1b[0m"
+      # @@root.kill_pids(pids)
+      # pids.each do |pid|
+      #   begin
+      #     # TODO: lots of dangling pids in @@files[<x>]
+      #     Process.kill("INT", pid)
+      #   rescue Errno::ESRCH
+      #   end
+      # end
+    end
+
+    TARGET_FD_LIMIT = 8192
+
+    def self.configure_number_of_file_descriptors
+      limit = Process.getrlimit(Process::RLIMIT_NOFILE)
+      if limit[0] < TARGET_FD_LIMIT && limit[1] >= TARGET_FD_LIMIT
+        Process.setrlimit(Process::RLIMIT_NOFILE, TARGET_FD_LIMIT)
+      else
+        puts "\x1b[33m[zeus] Warning: increase the max number of file descriptors. If you have a large project, this max cause a crash in about 10 seconds.\x1b[0m"
+      end
     end
 
     def self.run
       $0 = "zeus master"
+      configure_number_of_file_descriptors
       trap("INT") { exit 0 }
       at_exit { Process.killall_descendants(9) }
 
@@ -23,21 +54,38 @@ module Zeus
 
       queue = KQueue::Queue.new
 
+      lost_files = []
+
       notify = ->(event){
-        puts "GOT CHANGE IN #{event.watcher.path}"
+        if event.flags.include?(:delete)
+          # file was deleted, so we need to close and reopen it.
+          event.watcher.disable!
+          begin
+            queue.watch_file(event.watcher.path, :write, :extend, :rename, :delete, &notify)
+          rescue Errno::ENOENT
+            lost_files << event.watcher.path
+          end
+        end
+        puts "\x1b[37m#{event.watcher.path}\x1b[0m"
+        killall_with_file(event.watcher.path)
       }
 
       files = {}
       loop do
         queue.poll
 
+        # TODO: It would be really nice if we could put the queue poller in the select somehow.
+        #   --investigate kqueue. Is this possible?
         rs, _, _ = IO.select([$r], [], [], 1)
         if rs && r = rs[0]
-          file = r.readline
+          data = r.readline
+          data =~ /(\d+):(.*)/
+          pid, file = $1, $2
+          pid_has_file($1.to_i, $2)
           if files[file] == nil
             files[file] = true
             begin
-              queue.watch_file(file.chomp, :write, :extend, &notify)
+              queue.watch_file(file.chomp, :write, :extend, :rename, :delete, &notify)
             rescue Errno::EMFILE
               print_ulimit_message
               exit 1
@@ -50,13 +98,8 @@ module Zeus
 
     end
 
-    def self.print_ulimit_message
-      puts "\x1b[31mNot enough available File Descriptors. Zeus eats a lot of them."
-      puts "To increase the number available, run:"
-      puts "\x1b[32mulimit -n 8192\x1b[0m"
-    end
-
     class Stage
+      attr_reader :pid
       def initialize(name)
         @name = name
         @stages, @actions = [], []
@@ -79,10 +122,11 @@ module Zeus
       # 2. Starting all the substages (and restarting them when necessary)
       # 3. Starting all the acceptors (and restarting them when necessary)
       def run
-        fork {
+        @pid = fork {
           $0 = "zeus spawner: #{@name}"
+          pid = Process.pid
           $LOADED_FEATURES.each do |f|
-            $w.puts f + "\n"
+            $w.puts "#{pid}:#{f}\n"
           end
           puts "\x1b[35m[zeus] starting spawner `#{@name}`\x1b[0m"
 
@@ -109,6 +153,7 @@ module Zeus
     end
 
     class Acceptor
+      attr_reader :pid
       def initialize(name, socket, &b)
         @name = name
         @socket = socket
@@ -116,10 +161,11 @@ module Zeus
       end
 
       def run
-        fork {
+        @pid = fork {
           $0 = "zeus acceptor: #{@name}"
+          pid = Process.pid
           $LOADED_FEATURES.each do |f|
-            $w.puts f + "\n"
+            $w.puts "#{pid}:#{f}\n"
           end
           puts "\x1b[35m[zeus] starting acceptor `#{@name}`\x1b[0m"
 

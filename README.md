@@ -38,16 +38,15 @@ Run some commands:
     zeus rake -T
     zeus runner omg.rb
 
-## TODO
+## TODO (roughly prioritized)
 
-* Use fsevents to watch for file changes and kill off the highest nodes that have loaded that file
+* Kill process when files are detected to have changed
 * Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
-* (maybe) make .zeus.rb a DSL, so that syntax errors are more evident and other benefits.
 * Make the code less terrible
-* Support other frameworks?
 * Figure out how to run full test suites without multiple env loads
-* Always clean up processes -- right now some are left behind... sometimes.
-* Lots more...
+* Support other frameworks?
+* Use fsevents instead of kqueue to reduce the obscene number of file descriptors.
+* Support epoll on linux
 
 ## Contributing
 
