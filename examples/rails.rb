@@ -64,11 +64,9 @@ Zeus::Server.define! do
         end
 
         acceptor :testrb, ".zeus.test_testrb.sock" do
-          forkpoint testrb: acceptor(".zeus.test_testrb.sock") {
-            (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
-              abort r.options.banner + " tests..."
-            exit r.run
-          }
+          (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
+            abort r.options.banner + " tests..."
+          exit r.run
         end
 
       end
