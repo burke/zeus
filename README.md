@@ -22,10 +22,7 @@ Not yet. Zeus is nowhere near production-ready yet. Use only if you really like 
 
 Install the gem.
 
-    git clone git://github.com/burke/zeus.git
-    cd zeus
-    gem build zeus.gemspec
-    gem install zeus-*.gem
+    gem install zeus
 
 Copy `examples/rails.rb` to `{your app}/.zeus.rb`
 
