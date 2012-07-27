@@ -1,6 +1,8 @@
 require 'json'
 require 'socket'
 
+require 'zeus/process'
+
 module Zeus
   module Server
     def self.define!(&b)
@@ -10,6 +12,7 @@ module Zeus
 
     def self.run
       trap("INT") { exit 0 }
+      at_exit { Process.killall_descendants(9) }
       @@root_stage_pid = @@root.run
       Process.waitall
     end
