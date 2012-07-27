@@ -13,6 +13,15 @@ module Zeus
     }
     SIGNAL_REGEX = Regexp.union(SIGNALS.keys)
 
+    SOCKETS = {
+      'testrb'    => '.zeus.test_testrb.sock',
+      'console'   => '.zeus.dev_console.sock',
+      'server'    => '.zeus.dev_server.sock',
+      'rake'      => '.zeus.dev_rake.sock',
+      'runner'    => '.zeus.dev_runner.sock',
+      'generate'  => '.zeus.dev_generate.sock'
+    }
+
     def self.maybe_raw(&b)
       if $stdout.tty?
         $stdout.raw(&b)
@@ -21,7 +30,14 @@ module Zeus
       end
     end
 
+    def self.cleanup!
+      SOCKETS.values.each do |socket|
+        FileUtils.rm_rf socket
+      end
+    end
+
     def self.run
+
       maybe_raw do
         PTY.open do |master, slave|
           $stdout.tty? and master.winsize = $stdout.winsize
