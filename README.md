@@ -50,6 +50,7 @@ Run some commands:
 * Handle connections for not-yet-started sockets
 * Refactor, refactor, refactor...
 * Support other frameworks?
+* Periodically re-attempt to add lost files to KQueue
 * Figure out how to run full test suites without multiple env loads
 * Don't replace a socket with changed deps until the new one is ready
 
