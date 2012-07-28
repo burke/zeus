@@ -24,18 +24,20 @@ Zeus::Server.define! do
           Rails.application.require_environment!
         end
 
-        acceptor :generate, ".zeus.dev_generate.sock" do
+        command :generate, :g do
           require 'rails/commands/generate'
         end
-        acceptor :runner, ".zeus.dev_runner.sock" do
+
+        command :runner, :r do
           require 'rails/commands/runner'
         end
-        acceptor :console, ".zeus.dev_console.sock" do
+
+        command :console, :c do
           require 'rails/commands/console'
           Rails::Console.start(Rails.application)
         end
 
-        acceptor :server, ".zeus.dev_server.sock" do
+        command :server, :s do
           require 'rails/commands/server'
           server = Rails::Server.new
           Dir.chdir(Rails.application.root)
@@ -48,7 +50,7 @@ Zeus::Server.define! do
             load 'Rakefile'
           end
 
-          acceptor :rake, ".zeus.dev_rake.sock" do
+          command :rake do
             Rake.application.run
           end
 
@@ -63,7 +65,7 @@ Zeus::Server.define! do
           Rails.application.require_environment!
         end
 
-        acceptor :testrb, ".zeus.test_testrb.sock" do
+        command :testrb do
           (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
             abort r.options.banner + " tests..."
           exit r.run

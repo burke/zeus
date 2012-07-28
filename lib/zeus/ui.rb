@@ -1,72 +1,56 @@
 module Zeus
   class UI
-    def warn(message, newline = nil)
+
+    def initialize
+      @quiet = false
+      @debug = ENV['DEBUG']
     end
 
-    def debug(message, newline = nil)
+    def info(msg)
+      tell_me(msg, nil) if !@quiet
     end
 
-    def error(message, newline = nil)
+    def confirm(msg)
+      tell_me(msg, :green) if !@quiet
     end
 
-    def info(message, newline = nil)
+    def warn(msg)
+      tell_me(msg, :yellow)
     end
 
-    def confirm(message, newline = nil)
+    def error(msg)
+      tell_me(msg, :red)
+    end
+
+    def be_quiet!
+      @quiet = true
     end
 
     def debug?
-      false
+      # needs to be false instead of nil to be newline param to other methods
+      !!@debug && !@quiet
     end
 
-    class Shell < UI
-      attr_writer :shell
-
-      def initialize(shell)
-        @shell = shell
-        @quiet = false
-        @debug = ENV['DEBUG']
-      end
-
-      def info(msg, newline = nil)
-        tell_me(msg, nil, newline) if !@quiet
-      end
-
-      def confirm(msg, newline = nil)
-        tell_me(msg, :green, newline) if !@quiet
-      end
-
-      def warn(msg, newline = nil)
-        tell_me(msg, :yellow, newline)
-      end
-
-      def error(msg, newline = nil)
-        tell_me(msg, :red, newline)
-      end
-
-      def be_quiet!
-        @quiet = true
-      end
-
-      def debug?
-        # needs to be false instead of nil to be newline param to other methods
-        !!@debug && !@quiet
-      end
-
-      def debug!
-        @debug = true
-      end
-
-      def debug(msg, newline = nil)
-        tell_me(msg, nil, newline) if debug?
-      end
-
-      private
-      # valimism
-      def tell_me(msg, color = nil, newline = nil)
-        newline.nil? ? @shell.say(msg, color) : @shell.say(msg, color, newline)
-      end
+    def debug!
+      @debug = true
     end
+
+    def debug(msg)
+      tell_me(msg, nil) if debug?
+    end
+
+    private
+    def tell_me(msg, color = nil)
+      msg = case color
+            when :red    ; "\x1b[31m#{msg}\x1b[0m"
+            when :green  ; "\x1b[32m#{msg}\x1b[0m"
+            when :yellow ; "\x1b[33m#{msg}\x1b[0m"
+            else         ; msg
+            end
+      puts msg
+    end
+
 
   end
+
 end

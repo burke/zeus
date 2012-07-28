@@ -45,15 +45,15 @@ Run some commands:
 
 ## TODO (roughly prioritized)
 
-* Handle client/server without requiring a unix socket for each acceptor (1 shared socket)
+* Fix all the bugs I added when I switched to singlesocket...
 * Make the code less terrible
 * Figure out how to run full test suites without multiple env loads
 * Support other frameworks?
 * Use fsevent instead of kqueue to reduce the obscene number of file descriptors.
-* Support epoll on linux
-* Once it's really stable, transparently start the process in the background rather than requiring zeus start.
+* Support inotify on linux
 * Handle connections for not-yet-started sockets
 * Don't replace a socket with changed deps until the new one is ready
+* (maybe) Start the preloader as a daemon transparently when any command is run, then wait for it to finish
 
 ## Contributing
 

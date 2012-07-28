@@ -20,32 +20,19 @@ module Zeus
       end
     end
 
-    def self.run
+    def self.run(command, args)
       maybe_raw do
         PTY.open do |master, slave|
           $stdout.tty? and master.winsize = $stdout.winsize
           winch, winch_ = IO.pipe
           trap("WINCH") { winch_ << "\0" }
 
-          case ARGV.shift
-          when 'testrb', 't'
-            socket = UNIXSocket.new(".zeus.test_testrb.sock")
-          when 'console', 'c'
-            socket = UNIXSocket.new(".zeus.dev_console.sock")
-          when 'server', 's'
-            socket = UNIXSocket.new(".zeus.dev_server.sock")
-          when 'rake'
-            socket = UNIXSocket.new(".zeus.dev_rake.sock")
-          when 'runner', 'r'
-            socket = UNIXSocket.new(".zeus.dev_runner.sock")
-          when 'generate', 'g'
-            socket = UNIXSocket.new(".zeus.dev_generate.sock")
-          end
+          socket = UNIXSocket.new(".zeus.sock")
+          socket << {command: command, arguments: args}.to_json << "\n"
           socket.send_io(slave)
-          socket << ARGV.to_json << "\n"
           slave.close
 
-          pid = socket.gets.strip.to_i
+          pid = socket.readline.chomp.to_i
 
           begin
             buffer = ""
@@ -76,3 +63,5 @@ module Zeus
     end
   end
 end
+
+__FILE__ == $0 and Zeus::Client.run
