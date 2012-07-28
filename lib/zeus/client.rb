@@ -24,7 +24,7 @@ module Zeus
           set_winsize
 
           @winch = make_winch_channel
-          @pid = connect_to_server(command, arguments, slave)
+          @pid = connect_to_server(command, args, slave)
 
           buffer = ""
           begin
@@ -43,7 +43,7 @@ module Zeus
 
     def connect_to_server(command, arguments, slave, socket_path = ZEUS_SOCKET_PATH)
       socket = UNIXSocket.new(socket_path)
-      socket << {command: command, arguments: args}.to_json << "\n"
+      socket << {command: command, arguments: arguments}.to_json << "\n"
       socket.send_io(slave)
       slave.close
 
