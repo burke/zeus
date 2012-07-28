@@ -11,8 +11,74 @@ module Zeus
       "\x1C" => "QUIT"
     }
     SIGNAL_REGEX = Regexp.union(SIGNALS.keys)
+    ZEUS_SOCKET_PATH = ".zeus.sock"
 
-    def self.maybe_raw(&b)
+    def self.run(command, args)
+      new.run(command, args)
+    end
+
+    def run(command, args)
+      maybe_raw do
+        PTY.open do |master, slave|
+          @master = master
+          set_winsize
+
+          @winch = make_winch_channel
+          @pid = connect_to_server(command, arguments, slave)
+
+          buffer = ""
+          begin
+            while ready = select([@winch, @master, $stdin])[0]
+              handle_winch          if ready.include?(@winch)
+              handle_stdin(buffer)  if ready.include?($stdin)
+              handle_master(buffer) if ready.include?(@master)
+            end
+          rescue EOFError
+          end
+        end
+      end
+    end
+
+    private
+
+    def connect_to_server(command, arguments, slave, socket_path = ZEUS_SOCKET_PATH)
+      socket = UNIXSocket.new(socket_path)
+      socket << {command: command, arguments: args}.to_json << "\n"
+      socket.send_io(slave)
+      slave.close
+
+      pid = socket.readline.chomp.to_i
+    end
+
+    def make_winch_channel
+      winch, winch_ = IO.pipe
+      trap("WINCH") { winch_ << "\0" }
+      winch
+    end
+
+    def handle_winch
+      @winch.read(1)
+      set_winsize
+      Process.kill("WINCH", @pid)
+    end
+
+    def handle_stdin(buffer)
+      input = $stdin.readpartial(4096, buffer)
+      input.scan(SIGNAL_REGEX).each { |signal|
+        Process.kill(SIGNALS[signal], pid)
+      }
+      @master << input
+    end
+
+    def handle_master(buffer)
+      $stdout << @master.readpartial(4096, buffer)
+    end
+
+    def set_winsize
+      $stdout.tty? and @master.winsize = $stdout.winsize
+    end
+
+    def maybe_raw(&b)
       if $stdout.tty?
         $stdout.raw(&b)
       else
@@ -20,47 +86,6 @@ module Zeus
       end
     end
 
-    def self.run(command, args)
-      maybe_raw do
-        PTY.open do |master, slave|
-          $stdout.tty? and master.winsize = $stdout.winsize
-          winch, winch_ = IO.pipe
-          trap("WINCH") { winch_ << "\0" }
-
-          socket = UNIXSocket.new(".zeus.sock")
-          socket << {command: command, arguments: args}.to_json << "\n"
-          socket.send_io(slave)
-          slave.close
-
-          pid = socket.readline.chomp.to_i
-
-          begin
-            buffer = ""
-
-            while ready = select([winch, master, $stdin])[0]
-              if ready.include?(winch)
-                winch.read(1)
-                $stdout.tty? and master.winsize = $stdout.winsize
-                Process.kill("WINCH", pid)
-              end
-
-              if ready.include?($stdin)
-                input = $stdin.readpartial(4096, buffer)
-                input.scan(SIGNAL_REGEX).each { |signal|
-                  Process.kill(SIGNALS[signal], pid)
-                }
-                master << input
-              end
-
-              if ready.include?(master)
-                $stdout << master.readpartial(4096, buffer)
-              end
-            end
-          rescue EOFError
-          end
-        end
-      end
-    end
   end
 end
 
