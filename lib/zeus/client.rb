@@ -5,12 +5,22 @@ require "socket"
 
 module Zeus
   class Client
+    ComandNotFound = Class.new(Exception)
 
     SIGNALS = {
       "\x03" => "TERM",
       "\x1C" => "QUIT"
     }
     SIGNAL_REGEX = Regexp.union(SIGNALS.keys)
+
+    SOCKETS = {
+      'testrb'    => '.zeus.test_testrb.sock',
+      'console'   => '.zeus.dev_console.sock',
+      'server'    => '.zeus.dev_server.sock',
+      'rake'      => '.zeus.dev_rake.sock',
+      'runner'    => '.zeus.dev_runner.sock',
+      'generate'  => '.zeus.dev_generate.sock'
+    }
 
     def self.maybe_raw(&b)
       if $stdout.tty?
@@ -20,27 +30,39 @@ module Zeus
       end
     end
 
+    def self.cleanup!
+      SOCKETS.values.each do |socket|
+        FileUtils.rm_rf socket
+      end
+    end
+
     def self.run
+
       maybe_raw do
         PTY.open do |master, slave|
           $stdout.tty? and master.winsize = $stdout.winsize
           winch, winch_ = IO.pipe
           trap("WINCH") { winch_ << "\0" }
 
-          case ARGV.shift
+          command = ARGV.shift
+
+          socket = case command
           when 'testrb', 't'
-            socket = UNIXSocket.new(".zeus.test_testrb.sock")
+            UNIXSocket.new(".zeus.test_testrb.sock")
           when 'console', 'c'
-            socket = UNIXSocket.new(".zeus.dev_console.sock")
+            UNIXSocket.new(".zeus.dev_console.sock")
           when 'server', 's'
-            socket = UNIXSocket.new(".zeus.dev_server.sock")
+            UNIXSocket.new(".zeus.dev_server.sock")
           when 'rake'
-            socket = UNIXSocket.new(".zeus.dev_rake.sock")
+            UNIXSocket.new(".zeus.dev_rake.sock")
           when 'runner', 'r'
-            socket = UNIXSocket.new(".zeus.dev_runner.sock")
+            UNIXSocket.new(".zeus.dev_runner.sock")
           when 'generate', 'g'
-            socket = UNIXSocket.new(".zeus.dev_generate.sock")
+            UNIXSocket.new(".zeus.dev_generate.sock")
+          else
+            raise ComandNotFound.new(command)
           end
+
           socket.send_io(slave)
           socket << ARGV.to_json << "\n"
           slave.close
