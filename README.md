@@ -17,7 +17,6 @@ Soon? You can use Zeus now, but don't expect it to be perfect. I'm working hard 
 ## Ugly bits
 
 * Not battle-tested yet
-* Creates a bunch of sockets
 * Uses an obscene number of file descriptors
 
 ## Installation
@@ -45,15 +44,20 @@ Run some commands:
 
 ## TODO (roughly prioritized)
 
-* Fix all the bugs I added when I switched to singlesocket...
-* Make the code less terrible
-* Figure out how to run full test suites without multiple env loads
+* Make sure client connection requests are handled immediately
+* Acceptors booting should not be dependent on passing all loaded features to the file monitor
+* Route all logging output through Zeus.ui
+* Handle connections for not-yet-started sockets
+* Refactor, refactor, refactor...
 * Support other frameworks?
+* Figure out how to run full test suites without multiple env loads
+* Don't replace a socket with changed deps until the new one is ready
+
+## Ideas (not quite TODOs)
+
+* (maybe) Start the preloader as a daemon transparently when any command is run, then wait for it to finish
 * Use fsevent instead of kqueue to reduce the obscene number of file descriptors.
 * Support inotify on linux
-* Handle connections for not-yet-started sockets
-* Don't replace a socket with changed deps until the new one is ready
-* (maybe) Start the preloader as a daemon transparently when any command is run, then wait for it to finish
 
 ## Contributing
 
