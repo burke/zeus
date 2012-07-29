@@ -35,13 +35,14 @@ module Zeus
     D
     def start
       require 'zeus/server'
-      require './.zeus.rb'
-
+      begin
+        require './.zeus.rb'
+      rescue LoadError
+        Zeus.ui.error("Your project is missing a config file (.zeus.rb), or you are not\n"\
+          "in the project root. You can run `zeus init` to generate a config file.")
+        exit 1
+      end
       Zeus::Server.new.run
-    rescue LoadError
-      Zeus.ui.error("Your project is missing a config file (.zeus.rb), or you are not\n"\
-        "in the project root. You can run `zeus init` to generate a config file.")
-      exit 1
     end
 
     def help(*)
