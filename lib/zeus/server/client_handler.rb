@@ -31,16 +31,11 @@ module Zeus
 
       def initialize(registration_monitor)
         @reg_monitor = registration_monitor
-        begin
-          @server = UNIXServer.new(Zeus::SOCKET_NAME)
-          @server.listen(10)
-        rescue Errno::EADDRINUSE
-          Zeus.ui.error "Zeus appears to be already running in this project. If not, remove .zeus.sock and try again."
-          exit 1
-        # ensure
-        #   @server.close rescue nil
-        #   File.unlink(SERVER_SOCK)
-        end
+        @server = UNIXServer.new(Zeus::SOCKET_NAME)
+        @server.listen(10)
+      rescue Errno::EADDRINUSE
+        Zeus.ui.error "Zeus appears to be already running in this project. If not, remove .zeus.sock and try again."
+        exit 1
       end
 
       def handle_server_connection

@@ -45,11 +45,10 @@ module Zeus
 
       def resubscribe_deleted_file(event)
         event.watcher.disable!
-        begin
-          @queue.watch_file(event.watcher.path, :write, :extend, :rename, :delete, &method(:file_did_change))
-        rescue Errno::ENOENT
-          @deleted_files << event.watcher.path
-        end
+
+        @queue.watch_file(event.watcher.path, :write, :extend, :rename, :delete, &method(:file_did_change))
+      rescue Errno::ENOENT
+        @deleted_files << event.watcher.path
       end
 
     end
