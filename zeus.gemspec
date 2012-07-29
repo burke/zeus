@@ -16,4 +16,5 @@ Gem::Specification.new do |gem|
   gem.version       = Zeus::VERSION
 
   gem.add_dependency "rb-kqueue-burke", "~> 0.1.0"
+  gem.add_development_dependency "pry"
 end

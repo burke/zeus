@@ -1,6 +1,7 @@
 module Zeus
   class Server
     class Stage
+      HasNoChildren = Class.new(Exception)
 
       attr_accessor :name, :stages, :actions
       attr_reader :pid
@@ -17,9 +18,10 @@ module Zeus
           $0 = "zeus spawner: #{@name}"
           pid = Process.pid
           @server.w_pid "#{pid}:#{Process.ppid}"
-          puts "\x1b[35m[zeus] starting spawner `#{@name}`\x1b[0m"
+
+          Zeus.ui.as_zeus("starting spawner `#{@name}`")
           trap("INT") {
-            puts "\x1b[35m[zeus] killing spawner `#{@name}`\x1b[0m"
+            Zues.ui.as_zeus("killing spawner `#{@name}`")
             exit 0
           }
 
@@ -38,7 +40,7 @@ module Zeus
             begin
               pid = Process.wait
             rescue Errno::ECHILD
-              raise "Stage `#{@name}` has no children. All terminal nodes must be acceptors"
+              raise HasNoChildren.new("Stage `#{@name}` - All terminal nodes must be acceptors")
             end
             if (status = $?.exitstatus) > 0
               exit status

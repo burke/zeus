@@ -39,22 +39,18 @@ module Zeus
 
     PID_TYPE = "P"
     def w_pid line
-      begin
-        @w_msg.send(PID_TYPE + line, 0)
-      rescue Errno::ENOBUFS
-        sleep 0.2
-        retry
-      end
+      @w_msg.send(PID_TYPE + line, 0)
+    rescue Errno::ENOBUFS
+      sleep 0.2
+      retry
     end
 
     FEATURE_TYPE = "F"
     def w_feature line
-      begin
-        @w_msg.send(FEATURE_TYPE + line, 0)
-      rescue Errno::ENOBUFS
-        sleep 0.2
-        retry
-      end
+      @w_msg.send(FEATURE_TYPE + line, 0)
+    rescue Errno::ENOBUFS
+      sleep 0.2
+      retry
     end
 
     def run
@@ -98,19 +94,20 @@ module Zeus
 
     def handle_messages
       loop do
-        begin
-          data = @r_msg.recv_nonblock(1024)
-          case data[0]
-          when FEATURE_TYPE
-            handle_feature_message(data[1..-1])
-          when PID_TYPE
-            handle_pid_message(data[1..-1])
-          else
-            raise "Unrecognized message"
-          end
-        rescue Errno::EAGAIN
-          break
-        end
+        handle_message
+      end
+    rescue Errno::EAGAIN
+    end
+
+    def handle_message
+      data = @r_msg.recv_nonblock(1024)
+      case data[0]
+      when FEATURE_TYPE
+        handle_feature_message(data[1..-1])
+      when PID_TYPE
+        handle_pid_message(data[1..-1])
+      else
+        raise "Unrecognized message"
       end
     end
 

@@ -1,4 +1,5 @@
 module Zeus
+  SOCKET_NAME = '.zeus.sock'
 
   autoload :UI,      'zeus/ui'
   autoload :CLI,     'zeus/cli'
