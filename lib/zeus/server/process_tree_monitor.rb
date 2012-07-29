@@ -76,7 +76,7 @@ module Zeus
         def kill_nodes_with_feature(file, base = @root)
           if base.has_feature?(file)
             if base == @root.children[0] || base == @root
-              puts "\x1b[31mOne of zeus's dependencies changed. Not killing zeus. You may have to restart the server.\x1b[0m"
+              Zeus.ui.error "One of zeus's dependencies changed. Not killing zeus. You may have to restart the server."
               return false
             end
             kill_node(base)

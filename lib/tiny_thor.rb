@@ -78,7 +78,7 @@ BANNER
     taskname = ARGV.shift
     arguments = ARGV
 
-    taskname == "" and taskname = "help"
+    taskname ||= "help"
 
     unless task = @tasks[taskname.to_s]
       Zeus.ui.error "Could not find task \"#{taskname}\""

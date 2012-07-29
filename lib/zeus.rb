@@ -3,6 +3,8 @@ require 'zeus/server'
 require "zeus/ui"
 
 module Zeus
+  SOCKET_NAME = '.zeus.sock'
+
   class ZeusError < StandardError
     def self.status_code(code)
       define_method(:status_code) { code }
