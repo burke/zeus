@@ -1,6 +1,3 @@
-require 'zeus/server/stage'
-require 'zeus/server/acceptor'
-
 module Zeus
   module DSL
 
