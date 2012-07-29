@@ -49,7 +49,7 @@ module Zeus
       slave.close
 
       pid = socket.readline.chomp.to_i
-    rescue Errno::ENOENT, Errno::ECONNREFUSED
+    rescue Errno::ENOENT, Errno::ECONNREFUSED, Errno::ECONNRESET
       Zeus.ui.error "Zeus doesn't seem to be running, try 'zeus start`"
       abort
     end
