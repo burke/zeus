@@ -1,6 +1,7 @@
 module Zeus
   class Server
     class Stage
+      HasNoChildren = Class.new(Exception)
 
       attr_accessor :name, :stages, :actions
       attr_reader :pid
@@ -39,7 +40,7 @@ module Zeus
             begin
               pid = Process.wait
             rescue Errno::ECHILD
-              raise "Stage `#{@name}` has no children. All terminal nodes must be acceptors"
+              raise HasNoChildren.new("Stage `#{@name}` - All terminal nodes must be acceptors")
             end
             if (status = $?.exitstatus) > 0
               exit status
