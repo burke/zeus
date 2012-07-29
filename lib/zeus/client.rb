@@ -6,6 +6,8 @@ require "socket"
 module Zeus
   class Client
 
+    attr_accessor :pid
+
     SIGNALS = {
       "\x03" => "TERM",
       "\x1C" => "QUIT"
@@ -23,7 +25,7 @@ module Zeus
           set_winsize
 
           @winch = make_winch_channel
-          @pid = connect_to_server(command, args, slave)
+          pid = connect_to_server(command, args, slave)
 
           buffer = ""
           begin
@@ -58,7 +60,7 @@ module Zeus
     def handle_winch
       @winch.read(1)
       set_winsize
-      Process.kill("WINCH", @pid)
+      Process.kill("WINCH", pid)
     end
 
     def handle_stdin(buffer)
