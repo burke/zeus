@@ -2,17 +2,17 @@ require 'json'
 require 'socket'
 
 require 'rb-kqueue'
-
 require 'zeus/process'
-require 'zeus/dsl'
-require 'zeus/server/file_monitor'
-require 'zeus/server/client_handler'
-require 'zeus/server/process_tree_monitor'
-require 'zeus/server/acceptor_registration_monitor'
-require 'zeus/server/acceptor'
 
 module Zeus
   class Server
+
+    autoload :Stage,                       'zeus/server/stage'
+    autoload :Acceptor,                    'zeus/server/acceptor'
+    autoload :FileMonitor,                 'zeus/server/file_monitor'
+    autoload :ClientHandler,               'zeus/server/client_handler'
+    autoload :ProcessTreeMonitor,          'zeus/server/process_tree_monitor'
+    autoload :AcceptorRegistrationMonitor, 'zeus/server/acceptor_registration_monitor'
 
     def self.define!(&b)
       @@definition = Zeus::DSL::Evaluator.new.instance_eval(&b)
