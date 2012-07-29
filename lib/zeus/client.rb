@@ -11,7 +11,6 @@ module Zeus
       "\x1C" => "QUIT"
     }
     SIGNAL_REGEX = Regexp.union(SIGNALS.keys)
-    ZEUS_SOCKET_PATH = ".zeus.sock"
 
     def self.run(command, args)
       new.run(command, args)
@@ -41,7 +40,7 @@ module Zeus
 
     private
 
-    def connect_to_server(command, arguments, slave, socket_path = ZEUS_SOCKET_PATH)
+    def connect_to_server(command, arguments, slave, socket_path = Zeus::SOCKET_NAME)
       socket = UNIXSocket.new(socket_path)
       socket << {command: command, arguments: arguments}.to_json << "\n"
       socket.send_io(slave)

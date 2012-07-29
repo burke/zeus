@@ -26,15 +26,13 @@ module Zeus
     #   4. ClientHandler forwards the pid to the client over S_CLI.
     #
     class ClientHandler
-      SERVER_SOCK = ".zeus.sock"
-
       def datasource ; @server ; end
       def on_datasource_event ; handle_server_connection ; end
 
       def initialize(registration_monitor)
         @reg_monitor = registration_monitor
         begin
-          @server = UNIXServer.new(SERVER_SOCK)
+          @server = UNIXServer.new(Zeus::SOCKET_NAME)
           @server.listen(10)
         rescue Errno::EADDRINUSE
           Zeus.ui.error "Zeus appears to be already running in this project. If not, remove .zeus.sock and try again."
