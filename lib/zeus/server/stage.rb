@@ -17,9 +17,10 @@ module Zeus
           $0 = "zeus spawner: #{@name}"
           pid = Process.pid
           @server.w_pid "#{pid}:#{Process.ppid}"
-          puts "\x1b[35m[zeus] starting spawner `#{@name}`\x1b[0m"
+
+          Zeus.ui.as_zeus("starting spawner `#{@name}`")
           trap("INT") {
-            puts "\x1b[35m[zeus] killing spawner `#{@name}`\x1b[0m"
+            Zues.ui.as_zeus("killing spawner `#{@name}`")
             exit 0
           }
 

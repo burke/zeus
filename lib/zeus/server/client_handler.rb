@@ -64,7 +64,7 @@ module Zeus
         # TODO handle nothing found
         usock.send_io(client_terminal)
 
-        puts "accepting connection for #{command}"
+        Zeus.ui.info "accepting connection for #{command}"
 
         # 4
         acceptor.socket.puts arguments.to_json

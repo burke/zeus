@@ -36,9 +36,9 @@ module Zeus
 
           @server.w_pid "#{pid}:#{Process.ppid}"
 
-          puts "\x1b[35m[zeus] starting acceptor `#{@name}`\x1b[0m"
+          Zeus.ui.as_zeus "starting acceptor `#{@name}`"
           trap("INT") {
-            puts "\x1b[35m[zeus] killing acceptor `#{@name}`\x1b[0m"
+            Zeus.ui.as_zeus "killing acceptor `#{@name}`"
             exit 0
           }
 

@@ -39,7 +39,7 @@ module Zeus
         if limit[0] < TARGET_FD_LIMIT && limit[1] >= TARGET_FD_LIMIT
           Process.setrlimit(Process::RLIMIT_NOFILE, TARGET_FD_LIMIT)
         else
-          puts "\x1b[33m[zeus] Warning: increase the max number of file descriptors. If you have a large project, this max cause a crash in about 10 seconds.\x1b[0m"
+          Zeus.ui.warn "Warning: increase the max number of file descriptors. If you have a large project, this max cause a crash in about 10 seconds."
         end
       end
 
