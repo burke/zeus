@@ -1,8 +1,11 @@
-require "zeus/version"
-require 'zeus/server'
-require "zeus/ui"
-
 module Zeus
+
+  autoload :UI,      'zeus/ui'
+  autoload :CLI,     'zeus/cli'
+  autoload :Dsl,     'zeus/dsl'
+  autoload :Server,  'zeus/server'
+  autoload :Version, 'zeus/version'
+
   class ZeusError < StandardError
     def self.status_code(code)
       define_method(:status_code) { code }

@@ -1,4 +1,4 @@
 #!/usr/bin/env ruby
 
-require 'zeus/cli'
+require 'zeus'
 Zeus::CLI.start

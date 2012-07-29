@@ -1,4 +1,3 @@
-require 'zeus'
 require 'tiny_thor'
 
 module Zeus
