@@ -1,8 +1,8 @@
 require 'zeus'
-require 'tiny_thor'
+require 'thrud'
 
 module Zeus
-  class CLI < TinyThor
+  class CLI < Thrud
 
     def initialize(*)
       super
