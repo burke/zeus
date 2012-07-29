@@ -1,4 +1,4 @@
-class TinyThor
+class Thrud
 
   class Task < Struct.new(:method_name, :desc, :long_desc, :method_options)
     def arity(obj)
