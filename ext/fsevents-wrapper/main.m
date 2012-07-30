@@ -16,9 +16,9 @@ static FSEventStreamRef  _activeStream;
 static NSMutableDictionary *_fileIsWatched;
 
 static int flagsWorthReloadingFor = \
-    kFSEventStreamEventFlagItemRemoved | \
-    kFSEventStreamEventFlagItemRenamed | \
-    kFSEventStreamEventFlagItemModified;
+kFSEventStreamEventFlagItemRemoved | \
+kFSEventStreamEventFlagItemRenamed | \
+kFSEventStreamEventFlagItemModified;
 
 void myCallbackFunction(
                         ConstFSEventStreamRef streamRef,
@@ -36,8 +36,8 @@ void myCallbackFunction(
         
         if (flags & (kFSEventStreamEventFlagItemIsFile | flagsWorthReloadingFor)) {
             printf("%s\n", paths[i]);
+            fflush(stdout);
         }
-        else { printf("%d\n", flags); }
     }
 }
 
@@ -48,16 +48,16 @@ void configureStream()
     if (_activeStream) {
         FSEventStreamStop(_activeStream);
         FSEventStreamUnscheduleFromRunLoop(_activeStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
-        CFRelease(_activeStream);
+        //CFRelease(_activeStream);
     }
     
     _activeStream = FSEventStreamCreate(NULL,
-                                 &myCallbackFunction,
-                                 NULL,
-                                 _watchedFiles,
-                                 kFSEventStreamEventIdSinceNow,
-                                 1.0, // latency
-                                 kFSEventStreamCreateFlagFileEvents);
+                                        &myCallbackFunction,
+                                        NULL,
+                                        _watchedFiles,
+                                        kFSEventStreamEventIdSinceNow,
+                                        1.0, // latency
+                                        kFSEventStreamCreateFlagFileEvents);
     
     FSEventStreamScheduleWithRunLoop(_activeStream, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
     
@@ -69,7 +69,7 @@ int maybeAddFileToWatchList(char *line)
 {
     CFStringRef file = CFStringCreateWithCString(NULL, line, kCFStringEncodingASCII);
     struct stat buf;
-
+    
     if ([_fileIsWatched valueForKey:(__bridge NSString *)file]) {
         return 0;
     } else if (stat(line, &buf) == 0) {
@@ -85,29 +85,23 @@ void handleInputFiles()
 {
     int anyChanges = 0;
     
-    fd_set fds;
-    struct timeval tv;
-    int retval;
     char line[2048];
     
-    FD_ZERO(&fds);
-    FD_SET(0, &fds);
+    fd_set fdset;
     
-    // Poll, don't block.
-    tv.tv_usec = 0;
-    tv.tv_sec = 0;
+    FD_ZERO(&fdset);
+    FD_SET(STDIN_FILENO, &fdset);
+    struct timeval timeout;
+    timeout.tv_sec = 0;
+    timeout.tv_usec = 0;
     
-    retval = select(1, &fds, NULL, NULL, &tv);
-    while (retval) {
-        fgets(line, 2048, stdin);
+    select(STDIN_FILENO+1, &fdset, NULL, NULL, &timeout);
+    while (FD_ISSET(STDIN_FILENO, &fdset) && fgets(line, 2048, stdin) != NULL) {
         line[strlen(line)-1] = 0;
-        
         anyChanges |= maybeAddFileToWatchList(line);
-        
-        retval = select(1, &fds, NULL, NULL, &tv);
+        select(STDIN_FILENO+1, &fdset, NULL, NULL, &timeout);
     }
-    
-    
+        
     if (anyChanges) {
         configureStream();
     }
@@ -137,4 +131,3 @@ int main(int argc, const char * argv[])
     }
     return 0;
 }
-

@@ -1,7 +1,6 @@
 require 'json'
 require 'socket'
 
-require 'rb-kqueue'
 require 'zeus/process'
 
 module Zeus
@@ -24,7 +23,7 @@ module Zeus
 
     attr_reader :client_handler, :acceptor_registration_monitor
     def initialize
-      @file_monitor                  = FileMonitor.new(&method(:dependency_did_change))
+      @file_monitor                  = FileMonitor::FSEvent.new(&method(:dependency_did_change))
       @acceptor_registration_monitor = AcceptorRegistrationMonitor.new
       @process_tree_monitor          = ProcessTreeMonitor.new
       @client_handler                = ClientHandler.new(acceptor_registration_monitor)
@@ -65,14 +64,10 @@ module Zeus
       @w_msg.close
 
       loop do
-        @file_monitor.process_events
-
+        monitors = [@file_monitor, @acceptor_registration_monitor, @client_handler]
         # TODO: Make @r_msg a Monitor instead. All that logic should be its own thing.
-        monitors = [@acceptor_registration_monitor, @client_handler]
         datasources = [@r_msg, *monitors.map(&:datasource)]
 
-        # TODO: It would be really nice if we could put the queue poller in the select somehow.
-        #   --investigate kqueue. Is this possible?
         ready, _, _ = IO.select(datasources, [], [], 1)
         next unless ready
         monitors.each do |m|

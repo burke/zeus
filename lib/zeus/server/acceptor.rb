@@ -14,9 +14,7 @@ module Zeus
       end
 
       def register_with_client_handler(pid)
-        @a, @b = Socket.pair(:UNIX, :STREAM)
-        @s_client_handler = UNIXSocket.for_fd(@a.fileno)
-        @s_acceptor       = UNIXSocket.for_fd(@b.fileno)
+        @s_client_handler, @s_acceptor = UNIXSocket.pair
 
         @s_acceptor.puts registration_data(pid)
 

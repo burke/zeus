@@ -6,11 +6,7 @@ module Zeus
       def on_datasource_event ; handle_registration ; end
 
       def initialize
-        # note: if these aren't ivars, they go out of scope, get GC'd,
-        # and cause the UNIXSockets to quit working... often in perplexing ways.
-        @s, @r = Socket.pair(:UNIX, :DGRAM)
-        @reg_monitor  = UNIXSocket.for_fd(@s.fileno)
-        @reg_acceptor = UNIXSocket.for_fd(@r.fileno)
+        @reg_monitor, @reg_acceptor = UNIXSocket.pair
         @acceptors = []
       end
 

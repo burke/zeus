@@ -8,13 +8,10 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Zeus is an alpha-quality application preloader with terrible documentation.}
   gem.homepage      = "http://github.com/burke/zeus"
 
-  gem.files         = `git ls-files`.split($\)
+  gem.files         = `git ls-files`.split("\n").reject{ |f| f =~ /xcodeproj/ }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "zeus"
   gem.require_paths = ["lib"]
   gem.version       = Zeus::VERSION
-
-  gem.add_dependency "rb-kqueue-burke", "~> 0.1.0"
-  gem.add_development_dependency "pry"
 end
