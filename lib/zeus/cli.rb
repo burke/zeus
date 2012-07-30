@@ -1,4 +1,3 @@
-require 'zeus'
 require 'thrud'
 
 module Zeus
@@ -34,7 +33,6 @@ module Zeus
       use the zeus runner commands (see `zeus help` for a list of available commands).
     D
     def start
-      require 'zeus/server'
       begin
         require './.zeus.rb'
       rescue LoadError
@@ -60,7 +58,6 @@ module Zeus
       Zeus::Server.acceptors.each do |acc|
         desc acc.name, (acc.description || "#{acc.name} task defined in .zeus.rb")
         define_method(acc.name) { |*args|
-          require 'zeus/client'
           Zeus::Client.run(acc.name, args)
         }
         map acc.aliases => acc.name
