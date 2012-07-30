@@ -67,10 +67,9 @@ module Zeus
       loop do
         @file_monitor.process_events
 
-        datasources = [@r_msg,
-          @acceptor_registration_monitor.datasource, @client_handler.datasource]
-
+        # TODO: Make @r_msg a Monitor instead. All that logic should be its own thing.
         monitors = [@acceptor_registration_monitor, @client_handler]
+        datasources = [@r_msg, *monitors.map(&:datasource)]
 
         # TODO: It would be really nice if we could put the queue poller in the select somehow.
         #   --investigate kqueue. Is this possible?
