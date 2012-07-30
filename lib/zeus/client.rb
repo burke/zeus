@@ -63,7 +63,7 @@ module Zeus
     def handle_winch
       @winch.read(1)
       set_winsize
-      Process.kill("WINCH", pid)
+      Process.kill("WINCH", pid) if pid
     end
 
     def handle_stdin(buffer)
