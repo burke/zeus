@@ -70,24 +70,16 @@ module Zeus
         datasources = [@r_msg,
           @acceptor_registration_monitor.datasource, @client_handler.datasource]
 
+        monitors = [@acceptor_registration_monitor, @client_handler]
+
         # TODO: It would be really nice if we could put the queue poller in the select somehow.
         #   --investigate kqueue. Is this possible?
-        begin
-          rs, _, _ = IO.select(datasources, [], [], 1)
-        rescue Errno::EBADF
-          puts "EBADF" unless defined?($asdf)
-          sleep 1
-          $asdf = true
+        ready, _, _ = IO.select(datasources, [], [], 1)
+        next unless ready
+        monitors.each do |m|
+          m.on_datasource_event if ready.include?(m.datasource)
         end
-        rs.each do |r|
-          case r
-          when @acceptor_registration_monitor.datasource
-            @acceptor_registration_monitor.on_datasource_event
-          when @r_msg ; handle_messages
-          when @client_handler.datasource
-            @client_handler.on_datasource_event
-          end
-        end if rs
+        handle_messages if ready.include?(@r_msg)
       end
 
     ensure
