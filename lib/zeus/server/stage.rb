@@ -21,7 +21,7 @@ module Zeus
 
           Zeus.ui.as_zeus("starting spawner `#{@name}`")
           trap("INT") {
-            Zues.ui.as_zeus("killing spawner `#{@name}`")
+            Zeus.ui.as_zeus("killing spawner `#{@name}`")
             exit 0
           }
 
