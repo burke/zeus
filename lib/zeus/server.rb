@@ -90,6 +90,8 @@ module Zeus
         end if rs
       end
 
+    ensure
+      File.unlink(Zeus::SOCKET_NAME)
     end
 
     def handle_messages
