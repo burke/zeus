@@ -5,6 +5,7 @@ module Zeus
   autoload :CLI,     'zeus/cli'
   autoload :DSL,     'zeus/dsl'
   autoload :Server,  'zeus/server'
+  autoload :Client,  'zeus/client'
   autoload :Version, 'zeus/version'
 
   class ZeusError < StandardError
