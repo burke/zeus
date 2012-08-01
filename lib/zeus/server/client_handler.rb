@@ -27,8 +27,9 @@ module Zeus
       def datasource ; @server ; end
       def on_datasource_event ; handle_server_connection ; end
 
-      def initialize(registration_monitor)
+      def initialize(acceptor_commands, registration_monitor)
         @reg_monitor = registration_monitor
+        @acceptor_commands = acceptor_commands
         @server = UNIXServer.new(Zeus::SOCKET_NAME)
         @server.listen(10)
       rescue Errno::EADDRINUSE
@@ -38,7 +39,18 @@ module Zeus
 
       def handle_server_connection
         s_client = @server.accept
-        fork { handshake_client_to_acceptor(s_client) }
+        fork { handshake_client_to_acceptor(s_client) ; exit }
+      end
+
+      NoSuchCommand = Class.new(Exception)
+      AcceptorNotBooted = Class.new(Exception)
+      ApplicationLoadFailed = Class.new(Exception)
+
+      def exit_with_message(s_client, client_terminal, msg)
+        s_client << "0\n"
+        client_terminal << "[zeus] #{msg}\n"
+        client_terminal.close
+        s_client.close
       end
 
       #  client clienthandler acceptor
@@ -57,9 +69,23 @@ module Zeus
         client_terminal = s_client.recv_io
 
         # 3
+        unless @acceptor_commands.include?(command.to_s)
+          return exit_with_message(
+            s_client, client_terminal,
+            "no such command `#{command}`.")
+        end
         acceptor = @reg_monitor.find_acceptor_for_command(command)
+        unless acceptor
+          return exit_with_message(
+            s_client, client_terminal,
+            "not yet ready to process `#{command}`. Try again right away.")
+        end
         usock = UNIXSocket.for_fd(acceptor.socket.fileno)
-        # TODO handle nothing found
+        if usock.closed?
+          return exit_with_message(
+            s_client, client_terminal,
+            "`#{command}` handler is reloading a dependency. Try again right away.")
+        end
         usock.send_io(client_terminal)
 
         Zeus.ui.info "accepting connection for #{command}"

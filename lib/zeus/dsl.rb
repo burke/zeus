@@ -21,6 +21,10 @@ module Zeus
       # ^ configuration
       # V later use
 
+      def commands
+        [name, *aliases].map(&:to_s)
+      end
+
       def acceptors
         self
       end

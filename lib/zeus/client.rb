@@ -25,7 +25,7 @@ module Zeus
           set_winsize
 
           @winch = make_winch_channel
-          pid = connect_to_server(command, args, slave)
+          @pid = connect_to_server(command, args, slave)
 
           buffer = ""
           begin

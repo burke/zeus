@@ -26,7 +26,8 @@ module Zeus
       @file_monitor                  = FileMonitor::FSEvent.new(&method(:dependency_did_change))
       @acceptor_registration_monitor = AcceptorRegistrationMonitor.new
       @process_tree_monitor          = ProcessTreeMonitor.new
-      @client_handler                = ClientHandler.new(acceptor_registration_monitor)
+      acceptor_commands = self.class.acceptors.map(&:commands).flatten
+      @client_handler                = ClientHandler.new(acceptor_commands, acceptor_registration_monitor)
 
       # TODO: deprecate Zeus::Server.define! maybe. We can do that better...
       @plan = @@definition.to_domain_object(self)
@@ -55,7 +56,6 @@ module Zeus
     def run
       $0 = "zeus master"
       trap("INT") { exit 0 }
-      at_exit { Process.killall_descendants(9) }
 
       @r_msg, @w_msg = Socket.pair(:UNIX, :DGRAM)
 

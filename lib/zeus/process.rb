@@ -9,11 +9,17 @@ module Process
     end
   end
 
+  def self.pids_to_ppids
+    Hash[*`ps -eo pid,ppid`.scan(/\d+/).map(&:to_i)]
+  end
+
   def self.descendants(base=Process.pid)
     descendants = Hash.new{|ht,k| ht[k]=[k]}
-    Hash[*`ps -eo pid,ppid`.scan(/\d+/).map{|x|x.to_i}].each{|pid,ppid|
+
+    pids_to_ppids.each do |pid,ppid|
       descendants[ppid] << descendants[pid]
-    }
+    end
+
     descendants[base].flatten - [base]
   end
 end

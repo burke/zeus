@@ -52,7 +52,11 @@ module Zeus
             when :purple ; "\x1b[35m#{msg}\x1b[0m"
             else         ; msg
             end
-      puts msg
+      if msg[-1] == "\n"
+        puts msg
+      else
+        puts "#{msg}\n"
+      end
     end
 
 

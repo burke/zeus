@@ -25,8 +25,34 @@ module Zeus
         {pid: pid, commands: [name, *aliases], description: description}.to_json
       end
 
+      def descendent_acceptors
+        self
+      end
+
+      def print_error(io, error)
+        io.puts "#{error.backtrace[0]}: #{error.message} (#{error.class})"
+        error.backtrace[1..-1].each do |line|
+          io.puts "\tfrom #{line}"
+        end
+      end
+
+      def run_as_error(e)
+        register_with_client_handler(Process.pid)
+        Zeus.ui.as_zeus "starting error-state acceptor `#{@name}`"
+
+        Thread.new do
+          loop do
+            terminal = @s_acceptor.recv_io
+            _ = @s_acceptor.readline
+            @s_acceptor << 0 << "\n"
+            print_error(terminal, e)
+            terminal.close
+          end
+        end
+      end
+
       def run
-        fork {
+        pid = fork {
           $0 = "zeus acceptor: #{@name}"
           pid = Process.pid
 
@@ -49,6 +75,7 @@ module Zeus
             terminal = @s_acceptor.recv_io
             arguments = JSON.parse(@s_acceptor.readline.chomp)
             child = fork do
+              $0 = "zeus runner: #{@name}"
               postfork_action!
               @s_acceptor << $$ << "\n"
               $stdin.reopen(terminal)
@@ -62,6 +89,9 @@ module Zeus
             terminal.close
           end
         }
+        currpid = Process.pid
+        at_exit { Process.kill(9, pid) if Process.pid == currpid rescue nil }
+        pid
       end
 
       def prefork_action! # TODO : refactor

@@ -14,9 +14,15 @@ Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
 
 Soon? You can use Zeus now, but don't expect it to be perfect. I'm working hard on it.
 
-## Ugly bits
+## Requirements
 
-* Not battle-tested yet
+Pretty specific:
+
+* OS X 10.7+
+* Ruby 1.9+
+* Backported GC from Ruby 2.0.
+
+You can install the GC-patched ruby from [this gist](https://gist.github.com/1688857) or from RVM.
 
 ## Installation
 
@@ -51,19 +57,16 @@ Run some commands:
     zeus rake -T
     zeus runner omg.rb
 
-## Version 0.2.0 TODO
 
-* Make sure client connection requests are handled immediately (is this a problem? maybe not. Could chunk the select though)
-* Zeus should "know" about all the acceptors it's handling before they boot.
-* When a connection is requested to an unbooted acceptor, indicate that it's still loading.
-* When a syntax error happens while a stage is booting, causing it to crash, connections to its descendent acceptors should print that message then terminate.
-* After a syntax error causes failed load, a stage should re-attempt each time the file changes until it succeeds.
-* command processes should not be killed when zeus reloads files. (should they be killed when zeus exits?)
+## TODO (roughly prioritized)
+
 * Make sure that when a command process's connection is dropped, it is killed
-
-## Future TODO (roughly prioritized)
-
+* less leaky handling of at_exit pid killing
+* Instead of exiting when requesting an as-yet-unbooted acceptor, wait until it's available then run.
 * Refactor, refactor, refactor...
+* Make sure client connection requests are handled immediately (Chunk the select loop)
+* Don't fork to handshake client to acceptor
+* Eliminate the client-side exit lag for zeus commands.
 * Support other frameworks?
 * Figure out how to run full test suites without multiple env loads
 
