@@ -51,16 +51,21 @@ Run some commands:
     zeus rake -T
     zeus runner omg.rb
 
-## TODO (roughly prioritized)
+## Version 0.2.0 TODO
 
-* Make sure client connection requests are handled immediately
-* Acceptors booting should not be dependent on passing all loaded features to the file monitor
-* Route all logging output through Zeus.ui
-* Handle connections for not-yet-started sockets
+* Make sure client connection requests are handled immediately (is this a problem? maybe not. Could chunk the select though)
+* Zeus should "know" about all the acceptors it's handling before they boot.
+* When a connection is requested to an unbooted acceptor, indicate that it's still loading.
+* When a syntax error happens while a stage is booting, causing it to crash, connections to its descendent acceptors should print that message then terminate.
+* After a syntax error causes failed load, a stage should re-attempt each time the file changes until it succeeds.
+* command processes should not be killed when zeus reloads files. (should they be killed when zeus exits?)
+* Make sure that when a command process's connection is dropped, it is killed
+
+## Future TODO (roughly prioritized)
+
 * Refactor, refactor, refactor...
 * Support other frameworks?
 * Figure out how to run full test suites without multiple env loads
-* Don't replace a socket with changed deps until the new one is ready
 
 ## Ideas (not quite TODOs)
 
