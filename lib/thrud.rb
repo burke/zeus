@@ -55,7 +55,7 @@ BANNER
     else
       # this is super non-generic. problem for future-burke.
       project_tasks = self.class.instance_variable_get("@tasks").
-        reject{|k,_|['init', 'start', 'help'].include?(k)}.values.uniq
+        reject{|k,_|['initialize', 'version', 'init', 'start', 'help'].include?(k)}.values.uniq
 
       tasks = project_tasks.map { |task|
         "  zeus %-14s # %s" % [task.method_name, task.desc]
