@@ -34,7 +34,7 @@ module Zeus
     D
     def start
       begin
-        require definition_file
+        require self.class.definition_file
       rescue LoadError
         Zeus.ui.error("Your project is missing a config file (.zeus.rb), and it doesn't appear\n"\
           "to be a rails project. You can run `zeus init` to generate a config file.")
@@ -53,8 +53,16 @@ module Zeus
     end
     map %w(-v --version) => :version
 
+    def self.definition_file
+      if !File.exists?('.zeus.rb') && File.exists?('script/rails')
+        File.expand_path("../templates/rails.rb", __FILE__)
+      else
+        '.zeus.rb'
+      end
+    end
+
     begin
-      require './.zeus.rb'
+      require definition_file
       Zeus::Server.acceptors.each do |acc|
         desc acc.name, (acc.description || "#{acc.name} task defined in .zeus.rb")
         define_method(acc.name) { |*args|
@@ -65,15 +73,6 @@ module Zeus
     rescue LoadError
     end
 
-    private
-
-    def definition_file
-      if !File.exists?('.zeus.rb') && File.exists?('script/rails')
-        File.expand_path("../templates/rails.rb", __FILE__)
-      else
-        '.zeus.rb'
-      end
-    end
 
   end
 end

@@ -55,7 +55,7 @@ BANNER
     else
       # this is super non-generic. problem for future-burke.
       project_tasks = self.class.instance_variable_get("@tasks").
-        reject{|k,_|['initialize', 'version', 'init', 'start', 'help'].include?(k)}.values.uniq
+        reject{|k,v|['definition_file', 'initialize', 'version', 'init', 'start', 'help'].include?(v.method_name.to_s)}.values.uniq
 
       tasks = project_tasks.map { |task|
         "  zeus %-14s # %s" % [task.method_name, task.desc]
@@ -67,6 +67,7 @@ Global Commands:
   zeus help [COMMAND] # show help for a specific command
   zeus init           # #{task_for_name(:init).desc}
   zeus start          # #{task_for_name(:start).desc}
+  zeus version        # #{task_for_name(:version).desc}
 
 Project-local Commands:
 #{tasks.join("\n")}
