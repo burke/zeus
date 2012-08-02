@@ -2,7 +2,7 @@
 
 ## What?
 
-Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests are faster.
+Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests take **ONE second**.
 
 ### [Watch the screencast](http://vimeo.com/burkelibbey/zeus)
 
