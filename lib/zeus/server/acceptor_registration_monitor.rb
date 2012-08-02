@@ -46,7 +46,6 @@ module Zeus
         @acceptors.reject!{|ac|ac.commands == commands}
         @acceptors << AcceptorStub.new(pid, io, commands, description)
         notify_pings_for_commands(commands)
-        notify_existing_runners_for_commands(commands)
       end
 
       def notify_pings_for_commands(commands)
