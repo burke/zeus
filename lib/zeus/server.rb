@@ -79,9 +79,9 @@ module Zeus
     end
 
     def handle_messages
-      loop do
+      10.times {
         handle_message
-      end
+      }
     rescue Errno::EAGAIN
     end
 

@@ -17,13 +17,13 @@ module Zeus
         end
 
         def handle_changed_files
-          loop do
+          10.times {
             begin
               read_and_notify_files
             rescue Errno::EAGAIN
               break
             end
-          end
+          }
         end
 
         def read_and_notify_files
