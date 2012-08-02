@@ -57,7 +57,7 @@ module Zeus
       if !File.exists?('.zeus.rb') && File.exists?('script/rails')
         File.expand_path("../templates/rails.rb", __FILE__)
       else
-        '.zeus.rb'
+        './.zeus.rb'
       end
     end
 
