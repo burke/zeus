@@ -10,10 +10,6 @@ Zeus preloads your app so that your normal development tasks such as `console`, 
 
 Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
 
-## When?
-
-Soon? You can use Zeus now, but don't expect it to be perfect. I'm working hard on it.
-
 ## Requirements
 
 Pretty specific:
