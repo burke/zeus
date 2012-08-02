@@ -26,7 +26,7 @@ Install the gem.
 
     gem install zeus
 
-Run the project initializer.
+Run the project initializer from the root of your rails application:
 
     zeus init
 
