@@ -1,14 +1,10 @@
 # Zeus
 
-## What?
+## What is Zeus?
 
 Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests take **ONE second**.
 
 ### [Watch the screencast](http://vimeo.com/burkelibbey/zeus)
-
-## Why?
-
-Because waiting 25 seconds sucks, but waiting 0.4 seconds doesn't.
 
 ## Requirements
 
