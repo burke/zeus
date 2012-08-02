@@ -4,6 +4,8 @@
 
 Zeus preloads your app so that your normal development tasks such as `console`, `server`, `generate`, and tests take **ONE second**.
 
+This screencast gives a quick overview of how to use zeus:
+
 [![Watch the screencast!](http://s3.amazonaws.com/burkelibbey/vimeo-zeus.png)](http://vimeo.com/burkelibbey/zeus)
 
 ## Requirements
