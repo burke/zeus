@@ -3,25 +3,60 @@ module Zeus
     class AcceptorRegistrationMonitor
 
       def datasource          ; @reg_monitor ; end
-      def on_datasource_event ; handle_registration ; end
+      def on_datasource_event ; handle_message ; end
 
       def initialize
         @reg_monitor, @reg_acceptor = UNIXSocket.pair
         @acceptors = []
+        @pings = {}
       end
 
       AcceptorStub = Struct.new(:pid, :socket, :commands, :description)
 
-      def handle_registration
+      def handle_message
         io = @reg_monitor.recv_io
 
         data = JSON.parse(io.readline.chomp)
+        type = data['type']
+
+        case type
+        when 'wait' ; handle_wait(io, data)
+        when 'registration' ; handle_registration(io, data)
+        when 'deregistration' ; handle_deregistration(io, data)
+        else raise "invalid message"
+        end
+      end
+
+      def handle_wait(io, data)
+        command = data['command'].to_s
+        @pings[command] ||= []
+        @pings[command] << io
+      end
+
+      def handle_deregistration(io, data)
+        pid = data['pid'].to_i
+        @acceptors.reject!{|acc|acc.pid == pid}
+      end
+
+      def handle_registration(io, data)
         pid         = data['pid'].to_i
         commands    = data['commands']
         description = data['description']
 
         @acceptors.reject!{|ac|ac.commands == commands}
         @acceptors << AcceptorStub.new(pid, io, commands, description)
+        notify_pings_for_commands(commands)
+        notify_existing_runners_for_commands(commands)
+      end
+
+      def notify_pings_for_commands(commands)
+        (commands || []).each do |command|
+          (@pings[command.to_s] || []).each do |ping|
+            ping.puts "ready\n"
+            ping.close
+          end
+          @pings[command.to_s] = nil
+        end
       end
 
       def find_acceptor_for_command(command)

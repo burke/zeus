@@ -22,7 +22,7 @@ module Zeus
       end
 
       def registration_data(pid)
-        {pid: pid, commands: [name, *aliases], description: description}.to_json
+        {type: 'registration', pid: pid, commands: [name, *aliases], description: description}.to_json
       end
 
       def descendent_acceptors
@@ -91,9 +91,14 @@ module Zeus
             Process.detach(child)
             terminal.close
           end
+
         }
         currpid = Process.pid
-        at_exit { Process.kill(9, pid) if Process.pid == currpid rescue nil }
+        at_exit {
+          if Process.pid == currpid
+            Process.kill(9, pid) rescue nil
+          end
+        }
         pid
       end
 

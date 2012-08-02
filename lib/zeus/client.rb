@@ -69,7 +69,12 @@ module Zeus
     def handle_stdin(buffer)
       input = $stdin.readpartial(4096, buffer)
       input.scan(SIGNAL_REGEX).each { |signal|
-        Process.kill(SIGNALS[signal], pid)
+        begin
+          Process.kill(SIGNALS[signal], pid)
+        rescue Errno::ESRCH
+          # we're trying to kill a process that died. Just quit.
+          exit
+        end
       }
       @master << input
     end

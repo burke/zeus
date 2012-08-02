@@ -39,8 +39,24 @@ module Zeus
 
       def handle_server_connection
         s_client = @server.accept
-        fork { handshake_client_to_acceptor(s_client) ; exit }
+
+        # 1
+        data = JSON.parse(s_client.readline.chomp)
+        command, arguments = data.values_at('command', 'arguments')
+
+        # 2
+        client_terminal = s_client.recv_io
+
+        Thread.new {
+          loop do
+            pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal) ; exit }
+            Process.wait(pid)
+            break unless $?.exitstatus == REATTEMPT_HANDSHAKE
+          end
+        }
       end
+
+      REATTEMPT_HANDSHAKE = 204
 
       NoSuchCommand = Class.new(Exception)
       AcceptorNotBooted = Class.new(Exception)
@@ -53,6 +69,22 @@ module Zeus
         s_client.close
       end
 
+      def wait_for_acceptor(s_client, client_terminal, command, msg)
+        s_client << "0\n"
+        client_terminal << "[zeus] #{msg}\n"
+
+        regmsg = {type: 'wait', command: command}
+
+        s, r = UNIXSocket.pair
+        @reg_monitor.acceptor_registration_socket.send_io(r)
+        s << "#{regmsg.to_json}\n"
+
+        s.readline # wait
+        s.close
+
+        exit REATTEMPT_HANDSHAKE
+      end
+
       #  client clienthandler acceptor
       # 1  ---------->                | {command: String, arguments: [String]}
       # 2  ---------->                | Terminal IO
@@ -60,14 +92,7 @@ module Zeus
       # 4            ----------->     | Arguments (json array)
       # 5            <-----------     | pid
       # 6  <---------                 | pid
-      def handshake_client_to_acceptor(s_client)
-        # 1
-        data = JSON.parse(s_client.readline.chomp)
-        command, arguments = data.values_at('command', 'arguments')
-
-        # 2
-        client_terminal = s_client.recv_io
-
+      def handshake_client_to_acceptor(s_client, command, arguments, client_terminal)
         # 3
         unless @acceptor_commands.include?(command.to_s)
           return exit_with_message(
@@ -76,17 +101,24 @@ module Zeus
         end
         acceptor = @reg_monitor.find_acceptor_for_command(command)
         unless acceptor
-          return exit_with_message(
-            s_client, client_terminal,
-            "not yet ready to process `#{command}`. Try again right away.")
+          wait_for_acceptor(
+            s_client, client_terminal, command,
+            "waiting for `#{command}` to finish booting...")
         end
         usock = UNIXSocket.for_fd(acceptor.socket.fileno)
         if usock.closed?
-          return exit_with_message(
-            s_client, client_terminal,
-            "`#{command}` handler is reloading a dependency. Try again right away.")
+          wait_for_acceptor(
+            s_client, client_terminal, command,
+            "waiting for `#{command}` to finish reloading dependencies...")
         end
-        usock.send_io(client_terminal)
+        begin
+          usock.send_io(client_terminal)
+        rescue Errno::EPIPE
+          wait_for_acceptor(
+            s_client, client_terminal, command,
+            "waiting for `#{command}` to finish reloading dependencies...")
+        end
+
 
         Zeus.ui.info "accepting connection for #{command}"
 
