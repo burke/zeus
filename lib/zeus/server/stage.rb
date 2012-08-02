@@ -66,7 +66,9 @@ module Zeus
             pids[stage.run] = stage
           end
 
-          $LOADED_FEATURES.each { |f| notify_feature(f) }
+          Thread.new {
+            $LOADED_FEATURES.each { |f| notify_feature(f) }
+          }
 
           loop do
             begin
