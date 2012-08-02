@@ -1,8 +1,6 @@
 require 'json'
 require 'socket'
 
-require 'zeus/process'
-
 module Zeus
   class Server
 
