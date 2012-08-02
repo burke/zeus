@@ -6,7 +6,7 @@ module Zeus
   autoload :DSL,     'zeus/dsl'
   autoload :Server,  'zeus/server'
   autoload :Client,  'zeus/client'
-  autoload :Version, 'zeus/version'
+  autoload :VERSION, 'zeus/version'
 
   class ZeusError < StandardError
     def self.status_code(code)
