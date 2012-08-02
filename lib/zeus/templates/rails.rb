@@ -57,21 +57,21 @@ Zeus::Server.define! do
         end
       end
 
-      # stage :test do
-      #   action do
-      #     Rails.env = ENV['RAILS_ENV'] = "test"
-      #     Bundler.require(:test)
-      #     require APP_PATH
-      #     Rails.application.require_environment!
-      #   end
+      stage :test do
+        action do
+          Rails.env = ENV['RAILS_ENV'] = "test"
+          Bundler.require(:test)
+          require APP_PATH
+          Rails.application.require_environment!
+        end
 
-      #   command :testrb do
-      #     (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
-      #       abort r.options.banner + " tests..."
-      #     exit r.run
-      #   end
+        command :testrb do
+          (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
+            abort r.options.banner + " tests..."
+          exit r.run
+        end
 
-      # end
+      end
 
     end
   end
