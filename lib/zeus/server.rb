@@ -79,7 +79,7 @@ module Zeus
     end
 
     def handle_messages
-      10.times {
+      50.times {
         handle_message
       }
     rescue Errno::EAGAIN

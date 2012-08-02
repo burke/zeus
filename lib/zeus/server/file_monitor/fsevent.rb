@@ -17,7 +17,7 @@ module Zeus
         end
 
         def handle_changed_files
-          10.times {
+          50.times {
             begin
               read_and_notify_files
             rescue Errno::EAGAIN

@@ -66,9 +66,12 @@ module Zeus
             exit 0
           }
 
-          $LOADED_FEATURES.each do |f|
-            @server.w_feature "#{pid}:#{f}"
-          end
+          # Apparently threads don't continue in forks.
+          Thread.new {
+            $LOADED_FEATURES.each do |f|
+              @server.w_feature "#{pid}:#{f}"
+            end
+          }
 
           loop do
             prefork_action!
