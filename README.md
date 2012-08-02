@@ -14,6 +14,7 @@ Pretty specific:
 
 * OS X 10.7+
 * Ruby 1.9+
+* Rails 3.0+ (Support for other versions is not difficult and is planned.)
 * Backported GC from Ruby 2.0.
 
 You can install the GC-patched ruby from [this gist](https://gist.github.com/1688857) or from RVM.
