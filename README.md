@@ -30,14 +30,6 @@ Run the project initializer.
 
     zeus init
 
-## Upgrading from initial release
-
-Since zeus is super-brand-new, the config file format changed already.
-
-    gem install zeus
-    rm .zeus.rb
-    zeus init
-
 ## Usage
 
 Start the server:
