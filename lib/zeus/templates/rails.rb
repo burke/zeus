@@ -4,10 +4,10 @@ Zeus::Server.define! do
   stage :boot do
 
     action do
-      ENV_PATH  = File.expand_path('../config/environment',  __FILE__)
-      BOOT_PATH = File.expand_path('../config/boot',  __FILE__)
-      APP_PATH  = File.expand_path('../config/application',  __FILE__)
-      ROOT_PATH = File.expand_path('..',  __FILE__)
+      ROOT_PATH = File.expand_path(Dir.pwd)
+      ENV_PATH  = File.expand_path('config/environment',  ROOT_PATH)
+      BOOT_PATH = File.expand_path('config/boot',  ROOT_PATH)
+      APP_PATH  = File.expand_path('config/application',  ROOT_PATH)
 
       require BOOT_PATH
       require 'rails/all'
