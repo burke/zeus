@@ -29,6 +29,8 @@ module Zeus
       def close_child_socket  ; end
       def close_parent_socket ; @listener.close ; end
 
+      REATTEMPT_HANDSHAKE = 204
+
       def initialize(acceptor_commands, server)
         @server = server
         @acceptor_commands = acceptor_commands
@@ -39,55 +41,6 @@ module Zeus
         exit 1
       end
 
-      def handle_server_connection
-        s_client = @listener.accept
-
-        # 1
-        data = JSON.parse(s_client.readline.chomp)
-        command, arguments = data.values_at('command', 'arguments')
-
-        # 2
-        client_terminal = s_client.recv_io
-
-        Thread.new {
-          loop do
-            pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal) ; exit }
-            Process.wait(pid)
-            break unless $?.exitstatus == REATTEMPT_HANDSHAKE
-          end
-        }
-      end
-
-      REATTEMPT_HANDSHAKE = 204
-
-      NoSuchCommand = Class.new(Exception)
-      AcceptorNotBooted = Class.new(Exception)
-      ApplicationLoadFailed = Class.new(Exception)
-
-      def exit_with_message(s_client, client_terminal, msg)
-        s_client << "0\n"
-        client_terminal << "[zeus] #{msg}\n"
-        client_terminal.close
-        s_client.close
-      end
-
-      def wait_for_acceptor(s_client, client_terminal, command, msg)
-        s_client << "0\n"
-        client_terminal << "[zeus] #{msg}\n"
-
-        regmsg = {type: 'wait', command: command}
-
-        s, r = UNIXSocket.pair
-
-        @server.__CHILD__register_acceptor(r)
-        s << "#{regmsg.to_json}\n"
-
-        s.readline # wait
-        s.close
-
-        exit REATTEMPT_HANDSHAKE
-      end
-
       #  client clienthandler acceptor
       # 1  ---------->                | {command: String, arguments: [String]}
       # 2  ---------->                | Terminal IO
@@ -95,45 +48,74 @@ module Zeus
       # 4            ----------->     | Arguments (json array)
       # 5            <-----------     | pid
       # 6  <---------                 | pid
+      def handle_server_connection
+        s_client = @listener.accept
+
+        data = JSON.parse(s_client.readline.chomp) # step 1
+        command, arguments = data.values_at('command', 'arguments')
+
+        client_terminal = s_client.recv_io # step 2
+
+        Thread.new {
+          # This is a little ugly. Gist: Try to handshake the client to the acceptor.
+          # If the acceptor is not booted yet, this will hang until it is, then terminate with 
+          # REATTEMPT_HANDSHAKE. We catch that exit code and try once more.
+          loop do
+            pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal) ; exit }
+            Process.wait(pid)
+            break if $?.exitstatus != REATTEMPT_HANDSHAKE
+          end
+        }
+      end
+
       def handshake_client_to_acceptor(s_client, command, arguments, client_terminal)
-        # 3
         unless @acceptor_commands.include?(command.to_s)
-          return exit_with_message(
-            s_client, client_terminal,
-            "no such command `#{command}`.")
-        end
-        acceptor = @server.__CHILD__find_acceptor_for_command(command)
-        unless acceptor
-          wait_for_acceptor(
-            s_client, client_terminal, command,
-            "waiting for `#{command}` to finish booting...")
-        end
-        usock = UNIXSocket.for_fd(acceptor.socket.fileno)
-        if usock.closed?
-          wait_for_acceptor(
-            s_client, client_terminal, command,
-            "waiting for `#{command}` to finish reloading dependencies...")
-        end
-        begin
-          usock.send_io(client_terminal)
-        rescue Errno::EPIPE
-          wait_for_acceptor(
-            s_client, client_terminal, command,
-            "waiting for `#{command}` to finish reloading dependencies...")
+          msg = "no such command `#{command}`."
+          return exit_with_message(s_client, client_terminal, msg)
         end
 
+        unless acceptor = send_io_to_acceptor(client_terminal, command) # step 3
+          wait_for_acceptor(s_client, client_terminal, command)
+          exit REATTEMPT_HANDSHAKE
+        end
 
         Zeus.ui.info "accepting connection for #{command}"
 
-        # 4
-        acceptor.socket.puts arguments.to_json
-
-        # 5
-        pid = acceptor.socket.readline.chomp.to_i
-
-        # 6
-        s_client.puts pid
+        acceptor.socket.puts arguments.to_json # step 4
+        pid = acceptor.socket.readline.chomp.to_i # step 5
+        s_client.puts pid # step 6
       end
+
+      private
+
+      def exit_with_message(s_client, client_terminal, msg)
+        s_client << "0\n"
+        client_terminal << "[zeus] #{msg}\n"
+        client_terminal.close
+        s_client.close
+        exit 1
+      end
+
+      def wait_for_acceptor(s_client, client_terminal, command)
+        s_client << "0\n"
+        client_terminal << "[zeus] waiting for `#{command}` to finish booting...\n"
+
+        s, r = UNIXSocket.pair
+        s << {type: 'wait', command: command}.to_json << "\n"
+        @server.__CHILD__register_acceptor(r)
+
+        s.readline # wait until acceptor is booted
+      end
+
+      def send_io_to_acceptor(io, command)
+        return false unless acceptor = @server.__CHILD__find_acceptor_for_command(command)
+        return false unless usock = UNIXSocket.for_fd(acceptor.socket.fileno)
+        usock.send_io(io)
+        return acceptor
+      rescue Errno::EPIPE
+        return false
+      end
+
 
     end
   end
