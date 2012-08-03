@@ -8,7 +8,9 @@ module Zeus
     autoload :Acceptor,                    'zeus/server/acceptor'
     autoload :FileMonitor,                 'zeus/server/file_monitor'
     autoload :ProcessTree,                 'zeus/server/process_tree'
+    autoload :ForkedProcess,               'zeus/server/forked_process'
     autoload :ClientHandler,               'zeus/server/client_handler'
+    autoload :AcceptorErrorState,          'zeus/server/acceptor_error_state'
     autoload :ProcessTreeMonitor,          'zeus/server/process_tree_monitor'
     autoload :AcceptorRegistrationMonitor, 'zeus/server/acceptor_registration_monitor'
 
