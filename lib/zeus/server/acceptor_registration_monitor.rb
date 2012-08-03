@@ -4,7 +4,9 @@ module Zeus
 
       def datasource          ; @sock ; end
       def on_datasource_event ; handle_message ; end
-      def close_child_socket  ; @__CHILD__sock.close ; end
+      # @__CHILD__sock is not closed here, as it's used by the master to respond
+      # for unbooted acceptors
+      def close_child_socket  ; end 
       def close_parent_socket ; @sock.close ; end
 
       def initialize
