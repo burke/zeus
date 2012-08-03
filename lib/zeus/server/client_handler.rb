@@ -24,21 +24,23 @@ module Zeus
     #   4. ClientHandler forwards the pid to the client over S_CLI.
     #
     class ClientHandler
-      def datasource ; @server ; end
+      def datasource          ; @listener ; end
       def on_datasource_event ; handle_server_connection ; end
+      def close_child_socket  ; end
+      def close_parent_socket ; @listener.close ; end
 
-      def initialize(acceptor_commands, registration_monitor)
-        @reg_monitor = registration_monitor
+      def initialize(acceptor_commands, server)
+        @server = server
         @acceptor_commands = acceptor_commands
-        @server = UNIXServer.new(Zeus::SOCKET_NAME)
-        @server.listen(10)
+        @listener = UNIXServer.new(Zeus::SOCKET_NAME)
+        @listener.listen(10)
       rescue Errno::EADDRINUSE
         Zeus.ui.error "Zeus appears to be already running in this project. If not, remove .zeus.sock and try again."
         exit 1
       end
 
       def handle_server_connection
-        s_client = @server.accept
+        s_client = @listener.accept
 
         # 1
         data = JSON.parse(s_client.readline.chomp)
@@ -76,7 +78,8 @@ module Zeus
         regmsg = {type: 'wait', command: command}
 
         s, r = UNIXSocket.pair
-        @reg_monitor.acceptor_registration_socket.send_io(r)
+
+        @server.__CHILD__register_acceptor(r)
         s << "#{regmsg.to_json}\n"
 
         s.readline # wait
@@ -99,7 +102,7 @@ module Zeus
             s_client, client_terminal,
             "no such command `#{command}`.")
         end
-        acceptor = @reg_monitor.find_acceptor_for_command(command)
+        acceptor = @server.__CHILD__find_acceptor_for_command(command)
         unless acceptor
           wait_for_acceptor(
             s_client, client_terminal, command,

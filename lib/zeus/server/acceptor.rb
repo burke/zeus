@@ -9,8 +9,6 @@ module Zeus
       attr_accessor :name, :aliases, :description, :action
       def initialize(server)
         @server = server
-        @client_handler = server.client_handler
-        @registration_monitor = server.acceptor_registration_monitor
       end
 
       def register_with_client_handler(pid)
@@ -18,7 +16,7 @@ module Zeus
 
         @s_acceptor.puts registration_data(pid)
 
-        @registration_monitor.acceptor_registration_socket.send_io(@s_client_handler)
+        @server.__CHILD__register_acceptor(@s_client_handler)
       end
 
       def registration_data(pid)
@@ -58,7 +56,7 @@ module Zeus
 
           register_with_client_handler(pid)
 
-          @server.w_pid "#{pid}:#{Process.ppid}"
+          @server.__CHILD__pid_has_ppid(pid, Process.ppid)
 
           Zeus.ui.as_zeus "starting acceptor `#{@name}`"
           trap("INT") {
@@ -69,7 +67,7 @@ module Zeus
           # Apparently threads don't continue in forks.
           Thread.new {
             $LOADED_FEATURES.each do |f|
-              @server.w_feature "#{pid}:#{f}"
+              @server.__CHILD__pid_has_feature(pid, f)
             end
           }
 

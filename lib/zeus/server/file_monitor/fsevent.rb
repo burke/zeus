@@ -6,8 +6,10 @@ module Zeus
       class FSEvent
         WRAPPER_PATH = File.expand_path("../../../../../ext/fsevents-wrapper/fsevents-wrapper", __FILE__)
 
-        def datasource ; @io_out ; end
+        def datasource          ; @io_out ; end
         def on_datasource_event ; handle_changed_files ; end
+        def close_child_socket  ; end
+        def close_parent_socket ; [@io_in, @io_out].each(&:close) ; end
 
         def initialize(&change_callback)
           @change_callback = change_callback
@@ -17,13 +19,8 @@ module Zeus
         end
 
         def handle_changed_files
-          50.times {
-            begin
-              read_and_notify_files
-            rescue Errno::EAGAIN
-              break
-            end
-          }
+          50.times { read_and_notify_files }
+        rescue Errno::EAGAIN
         end
 
         def read_and_notify_files
@@ -42,7 +39,6 @@ module Zeus
         def watch(file)
           return false if @watched_files[file]
           @watched_files[file] = true
-          File.open('a.log', 'a') { |f| f.puts file }
           @io_in.puts file
           true
         end

@@ -2,11 +2,13 @@ module Zeus
   class Server
     class AcceptorRegistrationMonitor
 
-      def datasource          ; @reg_monitor ; end
+      def datasource          ; @sock ; end
       def on_datasource_event ; handle_message ; end
+      def close_child_socket  ; @__CHILD__sock.close ; end
+      def close_parent_socket ; @sock.close ; end
 
       def initialize
-        @reg_monitor, @reg_acceptor = UNIXSocket.pair
+        @sock, @__CHILD__sock = UNIXSocket.pair
         @acceptors = []
         @pings = {}
       end
@@ -14,7 +16,7 @@ module Zeus
       AcceptorStub = Struct.new(:pid, :socket, :commands, :description)
 
       def handle_message
-        io = @reg_monitor.recv_io
+        io = @sock.recv_io
 
         data = JSON.parse(io.readline.chomp)
         type = data['type']
@@ -58,15 +60,20 @@ module Zeus
         end
       end
 
-      def find_acceptor_for_command(command)
-        @acceptors.detect { |acceptor|
-          acceptor.commands.include?(command)
-        }
-      end
 
-      def acceptor_registration_socket
-        @reg_acceptor
-      end
+      module ChildProcessApi
+
+        def __CHILD__find_acceptor_for_command(command)
+          @acceptors.detect { |acceptor|
+            acceptor.commands.include?(command)
+          }
+        end
+
+        def __CHILD__register_acceptor(io)
+          @__CHILD__sock.send_io(io)
+        end
+
+      end ; include ChildProcessApi
 
     end
 

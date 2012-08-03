@@ -1,5 +1,7 @@
 module Zeus
   class Server
+    # NONE of the code in the module is run in the master process,
+    # so every communication to the master must be done with IPC.
     class Stage
       HasNoChildren = Class.new(Exception)
 
@@ -10,7 +12,7 @@ module Zeus
       end
 
       def notify_feature(feature)
-        @server.w_feature "#{Process.pid}:#{feature}"
+        @server.__CHILD__pid_has_feature(Process.pid, feature)
       end
 
       def descendent_acceptors
@@ -43,11 +45,13 @@ module Zeus
         sleep
       end
 
-      def run
+      def run(close_parent_sockets = false)
         @pid = fork {
+          # This is only passed to the top-level stage, from Server#run, not sub-stages.
+          @server.__CHILD__close_parent_sockets if close_parent_sockets
+
           $0 = "zeus spawner: #{@name}"
-          pid = Process.pid
-          @server.w_pid "#{pid}:#{Process.ppid}"
+          @server.__CHILD__pid_has_ppid(Process.pid, Process.ppid)
 
           Zeus.ui.as_zeus("starting spawner `#{@name}`")
           trap("INT") {

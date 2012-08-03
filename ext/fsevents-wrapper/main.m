@@ -123,11 +123,9 @@ void configureTimerAndRun()
 
 int main(int argc, const char * argv[])
 {
-    @autoreleasepool {
-        _watchedFiles = CFArrayCreateMutable(NULL, 0, NULL);
-        _fileIsWatched = [[NSMutableDictionary alloc] initWithCapacity:500];
+    _watchedFiles = CFArrayCreateMutable(NULL, 0, NULL);
+    _fileIsWatched = [[NSMutableDictionary alloc] initWithCapacity:500];
         
-        configureTimerAndRun();
-    }
+    configureTimerAndRun();
     return 0;
 }
