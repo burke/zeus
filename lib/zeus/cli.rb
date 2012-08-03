@@ -17,6 +17,8 @@ module Zeus
     D
     # method_option "rails", type: :string, banner: "Use the rails template instead of auto-detecting based on project contents"
     def init
+      require 'fileutils'
+
       if File.exist?(".zeus.rb")
         Zeus.ui.error ".zeus.rb already exists at #{Dir.pwd}/.zeus.rb"
         exit 1
