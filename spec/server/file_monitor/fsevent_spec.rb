@@ -1,6 +1,7 @@
 require 'socket'
 require 'tempfile'
 require 'fileutils'
+require 'securerandom'
 
 require 'zeus'
 
@@ -30,17 +31,20 @@ module Zeus::Server::FileMonitor
     it 'passes changed files to a callback' do
       io_in, io_out = stub_open_wrapper!
 
-      fsevent = FSEvent.new { |f| raise f }
+      # to prove that very long filenames aren't truncated anywhere:
+      filename = SecureRandom.hex(8000) + ".rb"
+
+      results = []
+      fsevent = FSEvent.new { |f| results << f }
 
       io_in.puts "/a/b/c.rb"
-      fsevent.stub(realpaths_for_givenpath: ["/a/b/c.rb"])
+      fsevent.stub(realpaths_for_givenpath: [filename])
       # test that the right socket is used, and it's ready for reading.
       IO.select([fsevent.datasource])[0].should == [io_out]
 
-      Zeus.ui.should_receive(:info).with(%r{/a/b/c.rb})
-      -> {
-        fsevent.on_datasource_event
-      }.should raise_error RuntimeError, "/a/b/c.rb"
+      Zeus.ui.should_receive(:info).with(%r{#{filename}})
+      fsevent.on_datasource_event
+      results[0].should == filename
     end
 
 
