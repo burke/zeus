@@ -37,7 +37,7 @@ module Zeus::Server::FileMonitor
       results = []
       fsevent = FSEvent.new { |f| results << f }
 
-      io_in.puts "/a/b/c.rb"
+      io_in.puts filename
       fsevent.stub(realpaths_for_givenpath: [filename])
       # test that the right socket is used, and it's ready for reading.
       IO.select([fsevent.datasource])[0].should == [io_out]
