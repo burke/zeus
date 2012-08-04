@@ -1,4 +1,5 @@
 require 'open3'
+require 'pathname'
 
 module Zeus
   class Server
@@ -13,9 +14,40 @@ module Zeus
 
         def initialize(&change_callback)
           @change_callback = change_callback
-          @io_in, @io_out, _ = Open3.popen2e(WRAPPER_PATH)
-          @watched_files = {}
+          @io_in, @io_out, _ = open_wrapper
+          @givenpath_to_realpath = {}
+          @realpath_to_givenpath = {}
           @buffer = ""
+        end
+
+        # The biggest complicating factor here is that ruby doesn't fully resolve
+        # symlinks in paths here, but FSEvents does. We resolve all paths fully with
+        # Pathname#realpath, and keep mappings in both directions.
+        # It's conceivable that the same file would be required by two different paths,
+        # so we keep an array and file callbacks for all given paths matching a real
+        # path when a change is detected.
+        def watch(given)
+          return false if @givenpath_to_realpath[given]
+
+          real = realpath(given)
+          @givenpath_to_realpath[given] = real
+          @realpath_to_givenpath[real] ||= []
+          @realpath_to_givenpath[real] << given
+
+          @io_in.puts real
+          true
+        end
+
+        private
+
+        def realpath(file)
+          Pathname.new(file).realpath.to_s
+        rescue Errno::ENOENT
+          file
+        end
+
+        def open_wrapper
+          Open3.popen2e(WRAPPER_PATH)
         end
 
         def handle_changed_files
@@ -24,30 +56,27 @@ module Zeus
         end
 
         def read_and_notify_files
-          lines = @io_out.read_nonblock(30000)
+          lines = @io_out.read_nonblock(1000)
           files = lines.split("\n")
           files[0] = "#{@buffer}#{files[0]}" unless @buffer == ""
           unless lines[-1] == "\n"
             @buffer = files.pop
           end
 
-          files.each do |file|
-            file_did_change(file)
+          files.each do |real|
+            file_did_change(real)
           end
         end
 
-        def watch(file)
-          return false if @watched_files[file]
-          @watched_files[file] = true
-          @io_in.puts file
-          true
+        def file_did_change(real)
+          realpaths_for_givenpath(real).each do |given|
+            Zeus.ui.info("Dependency change at #{given}")
+            @change_callback.call(given)
+          end
         end
 
-        private
-
-        def file_did_change(file)
-          Zeus.ui.info("Dependency change at #{file}")
-          @change_callback.call(file)
+        def realpaths_for_givenpath(real)
+          @realpath_to_givenpath[real] || []
         end
 
       end
