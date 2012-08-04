@@ -32,7 +32,7 @@ module Zeus::Server::FileMonitor
       io_in, io_out = stub_open_wrapper!
 
       # to prove that very long filenames aren't truncated anywhere:
-      filename = SecureRandom.hex(8000) + ".rb"
+      filename = SecureRandom.hex(4000) + ".rb"
 
       results = []
       fsevent = FSEvent.new { |f| results << f }
