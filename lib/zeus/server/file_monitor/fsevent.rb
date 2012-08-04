@@ -21,10 +21,10 @@ module Zeus
         end
 
         # The biggest complicating factor here is that ruby doesn't fully resolve
-        # symlinks in paths here, but FSEvents does. We resolve all paths fully with
+        # symlinks in paths, but FSEvents does. We resolve all paths fully with
         # Pathname#realpath, and keep mappings in both directions.
         # It's conceivable that the same file would be required by two different paths,
-        # so we keep an array and file callbacks for all given paths matching a real
+        # so we keep an array and fire callbacks for all given paths matching a real
         # path when a change is detected.
         def watch(given)
           return false if @givenpath_to_realpath[given]
