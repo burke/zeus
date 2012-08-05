@@ -7,15 +7,11 @@ module Zeus
     end
 
     def as_zeus(msg)
-      tell_me("[zeus] #{msg}",:purple)
+      tell_me("[zeus] #{msg}", :purple)
     end
 
     def info(msg)
       tell_me(msg, nil) if !@quiet
-    end
-
-    def confirm(msg)
-      tell_me(msg, :green) if !@quiet
     end
 
     def warn(msg)
@@ -44,7 +40,12 @@ module Zeus
     end
 
     private
+
     def tell_me(msg, color = nil)
+      puts make_message(msg, color)
+    end
+
+    def make_message(msg, color)
       msg = case color
             when :red    ; "\x1b[31m#{msg}\x1b[0m"
             when :green  ; "\x1b[32m#{msg}\x1b[0m"
@@ -52,11 +53,7 @@ module Zeus
             when :purple ; "\x1b[35m#{msg}\x1b[0m"
             else         ; msg
             end
-      if msg[-1] == "\n"
-        puts msg
-      else
-        puts "#{msg}\n"
-      end
+      msg[-1] == "\n" ? msg : "#{msg}\n"
     end
 
 
