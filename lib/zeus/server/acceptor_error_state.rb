@@ -16,7 +16,7 @@ module Zeus
 
       def run
         register_with_client_handler(Process.pid)
-        Zeus.ui.as_zeus "starting error-state acceptor `#{@name}`"
+        Zeus.ui.info "starting error-state acceptor `#{@name}`"
 
         Thread.new do
           loop do

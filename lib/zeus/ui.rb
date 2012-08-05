@@ -6,12 +6,8 @@ module Zeus
       @debug = ENV['DEBUG']
     end
 
-    def as_zeus(msg)
-      tell_me("[zeus] #{msg}", :purple) if !@quiet
-    end
-
     def info(msg)
-      tell_me(msg, nil) if !@quiet
+      tell_me(msg, :magenta) if !@quiet
     end
 
     def warn(msg)
@@ -22,21 +18,20 @@ module Zeus
       tell_me(msg, :red)
     end
 
-    def be_quiet!
-      @quiet = true
+    def debug(msg)
+      tell_me(msg, nil) if debug?
     end
 
-    def debug?
-      # needs to be false instead of nil to be newline param to other methods
-      !!@debug && !@quiet
+    def be_quiet!
+      @quiet = true
     end
 
     def debug!
       @debug = true
     end
 
-    def debug(msg)
-      tell_me(msg, nil) if debug?
+    def debug?
+      !!@debug && !@quiet
     end
 
     private
@@ -47,11 +42,11 @@ module Zeus
 
     def make_message(msg, color)
       msg = case color
-            when :red    ; "\x1b[31m#{msg}\x1b[0m"
-            when :green  ; "\x1b[32m#{msg}\x1b[0m"
-            when :yellow ; "\x1b[33m#{msg}\x1b[0m"
-            when :purple ; "\x1b[35m#{msg}\x1b[0m"
-            else         ; msg
+            when :red     ; "\x1b[31m#{msg}\x1b[0m"
+            when :green   ; "\x1b[32m#{msg}\x1b[0m"
+            when :yellow  ; "\x1b[33m#{msg}\x1b[0m"
+            when :magenta ; "\x1b[35m#{msg}\x1b[0m"
+            else          ; msg
             end
       msg[-1] == "\n" ? msg : "#{msg}\n"
     end

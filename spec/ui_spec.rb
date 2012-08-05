@@ -24,8 +24,8 @@ module Zeus
       ui.warn("warning").should == "\x1b[33mwarning\x1b[0m\n"
     end
 
-    it "prints info messages with no color, but not if quiet-mode is set" do
-      ui.info("info").should == "info\n"
+    it "prints info messages in magenta, but not if quiet-mode is set" do
+      ui.info("info").should == "\x1b[35minfo\x1b[0m\n"
       ui.be_quiet!
       ui.info("info").should == nil
     end
@@ -39,16 +39,15 @@ module Zeus
       ui.debug("debug").should == "debug\n"
     end
 
+    it "sets debug if ENV['DEBUG']" do
+      ENV['DEBUG'] = "yup"
+      ui.debug?.should be_true
+    end
+
     it "doesn't print debug messages if both quiet-mode and debug-mode are set" do
       ui.be_quiet!
       ui.debug!
       ui.debug("debug").should == nil
-    end
-
-    it "prints 'as_zeus' messages in purple with a [zeus] tag" do
-      ui.as_zeus("msg").should == "\x1b[35m[zeus] msg\x1b[0m\n"
-      ui.be_quiet!
-      ui.as_zeus("msg").should == nil
     end
 
   end
