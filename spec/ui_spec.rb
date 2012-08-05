@@ -45,5 +45,11 @@ module Zeus
       ui.debug("debug").should == nil
     end
 
+    it "prints 'as_zeus' messages in purple with a [zeus] tag" do
+      ui.as_zeus("msg").should == "\x1b[35m[zeus] msg\x1b[0m\n"
+      ui.be_quiet!
+      ui.as_zeus("msg").should == nil
+    end
+
   end
 end

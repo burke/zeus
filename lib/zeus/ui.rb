@@ -7,7 +7,7 @@ module Zeus
     end
 
     def as_zeus(msg)
-      tell_me("[zeus] #{msg}", :purple)
+      tell_me("[zeus] #{msg}", :purple) if !@quiet
     end
 
     def info(msg)
