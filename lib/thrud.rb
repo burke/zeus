@@ -45,7 +45,7 @@ class Thrud
   def help(taskname = nil)
     if taskname && task = task_for_name(taskname)
       arity = task.arity(self)
-      puts <<-BANNER
+      Zeus.ui.info <<-BANNER
 Usage:
   zeus #{taskname} #{arity == -1 ? "[ARGS]" : ""}
 
@@ -61,7 +61,7 @@ BANNER
         "  zeus %-14s # %s" % [task.method_name, task.desc]
       }
 
-      puts <<-BANNER
+      Zeus.ui.info <<-BANNER
 Global Commands:
   zeus help           # show this help menu
   zeus help [COMMAND] # show help for a specific command

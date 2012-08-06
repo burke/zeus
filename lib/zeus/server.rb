@@ -19,7 +19,7 @@ module Zeus
     end
 
     def self.acceptors
-      @@definition.acceptors
+      defined?(@@definition) ? @@definition.acceptors : []
     end
 
     def initialize

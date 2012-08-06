@@ -65,16 +65,16 @@ module Zeus
 
     begin
       require definition_file
-      Zeus::Server.acceptors.each do |acc|
-        desc acc.name, (acc.description || "#{acc.name} task defined in .zeus.rb")
-        define_method(acc.name) { |*args|
-          Zeus::Client.run(acc.name, args)
-        }
-        map acc.aliases => acc.name
-      end
     rescue LoadError
     end
 
+    Zeus::Server.acceptors.each do |acc|
+      desc acc.name, (acc.description || "#{acc.name} task defined in zeus definition file")
+      define_method(acc.name) { |*args|
+        Zeus::Client.run(acc.name, args)
+      }
+      map acc.aliases => acc.name
+    end
 
   end
 end
