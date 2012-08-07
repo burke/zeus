@@ -63,7 +63,11 @@ module Zeus
     def handle_winch
       @winch.read(1)
       set_winsize
-      Process.kill("WINCH", pid) if pid
+      begin
+        Process.kill("WINCH", pid) if pid
+      rescue Errno::ESRCH
+        exit # the remote process died. Just quit.
+      end
     end
 
     def handle_stdin(buffer)
@@ -72,8 +76,7 @@ module Zeus
         begin
           Process.kill(SIGNALS[signal], pid)
         rescue Errno::ESRCH
-          # we're trying to kill a process that died. Just quit.
-          exit
+          exit # the remote process died. Just quit.
         end
       }
       @master << input

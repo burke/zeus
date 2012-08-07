@@ -36,6 +36,8 @@ module Zeus
         ARGV.replace(arguments)
 
         @action.call
+      ensure
+        terminal.close
       end
 
       private
@@ -70,8 +72,8 @@ module Zeus
 
       def postfork_action! # TODO :refactor
         ActiveRecord::Base.establish_connection   rescue nil
-        ActiveSupport::DescendantsTracker.clear   rescue nil
-        ActiveSupport::Dependencies.clear         rescue nil
+        # ActiveSupport::DescendantsTracker.clear   rescue nil
+        # ActiveSupport::Dependencies.clear         rescue nil
       end
 
     end

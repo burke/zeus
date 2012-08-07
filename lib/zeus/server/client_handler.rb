@@ -62,10 +62,15 @@ module Zeus
           # This is a little ugly. Gist: Try to handshake the client to the acceptor.
           # If the acceptor is not booted yet, this will hang until it is, then terminate with 
           # REATTEMPT_HANDSHAKE. We catch that exit code and try once more.
-          loop do
-            pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal) ; exit }
-            Process.wait(pid)
-            break if $?.exitstatus != REATTEMPT_HANDSHAKE
+          begin
+            loop do
+              pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal) ; exit }
+              Process.wait(pid)
+              break if $?.exitstatus != REATTEMPT_HANDSHAKE
+            end
+          ensure
+            client_terminal.close
+            s_client.close
           end
         }
       end
