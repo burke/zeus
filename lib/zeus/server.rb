@@ -65,11 +65,11 @@ module Zeus
       end
 
       def __CHILD__pid_has_ppid(pid, ppid)
-        @process_tree_monitor.__CHILD__send_pid("#{pid}:#{Process.ppid}")
+        @process_tree_monitor.__CHILD__pid_has_ppid(pid, Process.ppid)
       end
 
       def __CHILD__pid_has_feature(pid, feature)
-        @process_tree_monitor.__CHILD__send_feature("#{pid}:#{feature}")
+        @process_tree_monitor.__CHILD__pid_has_feature(pid, feature)
       end
 
       def __CHILD__register_acceptor(io)

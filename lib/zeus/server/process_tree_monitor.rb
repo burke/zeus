@@ -9,16 +9,35 @@ module Zeus
       def close_child_socket  ; @__CHILD__sock.close ; end
       def close_parent_socket ; @sock.close ; end
 
-      def initialize(file_monitor)
-        @tree = ProcessTree.new
+      def initialize(file_monitor, tree=ProcessTree.new)
+        @tree = tree
         @file_monitor = file_monitor
 
-        @sock, @__CHILD__sock = Socket.pair(:UNIX, :DGRAM)
+        @sock, @__CHILD__sock = open_socketpair
       end
 
       def kill_nodes_with_feature(file)
         @tree.kill_nodes_with_feature(file)
       end
+
+      module ChildProcessApi
+        def __CHILD__pid_has_ppid(pid, ppid)
+          @__CHILD__sock.send(PID_TYPE + "#{pid}:#{ppid}", 0)
+        rescue Errno::ENOBUFS
+          sleep 0.2
+          retry
+        end
+
+        def __CHILD__pid_has_feature(pid, feature)
+          @__CHILD__sock.send(FEATURE_TYPE + "#{pid}:#{feature}", 0)
+        rescue Errno::ENOBUFS
+          sleep 0.2
+          retry
+        end
+      end ; include ChildProcessApi
+
+
+      private
 
       def handle_messages
         50.times { handle_message }
@@ -26,15 +45,17 @@ module Zeus
       end
 
       def handle_message
-        data = @sock.recv_nonblock(1024)
+        data = @sock.recv_nonblock(4096)
         case data[0]
         when FEATURE_TYPE
           handle_feature_message(data[1..-1])
         when PID_TYPE
           handle_pid_message(data[1..-1])
-        else
-          raise "Unrecognized message"
         end
+      end
+
+      def open_socketpair
+        Socket.pair(:UNIX, :DGRAM)
       end
 
       def handle_pid_message(data)
@@ -50,22 +71,6 @@ module Zeus
         @file_monitor.watch(file)
       end
 
-
-      module ChildProcessApi
-        def __CHILD__send_pid(message)
-          @__CHILD__sock.send(PID_TYPE + message, 0)
-        rescue Errno::ENOBUFS
-          sleep 0.2
-          retry
-        end
-
-        def __CHILD__send_feature(message)
-          @__CHILD__sock.send(FEATURE_TYPE + message, 0)
-        rescue Errno::ENOBUFS
-          sleep 0.2
-          retry
-        end
-      end ; include ChildProcessApi
 
     end
   end
