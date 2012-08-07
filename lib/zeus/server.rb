@@ -1,8 +1,10 @@
 require 'json'
 require 'socket'
+require 'forwardable'
 
 module Zeus
   class Server
+    extend Forwardable
 
     autoload :Stage,                       'zeus/server/stage'
     autoload :Acceptor,                    'zeus/server/acceptor'
@@ -58,29 +60,19 @@ module Zeus
       File.unlink(Zeus::SOCKET_NAME)
     end
 
-    module ChildProcessApi
 
-      def __CHILD__close_parent_sockets
-        monitors.each(&:close_parent_socket)
-      end
+    # Child process API
+    def __CHILD__close_parent_sockets
+      monitors.each(&:close_parent_socket)
+    end
 
-      def __CHILD__pid_has_ppid(pid, ppid)
-        @process_tree_monitor.__CHILD__pid_has_ppid(pid, Process.ppid)
-      end
+    def_delegators :@acceptor_registration_monitor,
+      :__CHILD__register_acceptor,
+      :__CHILD__find_acceptor_for_command
 
-      def __CHILD__pid_has_feature(pid, feature)
-        @process_tree_monitor.__CHILD__pid_has_feature(pid, feature)
-      end
-
-      def __CHILD__register_acceptor(io)
-        @acceptor_registration_monitor.__CHILD__register_acceptor(io)
-      end
-
-      def __CHILD__find_acceptor_for_command(command)
-        @acceptor_registration_monitor.__CHILD__find_acceptor_for_command(command)
-      end
-
-    end ; include ChildProcessApi
+    def_delegators :@process_tree_monitor,
+      :__CHILD__pid_has_ppid,
+      :__CHILD__pid_has_feature
 
   end
 end
