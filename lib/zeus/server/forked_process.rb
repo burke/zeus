@@ -33,9 +33,15 @@ module Zeus
           exit 0
         }
 
+        new_features = $LOADED_FEATURES - previously_loaded_features
+        $previously_loaded_features = $LOADED_FEATURES.dup
         Thread.new {
-          $LOADED_FEATURES.each { |f| notify_feature(f) }
+          new_features.each { |f| notify_feature(f) }
         }
+      end
+
+      def previously_loaded_features
+        defined?($previously_loaded_features) ? $previously_loaded_features : []
       end
 
       def kill_pid_on_exit(pid)

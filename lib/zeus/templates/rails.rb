@@ -16,7 +16,7 @@ Zeus::Server.define! do
     stage :default_bundle do
       action { Bundler.require(:default) }
 
-      stage :dev do
+      stage :development_environment do
         action do
           Bundler.require(:development)
           Rails.env = ENV['RAILS_ENV'] = "development"
@@ -57,18 +57,30 @@ Zeus::Server.define! do
         end
       end
 
-      stage :test do
+      stage :test_environment do
         action do
-          Rails.env = ENV['RAILS_ENV'] = "test"
           Bundler.require(:test)
+
+          Rails.env = ENV['RAILS_ENV'] = 'test'
           require APP_PATH
+
+          $rails_rake_task = 'yup' # lie to skip eager loading
           Rails.application.require_environment!
+          $rails_rake_task = nil
+
+          test = File.join(ROOT_PATH, 'test')
+          $LOAD_PATH.unshift(test) unless $LOAD_PATH.include?(test)
+          $LOAD_PATH.unshift(ROOT_PATH) unless $LOAD_PATH.include?(ROOT_PATH)
         end
 
-        command :testrb do
-          (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
-            abort r.options.banner + " tests..."
-          exit r.run
+        stage :test_helper do
+          action { require 'test_helper' }
+
+          command :testrb do
+            (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
+              abort r.options.banner + " tests..."
+            exit r.run
+          end
         end
 
       end

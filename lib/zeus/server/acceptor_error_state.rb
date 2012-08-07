@@ -4,7 +4,7 @@ require 'socket'
 # See Zeus::Server::ClientHandler for relevant documentation
 module Zeus
   class Server
-    module ErrorStateAcceptor
+    module AcceptorErrorState
       attr_accessor :error
 
       def print_error(io, error = @error)

@@ -37,9 +37,11 @@ module Zeus
         @listener = UNIXServer.new(Zeus::SOCKET_NAME)
         @listener.listen(10)
       rescue Errno::EADDRINUSE
-        Zeus.ui.error "Zeus appears to be already running in this project. If not, remove .zeus.sock and try again."
+        Zeus.ui.error "Zeus appears to be already running in this project. If not, remove #{Zeus::SOCKET_NAME} and try again."
         exit 1
       end
+
+      private
 
       #  client clienthandler acceptor
       # 1  ---------->                | {command: String, arguments: [String]}
@@ -85,8 +87,6 @@ module Zeus
         pid = acceptor.socket.readline.chomp.to_i # step 5
         s_client.puts pid # step 6
       end
-
-      private
 
       def exit_with_message(s_client, client_terminal, msg)
         s_client << "0\n"
