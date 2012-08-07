@@ -57,6 +57,9 @@ module Zeus
         @pid = fork {
           before_setup
           setup_forked_process(close_parent_sockets)
+
+          Zeus.run_after_fork!
+
           after_setup
           runloop!
         }

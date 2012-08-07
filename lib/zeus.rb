@@ -22,4 +22,14 @@ module Zeus
     @ui = ui
   end
 
+  def self.after_fork(&b)
+    @after_fork ||= []
+    @after_fork << b
+  end
+
+  def self.run_after_fork!
+    @after_fork.map(&:call) if @after_fork
+    @after_fork = []
+  end
+
 end
