@@ -4,8 +4,8 @@ require File.expand_path('../lib/zeus/version', __FILE__)
 Gem::Specification.new do |gem|
   gem.authors       = ["Burke Libbey"]
   gem.email         = ["burke@libbey.me"]
-  gem.description   = %q{Zeus preloads pretty much everything you'll ever want to use in development.}
-  gem.summary       = %q{Zeus is an alpha-quality application preloader with terrible documentation.}
+  gem.description   = %q{Boot any rails app in under a second}
+  gem.summary       = %q{Zeus is an intelligent preloader for ruby applications. It allows normal development tasks to be run in a fraction of a second.}
   gem.homepage      = "http://github.com/burke/zeus"
 
   gem.files         = `git ls-files`.split("\n").reject{ |f| f =~ /xcodeproj/ }
