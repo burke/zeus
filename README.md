@@ -39,7 +39,8 @@ Run some commands:
 
     zeus console
     zeus server
-    zeus testrb -Itest -I. test/unit/omg_test.rb
+    zeus testrb test/unit/widget_test.rb
+    zeus rspec spec/widget_spec.rb
     zeus generate model omg
     zeus rake -T
     zeus runner omg.rb
