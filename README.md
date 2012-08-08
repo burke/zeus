@@ -25,6 +25,10 @@ Install the gem.
 
     gem install zeus
 
+Q: "I should put it in my `Gemfile`, right?"
+
+A: No. running `bundle exec zeus` instead of `zeus` can add precious seconds to a command that otherwise would take 200ms. Zeus was built to be run from outside of bundler.
+
 ## Usage
 
 Start the server:
