@@ -1,4 +1,4 @@
-# Zeus
+# Zeus [![Build Status](https://secure.travis-ci.org/burke/zeus.png?branch=master)](http://travis-ci.org/burke/zeus) [![Code Climate](https://codeclimate.com/badge.png)](https://codeclimate.com/github/burke/zeus)
 
 ## What is Zeus?
 
