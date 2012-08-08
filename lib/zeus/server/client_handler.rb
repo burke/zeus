@@ -91,6 +91,7 @@ module Zeus
         acceptor.socket.puts arguments.to_json # step 4
         pid = acceptor.socket.readline.chomp.to_i # step 5
         s_client.puts pid # step 6
+        s_client.close
       end
 
       def exit_with_message(s_client, client_terminal, msg)
@@ -116,6 +117,7 @@ module Zeus
         return false unless acceptor = @server.__CHILD__find_acceptor_for_command(command)
         return false unless usock = UNIXSocket.for_fd(acceptor.socket.fileno)
         usock.send_io(io)
+        io.close
         return acceptor
       rescue Errno::EPIPE
         return false

@@ -37,7 +37,12 @@ module Zeus
 
         @action.call
       ensure
+        dnw, dnr = File.open("/dev/null", "w+"), File.open("/dev/null", "r+")
+        $stdin.reopen(dnw)
+        $stdout.reopen(dnr)
+        $stderr.reopen(dnr)
         terminal.close
+        exit 0
       end
 
       private
