@@ -17,7 +17,7 @@ Pretty specific:
 * Rails 3.0+ (Support for other versions is not difficult and is planned.)
 * Backported GC from Ruby 2.0.
 
-You can install the GC-patched ruby from [this gist](https://gist.github.com/1688857) or from RVM.
+You can install the GC-patched ruby from [this gist](https://gist.github.com/1688857) or from RVM.  This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
 
 ## Installation
 
