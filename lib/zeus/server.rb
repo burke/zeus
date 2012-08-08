@@ -27,7 +27,6 @@ module Zeus
       @file_monitor                  = FileMonitor::FSEvent.new(&method(:dependency_did_change))
       @acceptor_registration_monitor = AcceptorRegistrationMonitor.new
       @process_tree_monitor          = ProcessTreeMonitor.new(@file_monitor)
-      acceptor_commands = self.class.acceptors.map(&:commands).flatten
       @client_handler                = ClientHandler.new(acceptor_commands, self)
 
       @plan = @@definition.to_domain_object(self)
@@ -48,17 +47,10 @@ module Zeus
       @plan.run(true) # boot the actual app
       monitors.each(&:close_child_socket)
 
-      loop do
-        ready, = IO.select(monitors.map(&:datasource), [], [], 1)
-        next unless ready
-        monitors.each do |m|
-          m.on_datasource_event if ready.include?(m.datasource)
-        end
-      end
+      runloop!
     ensure
       File.unlink(Zeus::SOCKET_NAME)
     end
-
 
     # Child process API
     def __CHILD__close_parent_sockets
@@ -72,6 +64,22 @@ module Zeus
     def_delegators :@process_tree_monitor,
       :__CHILD__pid_has_ppid,
       :__CHILD__pid_has_feature
+
+    private
+
+    def acceptor_commands
+      self.class.acceptors.map(&:commands).flatten
+    end
+
+    def runloop!
+      loop do
+        ready, = IO.select(monitors.map(&:datasource), [], [], 1)
+        next unless ready
+        monitors.each do |m|
+          m.on_datasource_event if ready.include?(m.datasource)
+        end
+      end
+    end
 
   end
 end
