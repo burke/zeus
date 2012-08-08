@@ -1,10 +1,11 @@
 require 'socket'
 
+ROOT_PATH = File.expand_path(Dir.pwd)
+
 Zeus::Server.define! do
   stage :boot do
 
     action do
-      ROOT_PATH = File.expand_path(Dir.pwd)
       ENV_PATH  = File.expand_path('config/environment',  ROOT_PATH)
       BOOT_PATH = File.expand_path('config/boot',  ROOT_PATH)
       APP_PATH  = File.expand_path('config/application',  ROOT_PATH)
@@ -25,6 +26,11 @@ Zeus::Server.define! do
         end
 
         command :generate, :g do
+          begin
+            require 'rails/generators'
+            Rails.application.load_generators
+          rescue LoadError # Rails 3.0 doesn't require this block to be run, but 3.2+ does
+          end
           require 'rails/commands/generate'
         end
 
@@ -67,19 +73,39 @@ Zeus::Server.define! do
           $rails_rake_task = 'yup' # lie to skip eager loading
           Rails.application.require_environment!
           $rails_rake_task = nil
-
-          test = File.join(ROOT_PATH, 'test')
-          $LOAD_PATH.unshift(test) unless $LOAD_PATH.include?(test)
           $LOAD_PATH.unshift(ROOT_PATH) unless $LOAD_PATH.include?(ROOT_PATH)
+
+          if Dir.exist?(ROOT_PATH + "/test")
+            test = File.join(ROOT_PATH, 'test')
+            $LOAD_PATH.unshift(test) unless $LOAD_PATH.include?(test)
+          end
+
+          if Dir.exist?(ROOT_PATH + "/spec")
+            spec = File.join(ROOT_PATH, 'spec')
+            $LOAD_PATH.unshift(spec) unless $LOAD_PATH.include?(spec)
+          end
+
         end
 
-        stage :test_helper do
-          action { require 'test_helper' }
+        if Dir.exist?(ROOT_PATH + "/test")
+          stage :test_helper do
+            action { require 'test_helper' }
 
-          command :testrb do
-            (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
-              abort r.options.banner + " tests..."
-            exit r.run
+            command :testrb do
+              (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
+                abort r.options.banner + " tests..."
+              exit r.run
+            end
+          end
+        end
+
+        if Dir.exist?(ROOT_PATH + "/spec")
+          stage :spec_helper do
+            action { require 'spec_helper' }
+
+            command :rspec do
+              exit RSpec::Core::Runner.run(ARGV)
+            end
           end
         end
 
