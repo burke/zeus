@@ -22,20 +22,23 @@ module Zeus
 
       module ChildProcessApi
         def __CHILD__pid_has_ppid(pid, ppid)
-          @__CHILD__sock.send("#{PID_TYPE}:#{pid}:#{ppid}", 0)
-        rescue Errno::ENOBUFS
-          sleep 0.2
-          retry
+          buffer_send("#{PID_TYPE}:#{pid}:#{ppid}")
         end
 
         def __CHILD__pid_has_feature(pid, feature)
-          @__CHILD__sock.send("#{FEATURE_TYPE}:#{pid}:#{feature}", 0)
+          buffer_send("#{FEATURE_TYPE}:#{pid}:#{feature}")
+        end
+
+        private
+
+        def buffer_send(msg)
+          @__CHILD__sock.send(msg, 0)
         rescue Errno::ENOBUFS
           sleep 0.2
           retry
         end
-      end ; include ChildProcessApi
 
+      end ; include ChildProcessApi
 
       private
 
