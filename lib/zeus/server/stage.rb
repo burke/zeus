@@ -40,7 +40,7 @@ module Zeus
 
       def register_acceptors_as_errors(e)
         descendent_acceptors.each do |acc|
-          acc = acc.extend(AcceptorErrorState)
+          acc = acc.extend(Acceptor::ErrorState)
           acc.error = e
           acc.run
         end
