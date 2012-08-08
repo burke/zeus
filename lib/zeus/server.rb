@@ -10,6 +10,7 @@ module Zeus
     autoload :Acceptor,                    'zeus/server/acceptor'
     autoload :FileMonitor,                 'zeus/server/file_monitor'
     autoload :ProcessTree,                 'zeus/server/process_tree'
+    autoload :LoadTracking,                'zeus/server/load_tracking'
     autoload :ForkedProcess,               'zeus/server/forked_process'
     autoload :ClientHandler,               'zeus/server/client_handler'
     autoload :ProcessTreeMonitor,          'zeus/server/process_tree_monitor'
@@ -44,12 +45,25 @@ module Zeus
       $0 = "zeus master"
       trap("INT") { exit 0 }
 
+      LoadTracking.inject!(self)
+
       @plan.run(true) # boot the actual app
       monitors.each(&:close_child_socket)
 
       runloop!
     ensure
       File.unlink(Zeus::SOCKET_NAME)
+    end
+
+    # this is used in conjunction with Zeus::LoadTracking to track files loaded
+    # using `load` rather than `require`.
+    def add_extra_feature(full_expanded_path)
+      @extra_loaded_features ||= []
+      @extra_loaded_features << full_expanded_path
+    end
+
+    def extra_features
+      @extra_loaded_features || []
     end
 
     # Child process API
