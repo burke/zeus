@@ -53,8 +53,8 @@ module Zeus
         end
 
         def kill
-          # recall that this process explicitly traps USR1 -> exit 0
-          Process.kill("USR1", pid)
+          # recall that this process explicitly traps TERM -> exit 0
+          Process.kill("TERM", pid)
         end
 
         def add_child(node)
