@@ -94,7 +94,7 @@ module Zeus
         self
       end
 
-      def to_domain_object(server)
+      def to_process_object(server)
         Zeus::Server::Acceptor.new(server).tap do |stage|
           stage.name = @name
           stage.aliases = @aliases
@@ -140,10 +140,10 @@ module Zeus
         stages.map(&:acceptors).flatten
       end
 
-      def to_domain_object(server)
+      def to_process_object(server)
         Zeus::Server::Stage.new(server).tap do |stage|
           stage.name = @name
-          stage.stages = @stages.map { |stage| stage.to_domain_object(server) }
+          stage.stages = @stages.map { |stage| stage.to_process_object(server) }
           stage.actions = @actions
         end
       end

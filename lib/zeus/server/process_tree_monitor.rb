@@ -74,7 +74,6 @@ module Zeus
         @file_monitor.watch(file)
       end
 
-
     end
   end
 end

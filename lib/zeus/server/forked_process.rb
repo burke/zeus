@@ -1,5 +1,6 @@
 module Zeus
   class Server
+    # base class for Stage and Acceptor
     class ForkedProcess
       HasNoChildren = Class.new(Exception)
 

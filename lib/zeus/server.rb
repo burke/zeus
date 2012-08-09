@@ -29,7 +29,7 @@ module Zeus
       @process_tree_monitor          = ProcessTreeMonitor.new(@file_monitor, @@definition)
       @client_handler                = ClientHandler.new(acceptor_commands, self)
 
-      @plan = @@definition.to_domain_object(self)
+      @plan = @@definition.to_process_object(self)
     end
 
     def dependency_did_change(file)
