@@ -10,7 +10,7 @@ module Zeus
       end
 
       def notify_feature(feature)
-        @server.__CHILD__pid_has_feature(Process.pid, feature)
+        @server.__CHILD__stage_has_feature(@name, feature)
       end
 
       def descendent_acceptors
@@ -21,18 +21,30 @@ module Zeus
         raise "NotImplementedError"
       end
 
+      def notify_started
+        @server.__CHILD__stage_starting_with_pid(@name, Process.pid)
+        Zeus.ui.info("starting #{process_type} `#{@name}`")
+      end
+
+      def notify_terminated
+        # @server.__CHILD__stage_terminating(@name)
+        Zeus.ui.info("killing #{process_type} `#{@name}`")
+      end
+
       def setup_forked_process(close_parent_sockets)
         @server.__CHILD__close_parent_sockets if close_parent_sockets
-        @server.__CHILD__pid_has_ppid(Process.pid, Process.ppid)
+
+        notify_started
 
         $0 = "zeus #{process_type}: #{@name}"
 
-        Zeus.ui.info("starting #{process_type} `#{@name}`")
-        trap("INT") { exit 0 }
+        trap("INT") { exit }
         trap("TERM") {
-          Zeus.ui.info("killing #{process_type} `#{@name}`")
-          exit 0
+          notify_terminating
+          exit
         }
+
+        defined?(ActiveRecord::Base) and ActiveRecord::Base.clear_all_connections!
 
         new_features = newly_loaded_features()
         $previously_loaded_features = new_features
@@ -40,7 +52,6 @@ module Zeus
           new_features.each { |f| notify_feature(f) }
         }
       end
-
 
       def newly_loaded_features
         old_features = defined?($previously_loaded_features) ? $previously_loaded_features : []

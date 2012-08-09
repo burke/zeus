@@ -9,7 +9,6 @@ module Zeus
     autoload :Stage,                       'zeus/server/stage'
     autoload :Acceptor,                    'zeus/server/acceptor'
     autoload :FileMonitor,                 'zeus/server/file_monitor'
-    autoload :ProcessTree,                 'zeus/server/process_tree'
     autoload :LoadTracking,                'zeus/server/load_tracking'
     autoload :ForkedProcess,               'zeus/server/forked_process'
     autoload :ClientHandler,               'zeus/server/client_handler'
@@ -27,7 +26,7 @@ module Zeus
     def initialize
       @file_monitor                  = FileMonitor::FSEvent.new(&method(:dependency_did_change))
       @acceptor_registration_monitor = AcceptorRegistrationMonitor.new
-      @process_tree_monitor          = ProcessTreeMonitor.new(@file_monitor)
+      @process_tree_monitor          = ProcessTreeMonitor.new(@file_monitor, @@definition)
       @client_handler                = ClientHandler.new(acceptor_commands, self)
 
       @plan = @@definition.to_domain_object(self)
@@ -80,8 +79,8 @@ module Zeus
       :__CHILD__find_acceptor_for_command
 
     def_delegators :@process_tree_monitor,
-      :__CHILD__pid_has_ppid,
-      :__CHILD__pid_has_feature
+      :__CHILD__stage_starting_with_pid,
+      :__CHILD__stage_has_feature
 
     private
 
