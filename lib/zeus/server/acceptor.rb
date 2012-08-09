@@ -38,11 +38,14 @@ module Zeus
 
         @action.call
       ensure
+        # TODO this is a whole lot of voodoo that I don't really understand.
+        # I need to figure out how best to make the process disconenct cleanly.
         dnw, dnr = File.open("/dev/null", "w+"), File.open("/dev/null", "r+")
-        $stdin.reopen(dnw)
-        $stdout.reopen(dnr)
         $stderr.reopen(dnr)
+        $stdout.reopen(dnr)
         terminal.close
+        $stdin.reopen(dnw)
+        Process.kill(9, $$)
         exit 0
       end
 
