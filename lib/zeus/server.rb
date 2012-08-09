@@ -44,7 +44,10 @@ module Zeus
     def run
       $0 = "zeus master"
       trap("TERM") { exit 0 }
-      trap("INT") { exit 0 } # don't puke all over the screen
+      trap("INT") {
+        puts "\n\x1b[31mExiting\x1b[0m"
+        exit 0
+      }
 
       LoadTracking.inject!(self)
 
