@@ -28,17 +28,17 @@ class Zeus::Server
 
     it "passes process inheritance information to the tree" do
       IO.select([monitor.datasource], [], [], 0).should be_nil
-      monitor.__CHILD__pid_has_ppid(1, 2)
+      monitor.__CHILD__stage_starting_with_pid(:name, 1)
       IO.select([monitor.datasource], [], [], 0.5).should_not be_nil
-      tree.should_receive(:process_has_parent).with(1, 2)
+      tree.should_receive(:stage_has_pid).with(:name, 1)
       monitor.on_datasource_event
     end
 
     it "passes process feature information to the tree" do
       IO.select([monitor.datasource], [], [], 0).should be_nil
-      monitor.__CHILD__pid_has_feature(1, "rails")
+      monitor.__CHILD__stage_has_feature(:name, "rails")
       IO.select([monitor.datasource], [], [], 0.5).should_not be_nil
-      tree.should_receive(:process_has_feature).with(1, "rails")
+      tree.should_receive(:stage_has_feature).with(:name, "rails")
       file_monitor.should_receive(:watch).with("rails")
       monitor.on_datasource_event
     end
