@@ -28,6 +28,7 @@ module Zeus
 
       def __RUNNER__run(terminal, arguments)
         $0 = "zeus runner: #{@name}"
+        Process.setsid
         postfork_action!
         @s_acceptor << $$ << "\n"
         $stdin.reopen(terminal)

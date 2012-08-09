@@ -37,7 +37,7 @@ class Zeus::Server
     private
 
     def expect_kill(pid)
-      Process.should_receive(:kill).with("INT", pid)
+      Process.should_receive(:kill).with("USR1", pid)
     end
 
     def build_tree

@@ -9,7 +9,7 @@ module Zeus
     attr_accessor :pid
 
     SIGNALS = {
-      "\x03" => "TERM",
+      "\x03" => "INT",
       "\x1C" => "QUIT"
     }
     SIGNAL_REGEX = Regexp.union(SIGNALS.keys)

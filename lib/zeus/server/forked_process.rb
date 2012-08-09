@@ -28,7 +28,7 @@ module Zeus
         $0 = "zeus #{process_type}: #{@name}"
 
         Zeus.ui.info("starting #{process_type} `#{@name}`")
-        trap("INT") {
+        trap("USR1") {
           Zeus.ui.info("killing #{process_type} `#{@name}`")
           exit 0
         }
