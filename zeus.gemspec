@@ -6,7 +6,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["burke@libbey.me"]
   gem.description   = %q{Boot any rails app in under a second}
   gem.summary       = %q{Zeus is an intelligent preloader for ruby applications. It allows normal development tasks to be run in a fraction of a second.}
-  gem.homepage      = "http://github.com/burke/zeus"
+  gem.homepage      = "https://github.com/burke/zeus"
 
   gem.files         = `git ls-files`.split("\n").reject{ |f| f =~ /xcodeproj/ }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
@@ -14,4 +14,5 @@ Gem::Specification.new do |gem|
   gem.name          = "zeus"
   gem.require_paths = ["lib"]
   gem.version       = Zeus::VERSION
+  gem.license       = "MIT"
 end
