@@ -16,7 +16,9 @@ module Zeus
         rescue => e
           handle_load_error(e)
         end
+      end
 
+      def after_notify
         @pids = {}
         @stages.each do |stage|
           @pids[stage.run] = stage

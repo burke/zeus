@@ -3,18 +3,13 @@ module Zeus
     class LoadTracking
 
       def self.inject!(server)
-        mod = module_for_server(server)
-        Object.class_eval { include mod }
-      end
-
-      def self.module_for_server(server)
-        Module.new.tap do |load_tracking|
-          load_tracking.send(:define_method, :load) { |file, *a|
-            if ret = super(file, *a)
-              LoadTracking.add_feature(server, file)
-            end
-            ret
-          }
+        $server = server
+        class << Kernel
+          alias_method :__original_load, :load
+          def load(file, *a)
+            LoadTracking.add_feature($server, file)
+            __original_load(file, *a)
+          end
         end
       end
 

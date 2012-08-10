@@ -47,11 +47,6 @@ module Zeus
 
         defined?(ActiveRecord::Base) and ActiveRecord::Base.clear_all_connections!
 
-        new_features = newly_loaded_features()
-        $previously_loaded_features = new_features
-        Thread.new {
-          new_features.each { |f| notify_feature(f) }
-        }
       end
 
       def newly_loaded_features
@@ -74,6 +69,19 @@ module Zeus
       def after_setup
       end
 
+      def notify_new_features
+        new_features = newly_loaded_features()
+        $previously_loaded_features ||= []
+        $previously_loaded_features |= new_features
+        Thread.new {
+          new_features.each { |f| notify_feature(f) }
+        }
+      end
+
+      def after_notify
+      end
+
+      # TODO: This just got really ugly and needs a refactor more than ever.
       def run(close_parent_sockets = false)
         @pid = fork {
           before_setup
@@ -82,6 +90,9 @@ module Zeus
           Zeus.run_after_fork!
 
           after_setup
+          notify_new_features
+
+          after_notify
           runloop!
         }
         kill_pid_on_exit(@pid)

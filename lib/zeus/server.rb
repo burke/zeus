@@ -58,15 +58,13 @@ module Zeus
       File.unlink(Zeus::SOCKET_NAME)
     end
 
-    # this is used in conjunction with Zeus::LoadTracking to track files loaded
-    # using `load` rather than `require`.
     def add_extra_feature(full_expanded_path)
-      @extra_loaded_features ||= []
-      @extra_loaded_features << full_expanded_path
+      $extra_loaded_features ||= []
+      $extra_loaded_features << full_expanded_path
     end
 
     def extra_features
-      @extra_loaded_features || []
+      $extra_loaded_features || []
     end
 
     # Child process API
