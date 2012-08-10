@@ -50,8 +50,10 @@ module Zeus
 
       pid = socket.readline.chomp.to_i
     rescue Errno::ENOENT, Errno::ECONNREFUSED, Errno::ECONNRESET
-      Zeus.ui.error "Zeus doesn't seem to be running, try 'zeus start`"
-      abort
+      # we need a \r at the end because the terminal is in raw mode.
+      # we need to reset the cursor to position 0
+      Zeus.ui.error "Zeus doesn't seem to be running, try 'zeus start`\r"
+      exit 1
     end
 
     def make_winch_channel
