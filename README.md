@@ -45,6 +45,9 @@ Run some commands:
     zeus rake -T
     zeus runner omg.rb
 
+## What's coming?
+
+[See the roadmap](https://github.com/burke/zeus/wiki/Roadmap)
 
 ## Contributing
 
