@@ -1,0 +1,19 @@
+ROADMAP:
+  Version 1.0.0:
+    - Works on nearly all rails projects with no hacks (except maybe Zendesk...)
+    - bulletproof dependency monitoring
+    - Sane configuration DSL
+    - Minimize importance of `zeus init` even further
+    - On-demand loading for rarely-used / frequently-changing commands (eg. production server)
+    - No lost processes.
+    - Kicker/guard-like feature for autotesting (maybe pushed to post-1.0.0)
+
+  Version 2.0.0:
+    - hook-based configuration DSL
+      - shouldn't need to override everything to override anything
+    - Transparently start in background (no foreground `zeus start`)
+    - Framework-agnostic (or at least support a bunch of them)
+
+  Version 3.0.0:
+    - Language-agnostic (pipes and signals and sockets, oh my!)
+
