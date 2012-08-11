@@ -53,6 +53,8 @@ Run some commands:
 
 Fork, Branch, Pull Request.
 
+Check [Rails tests](https://github.com/burke/zeus-extended-testcases) if you change something rails related.
+
 ## Thanks...
 
 * To [Stefan Penner](http://github.com/stefanpenner) for discussion and various contributions.
