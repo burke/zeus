@@ -5,21 +5,40 @@ describe "Integration" do
     kill_all_children
   end
 
-  it "starts the zeus server in a non-rails project with a config and responds to commands" do
-    write ".zeus.rb", <<-RUBY
-      Zeus::Server.define! do
-        stage :foo do
-          command :bar do
-            puts "YES"
+  context "in a non-rails project with a .zeus.rb" do
+    it "starts the zeus server and responds to commands" do
+      write ".zeus.rb", <<-RUBY
+        Zeus::Server.define! do
+          stage :foo do
+            command :bar do
+              puts "YES"
+            end
           end
         end
-      end
-    RUBY
+      RUBY
 
-    start, run = start_and_run("bar")
-    start.should include "spawner `foo`"
-    start.should include "acceptor `bar`"
-    run.should == ["YES\r\n"]
+      start, run = start_and_run("bar")
+      start.should include "spawner `foo`"
+      start.should include "acceptor `bar`"
+      run.should == ["YES\r\n"]
+    end
+
+    it "can run via command alias" do
+      write ".zeus.rb", <<-RUBY
+        Zeus::Server.define! do
+          stage :foo do
+            command :bar, :b do
+              puts "YES"
+            end
+          end
+        end
+      RUBY
+
+      start, run = start_and_run("b")
+      start.should include "spawner `foo`"
+      start.should include "acceptor `bar`"
+      run.should == ["YES\r\n"]
+    end
   end
 
   private
