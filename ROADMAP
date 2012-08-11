@@ -1,5 +1,7 @@
 ROADMAP:
   Version 1.0.0:
+    - Great documentation
+    - Comprehensive tests
     - Works on nearly all rails projects with no hacks (except maybe Zendesk...)
     - bulletproof dependency monitoring
     - Sane configuration DSL
