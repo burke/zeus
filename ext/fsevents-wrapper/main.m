@@ -1,14 +1,7 @@
-//
-//  main.m
-//  fsevents-wrapper
-//
-//  Created by Burke Libbey on 2012-07-30.
-//  Copyright (c) 2012 Burke Libbey. All rights reserved.
-//
-
 #import <Foundation/Foundation.h>
 #include <CoreServices/CoreServices.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 
 static CFMutableArrayRef _watchedFiles;
@@ -87,21 +80,11 @@ void handleInputFiles()
     
     char line[2048];
     
-    fd_set fdset;
-    
-    FD_ZERO(&fdset);
-    FD_SET(STDIN_FILENO, &fdset);
-    struct timeval timeout;
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 0;
-    
-    select(STDIN_FILENO+1, &fdset, NULL, NULL, &timeout);
-    while (FD_ISSET(STDIN_FILENO, &fdset) && fgets(line, 2048, stdin) != NULL) {
+    while (fgets(line, sizeof(line), stdin) != NULL) {
         line[strlen(line)-1] = 0;
         anyChanges |= maybeAddFileToWatchList(line);
-        select(STDIN_FILENO+1, &fdset, NULL, NULL, &timeout);
     }
-        
+    
     if (anyChanges) {
         configureStream();
     }
@@ -123,6 +106,10 @@ void configureTimerAndRun()
 
 int main(int argc, const char * argv[])
 {
+    int flags = fcntl(0, F_GETFL);
+    flags |= O_NONBLOCK;
+    fcntl(STDIN_FILENO, F_SETFL, flags);
+
     _watchedFiles = CFArrayCreateMutable(NULL, 0, NULL);
     _fileIsWatched = [[NSMutableDictionary alloc] initWithCapacity:500];
         

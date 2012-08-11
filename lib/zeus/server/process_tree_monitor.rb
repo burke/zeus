@@ -44,11 +44,17 @@ module Zeus
 
       def handle_messages
         50.times { handle_message }
-      rescue Errno::EAGAIN
+      rescue Stop
       end
 
+      Stop = Class.new(Exception)
+
       def handle_message
-        data = @sock.recv_nonblock(4096)
+        begin
+          data = @sock.recv_nonblock(4096)
+        rescue Errno::EAGAIN
+          raise Stop
+        end
         case data[0]
         when STARTING_MARKER
           handle_starting_message(data[1..-1])

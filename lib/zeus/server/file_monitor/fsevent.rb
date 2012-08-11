@@ -34,7 +34,8 @@ module Zeus
           @realpath_to_givenpath[real] ||= []
           @realpath_to_givenpath[real] << given
 
-          @io_in.puts real
+          @io_in.write("#{real}\n")
+          File.open("a.log", "a") { |f|f.puts "\x1b[33mR:#{real}\x1b[0m" }
           true
         end
 
@@ -52,11 +53,21 @@ module Zeus
 
         def handle_changed_files
           50.times { read_and_notify_files }
-        rescue Errno::EAGAIN
+        rescue Stop
         end
 
+        Stop = Class.new(Exception)
+
         def read_and_notify_files
-          lines = @io_out.read_nonblock(1000)
+          begin
+            lines = @io_out.read_nonblock(1000)
+          rescue Errno::EAGAIN
+            raise Stop
+          rescue EOFError
+            Zeus.ui.error("fsevents-wrapper crashed.")
+            Process.kill("INT", 0)
+          end
+          File.open("fse-out.log", "a") { |f|f.write lines }
           files = lines.split("\n")
           files[0] = "#{@buffer}#{files[0]}" unless @buffer == ""
           unless lines[-1] == "\n"

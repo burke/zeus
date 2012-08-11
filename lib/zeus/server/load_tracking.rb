@@ -3,14 +3,7 @@ module Zeus
     class LoadTracking
 
       def self.inject!(server)
-        $server = server
-        class << Kernel
-          alias_method :__original_load, :load
-          def load(file, *a)
-            LoadTracking.add_feature($server, file)
-            __original_load(file, *a)
-          end
-        end
+        $zeus_file_monitor_server = server
       end
 
       def self.add_feature(server, file)
@@ -36,3 +29,23 @@ module Zeus
     end
   end
 end
+
+module Kernel
+
+  def load(file, *a)
+    Kernel.load(file, *a)
+  end
+
+  class << self
+    alias_method :__original_load, :load
+    def load(file, *a)
+      if defined?($zeus_file_monitor_server)
+        Zeus::Server::LoadTracking.add_feature($zeus_file_monitor_server, file)
+      end
+      __original_load(file, *a)
+    end
+  end
+
+end
+
+
