@@ -71,9 +71,6 @@ module Zeus
 
       def notify_new_features
         new_features = newly_loaded_features()
-        if x = new_features.grep(/config\/routes/)
-          puts "#{name} : #{x.inspect}"
-        end
         $previously_loaded_features ||= []
         $previously_loaded_features |= new_features
         Thread.new {
