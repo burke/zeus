@@ -35,7 +35,6 @@ module Zeus
           @realpath_to_givenpath[real] << given
 
           @io_in.write("#{real}\n")
-          File.open("a.log", "a") { |f|f.puts "\x1b[33mR:#{real}\x1b[0m" }
           true
         end
 
