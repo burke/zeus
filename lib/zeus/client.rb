@@ -1,4 +1,11 @@
-require "io/console"
+begin
+  require "io/console"
+rescue LoadError
+  Zeus.ui.error "io/console not found. Please `gem install io-console` or, preferably, " +
+    "install ruby 1.9.3 by following the instructions at: " +
+    "https://gist.github.com/1688857"
+  exit 1
+end
 require "json"
 require "pty"
 require "socket"
