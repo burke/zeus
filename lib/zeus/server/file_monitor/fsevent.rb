@@ -66,7 +66,6 @@ module Zeus
             Zeus.ui.error("fsevents-wrapper crashed.")
             Process.kill("INT", 0)
           end
-          File.open("fse-out.log", "a") { |f|f.write lines }
           files = lines.split("\n")
           files[0] = "#{@buffer}#{files[0]}" unless @buffer == ""
           unless lines[-1] == "\n"
