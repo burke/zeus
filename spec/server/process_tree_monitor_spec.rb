@@ -1,4 +1,4 @@
-require 'zeus'
+require 'spec_helper'
 
 class Zeus::Server
   describe ProcessTreeMonitor do
