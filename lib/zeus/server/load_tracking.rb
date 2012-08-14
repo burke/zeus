@@ -1,31 +1,32 @@
 module Zeus
   class Server
     class LoadTracking
+      class << self
+        attr_accessor :server
 
-      def self.inject!(server)
-        $zeus_file_monitor_server = server
-      end
+        def add_feature(file)
+          return unless server
+          if absolute_path?(file)
+            server.add_extra_feature(file)
+          elsif File.exist?("./#{file}")
+            server.add_extra_feature(File.expand_path("./#{file}"))
+          else
+            path = find_in_load_path(file)
+            server.add_extra_feature(path) if path
+          end
+        end
 
-      def self.add_feature(server, file)
-        if absolute_path?(file)
-          server.add_extra_feature(file)
-        elsif File.exist?("./#{file}")
-          server.add_extra_feature(File.expand_path("./#{file}"))
-        else
-          path = find_in_load_path(file)
-          server.add_extra_feature(path) if path
+        private
+
+        def find_in_load_path(file)
+          path = $LOAD_PATH.detect { |path| File.exist?("#{path}/#{file}") }
+          "#{path}/#{file}" if path
+        end
+
+        def absolute_path?(file)
+          file =~ /^\// && File.exist?(file)
         end
       end
-
-      def self.find_in_load_path(file)
-        path = $LOAD_PATH.detect { |path| File.exist?("#{path}/#{file}") }
-        "#{path}/#{file}" if path
-      end
-
-      def self.absolute_path?(file)
-        file =~ /^\// && File.exist?(file)
-      end
-
     end
   end
 end
@@ -39,9 +40,7 @@ module Kernel
   class << self
     alias_method :__original_load, :load
     def load(file, *a)
-      if defined?($zeus_file_monitor_server)
-        Zeus::Server::LoadTracking.add_feature($zeus_file_monitor_server, file)
-      end
+      Zeus::Server::LoadTracking.add_feature(file)
       __original_load(file, *a)
     end
   end
