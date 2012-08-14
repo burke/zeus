@@ -48,7 +48,7 @@ module Zeus
         exit 0
       }
 
-      LoadTracking.inject!(self)
+      LoadTracking.server = self
 
       @plan.run(true) # boot the actual app
       monitors.each(&:close_child_socket)
