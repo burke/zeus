@@ -14,6 +14,7 @@ describe Zeus::Server::LoadTracking do
   let(:recorder){ Recorder.new }
 
   around do |example|
+    $foo = nil
     Zeus::Server::LoadTracking.server = recorder
     example.call
     Zeus::Server::LoadTracking.server = nil
@@ -41,6 +42,16 @@ describe Zeus::Server::LoadTracking do
     end
     $foo.should == 1
     recorder.recorded.should == [[:add_extra_feature, "/Users/mgrosser/code/tools/zeus/spec/tmp/lib/foo.rb"]]
+  end
+
+  it "does not add unfound files" do
+    write "lib/foo.rb", "$foo = 1"
+    begin
+      load "foo.rb"
+    rescue LoadError
+    end
+    $foo.should == nil
+    recorder.recorded.should == []
   end
 
   private
