@@ -1,4 +1,8 @@
 require 'socket'
+begin
+  require 'testrbl' # before bundler is setup so it does not need to be in the Gemfile
+rescue LoadError
+end
 
 ROOT_PATH = File.expand_path(Dir.pwd)
 
@@ -92,9 +96,21 @@ Zeus::Server.define! do
             action { require 'test_helper' }
 
             command :testrb do
-              (r = Test::Unit::AutoRunner.new(true)).process_args(ARGV) or
-                abort r.options.banner + " tests..."
-              exit r.run
+              argv = ARGV
+
+              # try to find patter by line using testrbl
+              if defined?(Testrbl) && argv.size == 1 and argv.first =~ /^\S+:\d+$/
+                file, line = argv.first.split(':')
+                argv = [file, '-n', "/#{Testrbl.send(:pattern_from_file, File.readlines(file), line)}/"]
+                puts "using -n '#{argv[2]}'" # let users copy/paste or adjust the pattern
+              end
+
+              runner = Test::Unit::AutoRunner.new(true)
+              if runner.process_args(argv)
+                exit runner.run
+              else
+                abort runner.options.banner + " tests..."
+              end
             end
           end
         end
