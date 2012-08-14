@@ -39,6 +39,33 @@ describe "Integration" do
       start.should include "acceptor `bar`"
       run.should == ["YES\r\n"]
     end
+
+    it "restarts on file change" do
+      write ".zeus.rb", <<-RUBY
+        Zeus::Server.define! do
+          stage :foo do
+            action{ require "./foo_dependency" }
+            command :bar do
+              puts $foo
+            end
+          end
+        end
+      RUBY
+      write "foo_dependency.rb", "$foo = 'VERSION-1'"
+
+      start, run = start_and_run([
+        "bar",
+        lambda{
+          sleep 0.2
+          write "foo_dependency.rb", "$foo = 'VERSION-2'"
+          sleep 0.2
+          zeus("bar")
+        }
+      ])
+      start.should include "spawner `foo`"
+      start.should include "acceptor `bar`"
+      run.should == ["VERSION-1\r\n", "VERSION-2\r\n"]
+    end
   end
 
   private
@@ -66,7 +93,13 @@ describe "Integration" do
     start_output = ""
     t1 = Thread.new { record_start(start_output) }
     sleep 0.1
-    run_output = [*commands].map{ |cmd| zeus(cmd) }
+    run_output = [*commands].map do |cmd|
+      if cmd.is_a?(String)
+        zeus(cmd)
+      else
+        cmd.call
+      end
+    end
     sleep 0.2
     t1.kill
     [start_output, run_output]
