@@ -20,18 +20,20 @@ describe Zeus::Server::LoadTracking do
     Zeus::Server::LoadTracking.server = nil
   end
 
+  let(:tmp_path) { File.expand_path(Dir.pwd) }
+
   it "tracks loading of absolute paths" do
     write "foo.rb", "$foo = 1"
     load "#{Dir.pwd}/foo.rb"
     $foo.should == 1
-    recorder.recorded.should == [[:add_extra_feature, "/Users/mgrosser/code/tools/zeus/spec/tmp/foo.rb"]]
+    recorder.recorded.should == [[:add_extra_feature, tmp_path + "/foo.rb"]]
   end
 
   it "tracks loading of relative paths" do
     write "foo.rb", "$foo = 1"
     load "./foo.rb"
     $foo.should == 1
-    recorder.recorded.should == [[:add_extra_feature, "/Users/mgrosser/code/tools/zeus/spec/tmp/foo.rb"]]
+    recorder.recorded.should == [[:add_extra_feature, tmp_path + "/foo.rb"]]
   end
 
   it "tracks loading from library paths" do
@@ -41,7 +43,7 @@ describe Zeus::Server::LoadTracking do
       load "foo.rb"
     end
     $foo.should == 1
-    recorder.recorded.should == [[:add_extra_feature, "/Users/mgrosser/code/tools/zeus/spec/tmp/lib/foo.rb"]]
+    recorder.recorded.should == [[:add_extra_feature, tmp_path + "/lib/foo.rb"]]
   end
 
   it "does not add unfound files" do
