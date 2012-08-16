@@ -52,7 +52,8 @@ module Zeus
       LoadTracking.server = self
 
       @plan.run(true) # boot the actual app
-      at_exit { @process_tree_monitor.kill_all_nodes }
+      master = Process.pid
+      at_exit { @process_tree_monitor.kill_all_nodes if Process.pid == master }
       monitors.each(&:close_child_socket)
 
       runloop!
