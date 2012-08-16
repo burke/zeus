@@ -37,7 +37,6 @@ module Zeus
         end
       end
 
-
       private
 
       def register_acceptors_as_errors(e)

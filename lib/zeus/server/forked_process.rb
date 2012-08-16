@@ -40,7 +40,7 @@ module Zeus
 
         trap("INT") { exit }
         trap("TERM") {
-          notify_terminating
+          notify_terminated
           exit
         }
 
@@ -51,11 +51,6 @@ module Zeus
       def newly_loaded_features
         old_features = defined?($previously_loaded_features) ? $previously_loaded_features : []
         ($LOADED_FEATURES + @server.extra_features) - old_features
-      end
-
-      def kill_pid_on_exit(pid)
-        currpid = Process.pid
-        at_exit { Process.kill(9, pid) if Process.pid == currpid rescue nil }
       end
 
       def runloop!
@@ -94,8 +89,6 @@ module Zeus
           after_notify
           runloop!
         }
-        kill_pid_on_exit(@pid)
-        @pid
       end
 
     end

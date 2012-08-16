@@ -20,6 +20,10 @@ module Zeus
         @root.kill_nodes_with_feature(file)
       end
 
+      def kill_all_nodes
+        @root.kill!
+      end
+
       module ChildProcessApi
         def __CHILD__stage_starting_with_pid(name, pid)
           buffer_send("#{STARTING_MARKER}#{name}:#{pid}")

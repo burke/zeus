@@ -44,8 +44,6 @@ module Zeus
         end
       end
 
-      private
-
       # We send STOP before actually killing the processes here.
       # This is to prevent parents from respawning before all the children
       # are killed. This prevents a race condition.
@@ -56,7 +54,9 @@ module Zeus
         old_pid  = pid
         self.pid = nil
         Process.kill("KILL", old_pid) if old_pid
-      end ; protected :kill!
+      end
+
+      private
 
       def node_for_name(name)
         @nodes_by_name ||= __nodes_by_name
