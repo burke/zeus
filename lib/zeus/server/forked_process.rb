@@ -2,7 +2,6 @@ module Zeus
   class Server
     # base class for Stage and Acceptor
     class ForkedProcess
-      HasNoChildren = Class.new(Exception)
 
       attr_accessor :name
       attr_reader :pid

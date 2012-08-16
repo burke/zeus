@@ -4,52 +4,28 @@ require 'socket'
 # See Zeus::Server::ClientHandler for relevant documentation
 module Zeus
   class Server
-    class Acceptor < ForkedProcess
-      attr_accessor :aliases, :description, :action
+    class Acceptor
+      attr_accessor :aliases, :description, :action, :name
+      def initialize(server)
+        @server = server
+      end
 
       def descendent_acceptors
         self
       end
 
-      def before_setup
+      def run
         register_with_client_handler(Process.pid)
-      end
+        Zeus.ui.info("starting #{process_type} `#{@name}`")
 
-      def runloop!
-        loop do
-          prefork_action!
-          terminal, arguments = accept_connection # blocking
-          child = fork { __RUNNER__run(terminal, arguments) }
-          terminal.close
-
-          Process.detach(child)
-        end
-      end
-
-      def __RUNNER__run(terminal, arguments)
-        $0 = "zeus runner: #{@name}"
-        Process.setsid
-        postfork_action!
-        @s_acceptor << $$ << "\n"
-        $stdin.reopen(terminal)
-        $stdout.reopen(terminal)
-        $stderr.reopen(terminal)
-        ARGV.replace(arguments)
-
-        @action.call
-      ensure
-        # TODO this is a whole lot of voodoo that I don't really understand.
-        # I need to figure out how best to make the process disconenct cleanly.
-        dnw, dnr = File.open("/dev/null", "w+"), File.open("/dev/null", "r+")
-        $stderr.reopen(dnr)
-        $stdout.reopen(dnr)
-        terminal.close
-        $stdin.reopen(dnw)
-        Process.kill(9, $$)
-        exit 0
+        thread_with_backtrace_on_error { runloop! }
       end
 
       private
+
+      def command_runner
+        CommandRunner.new(name, action, @s_acceptor)
+      end
 
       def register_with_client_handler(pid)
         @s_client_handler, @s_acceptor = UNIXSocket.pair
@@ -72,41 +48,45 @@ module Zeus
         "acceptor"
       end
 
-
-      # these two methods should be part of the configuration DSL.
-      # They're here for now, but I want them out.
-      def prefork_action! # TODO : refactor
-        ActiveRecord::Base.clear_all_connections! rescue nil
+      def print_error(io, error)
+        io.puts "#{error.backtrace[0]}: #{error.message} (#{error.class})"
+        error.backtrace[1..-1].each do |line|
+          io.puts "\tfrom #{line}"
+        end
       end
 
-      def postfork_action! # TODO :refactor
-        ActiveRecord::Base.establish_connection   rescue nil
-        # ActiveSupport::DescendantsTracker.clear   rescue nil
-        # ActiveSupport::Dependencies.clear         rescue nil
+      def thread_with_backtrace_on_error(&b)
+        Thread.new {
+          begin
+            b.call
+          rescue => e
+            print_error($stdout, e)
+          end
+        }
+      end
+
+      def runloop!
+        loop do
+          terminal, arguments = accept_connection # blocking
+          command_runner.run(terminal, arguments)
+        end
       end
 
       module ErrorState
+        NOT_A_PID = 0
         attr_accessor :error
 
-        def print_error(io, error = @error)
-          io.puts "#{error.backtrace[0]}: #{error.message} (#{error.class})"
-          error.backtrace[1..-1].each do |line|
-            io.puts "\tfrom #{line}"
-          end
+        def process_type
+          "error-state acceptor"
         end
 
-        def run
-          register_with_client_handler(Process.pid)
-          Zeus.ui.info "starting error-state acceptor `#{@name}`"
-
-          Thread.new do
-            loop do
-              terminal = @s_acceptor.recv_io
-              _ = @s_acceptor.readline
-              @s_acceptor << 0 << "\n"
-              print_error(terminal)
-              terminal.close
-            end
+        def runloop!
+          loop do
+            terminal = @s_acceptor.recv_io
+            _ = @s_acceptor.readline
+            @s_acceptor << NOT_A_PID << "\n"
+            print_error(terminal, @error)
+            terminal.close
           end
         end
 

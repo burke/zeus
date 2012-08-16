@@ -12,6 +12,7 @@ module Zeus
     autoload :LoadTracking,                'zeus/server/load_tracking'
     autoload :ForkedProcess,               'zeus/server/forked_process'
     autoload :ClientHandler,               'zeus/server/client_handler'
+    autoload :CommandRunner,               'zeus/server/command_runner'
     autoload :ProcessTreeMonitor,          'zeus/server/process_tree_monitor'
     autoload :AcceptorRegistrationMonitor, 'zeus/server/acceptor_registration_monitor'
 

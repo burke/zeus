@@ -30,7 +30,7 @@ module Zeus
           begin
             pid = Process.wait
           rescue Errno::ECHILD
-            raise HasNoChildren.new("Stage `#{@name}` - All terminal nodes must be acceptors")
+            sleep # if this is a terminal node, just let acceptors run...
           end
           stage = @pids[pid]
           @pids[stage.run] = stage
