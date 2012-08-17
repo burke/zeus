@@ -16,7 +16,7 @@ module Zeus
     autoload :AcceptorRegistrationMonitor, 'zeus/server/acceptor_registration_monitor'
 
     def self.define!(&b)
-      @@definition = Zeus::DSL::Evaluator.new.instance_eval(&b)
+      @@definition = Zeus::Plan::Evaluator.new.instance_eval(&b)
     end
 
     def self.acceptors

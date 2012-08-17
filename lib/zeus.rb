@@ -3,7 +3,7 @@ module Zeus
 
   autoload :UI,           'zeus/ui'
   autoload :CLI,          'zeus/cli'
-  autoload :DSL,          'zeus/dsl'
+  autoload :Plan,         'zeus/plan'
   autoload :Server,       'zeus/server'
   autoload :Client,       'zeus/client'
   autoload :VERSION,      'zeus/version'

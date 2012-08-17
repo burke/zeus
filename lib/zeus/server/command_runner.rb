@@ -26,6 +26,8 @@ module Zeus
         ARGV.replace(arguments)
 
         run_action
+      ensure
+        Process.kill(9, 0)
       end
 
       def run_action
