@@ -22,26 +22,22 @@ module Zeus
         Process.setsid
         reconnect_activerecord!
         @s_acceptor << $$ << "\n"
-        $stdin.reopen(terminal)
-        $stdout.reopen(terminal)
-        $stderr.reopen(terminal)
+        reopen_streams(terminal, terminal, terminal)
         ARGV.replace(arguments)
 
-        begin
-          @action.call
-        rescue Exception => error
-          ErrorPrinter.new(error).write_to(terminal)
-        end
-      ensure
-        # TODO this is a whole lot of voodoo that I don't really understand.
-        # I need to figure out how best to make the process disconenct cleanly.
-        dnw, dnr = File.open("/dev/null", "w+"), File.open("/dev/null", "r+")
-        $stderr.reopen(dnr)
-        $stdout.reopen(dnr)
-        terminal.close
-        $stdin.reopen(dnw)
-        Process.kill(9, $$)
-        exit 0
+        run_action
+      end
+
+      def run_action
+        @action.call
+      rescue Exception => error
+        ErrorPrinter.new(error).write_to($stderr)
+      end
+
+      def reopen_streams(i, o, e)
+        $stdin.reopen(i)
+        $stdout.reopen(o)
+        $stderr.reopen(e)
       end
 
       def reconnect_activerecord!
