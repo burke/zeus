@@ -3,7 +3,6 @@ module Zeus
     class ForkedProcess
 
       attr_accessor :name
-      attr_reader :pid
       def initialize(server)
         @server = server
       end
@@ -35,7 +34,6 @@ module Zeus
         }
 
         defined?(ActiveRecord::Base) and ActiveRecord::Base.clear_all_connections!
-
       end
 
       def newly_loaded_features

@@ -33,4 +33,14 @@ module Zeus
     @after_fork = []
   end
 
+  def self.thread_with_backtrace_on_error(&b)
+    Thread.new {
+      begin
+        b.call
+      rescue => e
+        ErrorPrinter.new(e).write_to($stdout)
+      end
+    }
+  end
+
 end

@@ -1,7 +1,6 @@
 require 'json'
 require 'socket'
 
-# See Zeus::Server::ClientHandler for relevant documentation
 module Zeus
   class Server
     class Acceptor
@@ -17,8 +16,7 @@ module Zeus
       def run
         register_with_client_handler(Process.pid)
         Zeus.ui.info("starting #{process_type} `#{@name}`")
-
-        thread_with_backtrace_on_error { runloop! }
+        Zeus.thread_with_backtrace_on_error { runloop! }
       end
 
       private
@@ -46,16 +44,6 @@ module Zeus
 
       def process_type
         "acceptor"
-      end
-
-      def thread_with_backtrace_on_error(&b)
-        Thread.new {
-          begin
-            b.call
-          rescue => e
-            ErrorPrinter.new(e).write_to($stdout)
-          end
-        }
       end
 
       def runloop!
