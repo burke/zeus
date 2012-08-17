@@ -49,8 +49,8 @@ module Zeus
 
       def run_action
         @action.call
-      rescue Exception => error
-        ErrorPrinter.new(error).write_to($stderr) unless error.kind_of?(SystemExit)
+      rescue StandardError => error
+        ErrorPrinter.new(error).write_to($stderr)
         raise
       end
 
