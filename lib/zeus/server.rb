@@ -43,11 +43,7 @@ module Zeus
     def run
       $0 = "zeus master"
       trap("TERM") { exit 0 }
-      trap("INT") {
-        puts "\n\x1b[31mExiting\x1b[0m"
-        exit 0
-      }
-
+      trap("INT") { puts "\n\x1b[31mExiting\x1b[0m" ; exit }
       LoadTracking.server = self
 
       @plan.run(true) # boot the actual app
