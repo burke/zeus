@@ -33,7 +33,7 @@ module Zeus
         notify_started
         trap("INT") { exit }
         trap("TERM") { notify_terminated ; exit }
-        defined?(ActiveRecord::Base) and ActiveRecord::Base.clear_all_connections!
+        ActiveRecord::Base.clear_all_connections! rescue nil
       end
 
       def feature_notifier
