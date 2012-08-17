@@ -32,6 +32,7 @@ module Zeus
         command, arguments = data.values_at('command', 'arguments')
 
         client_terminal = s_client.recv_io
+        exit_status_socket = s_client.recv_io
 
         Thread.new {
           # This is a little ugly. Gist: Try to handshake the client to the acceptor.
@@ -39,7 +40,7 @@ module Zeus
           # REATTEMPT_HANDSHAKE. We catch that exit code and try once more.
           begin
             loop do
-              pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal) ; exit }
+              pid = fork { handshake_client_to_acceptor(s_client, command, arguments, client_terminal, exit_status_socket) ; exit }
               Process.wait(pid)
               break if $?.exitstatus != REATTEMPT_HANDSHAKE
             end
@@ -50,13 +51,13 @@ module Zeus
         }
       end
 
-      def handshake_client_to_acceptor(s_client, command, arguments, client_terminal)
+      def handshake_client_to_acceptor(s_client, command, arguments, client_terminal, exit_status_socket)
         unless @acceptor_commands.include?(command.to_s)
           msg = "no such command `#{command}`."
           return exit_with_message(s_client, client_terminal, msg)
         end
 
-        unless acceptor = send_io_to_acceptor(client_terminal, command)
+        unless acceptor = send_io_to_acceptor(client_terminal, exit_status_socket, command)
           wait_for_acceptor(s_client, client_terminal, command)
           exit REATTEMPT_HANDSHAKE
         end
@@ -88,11 +89,13 @@ module Zeus
         s.readline # wait until acceptor is booted
       end
 
-      def send_io_to_acceptor(io, command)
+      def send_io_to_acceptor(io, io2, command)
         return false unless acceptor = @server.__CHILD__find_acceptor_for_command(command)
         return false unless usock = UNIXSocket.for_fd(acceptor.socket.fileno)
         usock.send_io(io)
+        usock.send_io(io2)
         io.close
+        io2.close
         return acceptor
       rescue Errno::EPIPE
         return false

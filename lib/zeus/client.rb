@@ -33,6 +33,7 @@ module Zeus
     def run(command, args)
       maybe_raw do
         PTY.open do |master, slave|
+          @exit_status, @es2 = IO.pipe
           @master = master
           set_winsize
           make_winch_channel
@@ -47,18 +48,24 @@ module Zeus
 
     def select_loop!
       buffer = ""
-      while ready = select([winch, @master, $stdin])[0]
+      while ready = select([winch, @master, $stdin, @exit_status])[0]
         handle_winch          if ready.include?(winch)
         handle_stdin(buffer)  if ready.include?($stdin)
         handle_master(buffer) if ready.include?(@master)
+        handle_exit           if ready.include?(@exit_status)
       end
     rescue EOFError
+    end
+
+    def handle_exit
+      exit @exit_status.readline.chomp.to_i
     end
 
     def connect_to_server(command, arguments, slave, socket_path = Zeus::SOCKET_NAME)
       socket = UNIXSocket.new(socket_path)
       socket << {command: command, arguments: arguments}.to_json << "\n"
       socket.send_io(slave)
+      socket.send_io(@es2)
       slave.close
 
       pid = socket.readline.chomp.to_i

@@ -37,9 +37,10 @@ module Zeus
 
       def accept_connection
         terminal = @s_acceptor.recv_io # blocking
+        exit_status_socket = @s_acceptor.recv_io
         arguments = JSON.parse(@s_acceptor.readline.chomp)
 
-        [terminal, arguments]
+        [terminal, exit_status_socket, arguments]
       end
 
       def process_type
@@ -48,8 +49,8 @@ module Zeus
 
       def runloop!
         loop do
-          terminal, arguments = accept_connection # blocking
-          command_runner.run(terminal, arguments)
+          terminal, exit_status_socket, arguments = accept_connection # blocking
+          command_runner.run(terminal, exit_status_socket, arguments)
         end
       end
 
