@@ -57,6 +57,7 @@ Check [Rails tests](https://github.com/burke/zeus-extended-testcases) if you cha
 
 ## Thanks...
 
+* To [Michael Grosser](http://github.com/grosser) for various contributions
 * To [Stefan Penner](http://github.com/stefanpenner) for discussion and various contributions.
 * To [Samuel Kadolph](http://github.com/samuelkadolph) for doing most of the cross-process pseudoterminal legwork.
 * To [Jesse Storimer](http://github.com/jstorimer) for spin, part of the inspiration for this project
