@@ -5,8 +5,8 @@ module Zeus
       def datasource          ; @sock ; end
       def on_datasource_event ; handle_message ; end
       # @__CHILD__sock is not closed here, as it's used by the master to respond
-      # for unbooted acceptors
-      def close_child_socket  ; end 
+      # on behalf of unbooted acceptors
+      def close_child_socket  ; end
       def close_parent_socket ; @sock.close ; end
 
       def initialize
@@ -26,7 +26,6 @@ module Zeus
         case type
         when 'wait' ; handle_wait(io, data)
         when 'registration' ; handle_registration(io, data)
-        when 'deregistration' ; handle_deregistration(io, data)
         else raise "invalid message"
         end
       end
@@ -35,11 +34,6 @@ module Zeus
         command = data['command'].to_s
         @pings[command] ||= []
         @pings[command] << io
-      end
-
-      def handle_deregistration(io, data)
-        pid = data['pid'].to_i
-        @acceptors.reject!{|acc|acc.pid == pid}
       end
 
       def handle_registration(io, data)
@@ -62,7 +56,6 @@ module Zeus
         end
       end
 
-
       module ChildProcessApi
 
         def __CHILD__find_acceptor_for_command(command)
@@ -78,6 +71,5 @@ module Zeus
       end ; include ChildProcessApi
 
     end
-
   end
 end
