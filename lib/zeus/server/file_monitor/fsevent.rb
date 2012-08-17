@@ -40,6 +40,7 @@ module Zeus
 
         def kill_wrapper
           Process.kill(9, @wrapper_thread.pid)
+        rescue Errno::ESRCH # already dead. SIGINT to master causes this often.
         end
 
         private
