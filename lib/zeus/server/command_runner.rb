@@ -27,7 +27,11 @@ module Zeus
         $stderr.reopen(terminal)
         ARGV.replace(arguments)
 
-        @action.call
+        begin
+          @action.call
+        rescue Exception => error
+          ErrorPrinter.new(error).write_to(terminal)
+        end
       ensure
         # TODO this is a whole lot of voodoo that I don't really understand.
         # I need to figure out how best to make the process disconenct cleanly.

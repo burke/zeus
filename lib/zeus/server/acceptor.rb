@@ -48,19 +48,12 @@ module Zeus
         "acceptor"
       end
 
-      def print_error(io, error)
-        io.puts "#{error.backtrace[0]}: #{error.message} (#{error.class})"
-        error.backtrace[1..-1].each do |line|
-          io.puts "\tfrom #{line}"
-        end
-      end
-
       def thread_with_backtrace_on_error(&b)
         Thread.new {
           begin
             b.call
           rescue => e
-            print_error($stdout, e)
+            ErrorPrinter.new(e).write_to($stdout)
           end
         }
       end
@@ -85,7 +78,7 @@ module Zeus
             terminal = @s_acceptor.recv_io
             _ = @s_acceptor.readline
             @s_acceptor << NOT_A_PID << "\n"
-            print_error(terminal, @error)
+            ErrorPrinter.new(@error).write_to(terminal)
             terminal.close
           end
         end

@@ -9,8 +9,7 @@ module Zeus
         @stages.map(&:descendent_acceptors).flatten
       end
 
-
-      def after_setup
+      def run_actions
         begin
           @actions.each(&:call)
         rescue => e
@@ -18,11 +17,21 @@ module Zeus
         end
       end
 
-      def after_notify
+      def start_child_stages
         @pids = {}
         @stages.each do |stage|
           @pids[stage.run] = stage
         end
+      end
+
+      def run(close_parent_sockets = false)
+        @pid = fork {
+          setup_forked_process(close_parent_sockets)
+          run_actions
+          notify_new_features
+          start_child_stages
+          runloop!
+        }
       end
 
       def runloop!
