@@ -48,12 +48,17 @@ module Zeus
 
       @plan.run(true) # boot the actual app
       master = Process.pid
-      at_exit { @process_tree_monitor.kill_all_nodes if Process.pid == master }
+      at_exit { cleanup_all_children if Process.pid == master }
       monitors.each(&:close_child_socket)
 
       runloop!
     ensure
       File.unlink(Zeus::SOCKET_NAME)
+    end
+
+    def cleanup_all_children
+      @process_tree_monitor.kill_all_nodes
+      @file_monitor.kill_wrapper
     end
 
     def add_extra_feature(full_expanded_path)

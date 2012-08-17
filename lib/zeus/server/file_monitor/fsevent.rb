@@ -14,7 +14,7 @@ module Zeus
 
         def initialize(&change_callback)
           @change_callback = change_callback
-          @io_in, @io_out, _ = open_wrapper
+          @io_in, @io_out, @wrapper_thread = open_wrapper
           @givenpath_to_realpath = {}
           @realpath_to_givenpath = {}
           @buffer = ""
@@ -36,6 +36,10 @@ module Zeus
 
           @io_in.write("#{real}\n")
           true
+        end
+
+        def kill_wrapper
+          Process.kill(9, @wrapper_thread.pid)
         end
 
         private
