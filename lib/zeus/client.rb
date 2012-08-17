@@ -21,7 +21,8 @@ module Zeus
 
     SIGNALS = {
       "\x03" => "INT",
-      "\x1C" => "QUIT"
+      "\x1C" => "QUIT",
+      "\x1A" => "TSTP",
     }
     SIGNAL_REGEX = Regexp.union(SIGNALS.keys)
 
@@ -61,6 +62,8 @@ module Zeus
       slave.close
 
       pid = socket.readline.chomp.to_i
+      trap("CONT") { Process.kill("CONT", @pid) }
+      pid
     rescue Errno::ENOENT, Errno::ECONNREFUSED, Errno::ECONNRESET
       # we need a \r at the end because the terminal is in raw mode.
       Zeus.ui.error "Zeus doesn't seem to be running, try 'zeus start`\r"
@@ -71,12 +74,21 @@ module Zeus
       input = $stdin.readpartial(4096, buffer)
       input.scan(SIGNAL_REGEX).each { |signal|
         begin
-          Process.kill(SIGNALS[signal], pid)
+          send_signal(signal, pid)
         rescue Errno::ESRCH
           exit # the remote process died. Just quit.
         end
       }
       @master << input
+    end
+
+    def send_signal(signal, pid)
+      if SIGNALS[signal] == "TSTP"
+        Process.kill("STOP", pid)
+        Process.kill("TSTP", Process.pid)
+      else
+        Process.kill(SIGNALS[signal], pid)
+      end
     end
 
     def handle_master(buffer)
