@@ -7,9 +7,6 @@ module Zeus
       super
       Zeus.ui = Zeus::UI.new
       Zeus.ui.debug! #if options['verbose']
-      if defined?(Bundler)
-        Zeus.ui.warn "Don't run Zeus with `bundle exec`. It's unnecessarily slow."
-      end
     end
 
     desc "init", "Generates a zeus config file in the current working directory"

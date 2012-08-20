@@ -1,3 +1,5 @@
+require 'zeus/hacks/bundler'
+
 module Zeus
   SOCKET_NAME = '.zeus.sock'
 
@@ -44,3 +46,4 @@ module Zeus
   end
 
 end
+
