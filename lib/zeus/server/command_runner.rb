@@ -34,7 +34,7 @@ module Zeus
       end
 
       def return_process_exit_status
-        at_exit do
+        prepend_at_exit do
           if $!.nil? || $!.is_a?(SystemExit) && $!.success?
             @exit_status_socket.puts(0)
           else
