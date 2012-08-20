@@ -28,6 +28,7 @@ module Zeus
       def register_with_client_handler(pid)
         @s_client_handler, @s_acceptor = UNIXSocket.pair
         @s_acceptor.puts registration_data(pid)
+        at_exit { @s_client_handler.close ; @s_acceptor.close }
         @server.__CHILD__register_acceptor(@s_client_handler)
       end
 
