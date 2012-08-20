@@ -1,10 +1,11 @@
+require 'zeus/server/stage/error_state'
+require 'zeus/server/stage/feature_notifier'
+
 module Zeus
   class Server
     # NONE of the code in the module is run in the master process,
     # so every communication to the master must be done with IPC.
     class Stage
-      autoload :ErrorState,      'zeus/server/stage/error_state'
-      autoload :FeatureNotifier, 'zeus/server/stage/feature_notifier'
 
       attr_accessor :name, :stages, :actions
       def initialize(server)

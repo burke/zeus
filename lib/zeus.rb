@@ -1,15 +1,13 @@
-require 'zeus/hacks/bundler'
+require 'zeus/version'
+require 'zeus/ui'
+require 'zeus/plan'
+require 'zeus/server'
+require 'zeus/client'
+require 'zeus/error_printer'
+require 'zeus/cli'
 
 module Zeus
   SOCKET_NAME = '.zeus.sock'
-
-  autoload :UI,           'zeus/ui'
-  autoload :CLI,          'zeus/cli'
-  autoload :Plan,         'zeus/plan'
-  autoload :Server,       'zeus/server'
-  autoload :Client,       'zeus/client'
-  autoload :VERSION,      'zeus/version'
-  autoload :ErrorPrinter, 'zeus/error_printer'
 
   class ZeusError < StandardError
     def self.status_code(code)

@@ -1,11 +1,11 @@
 require 'set'
 
+require 'zeus/plan/node'
+require 'zeus/plan/stage'
+require 'zeus/plan/acceptor'
+
 module Zeus
   module Plan
-    autoload :Node,     'zeus/plan/node'
-    autoload :Stage,    'zeus/plan/stage'
-    autoload :Acceptor, 'zeus/plan/acceptor'
-
     class Evaluator
       def stage(name, &b)
         stage = Plan::Stage.new(name)
@@ -14,6 +14,5 @@ module Zeus
         stage
       end
     end
-
   end
 end

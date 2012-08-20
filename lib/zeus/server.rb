@@ -2,18 +2,18 @@ require 'json'
 require 'socket'
 require 'forwardable'
 
+require 'zeus/server/stage'
+require 'zeus/server/acceptor'
+require 'zeus/server/file_monitor'
+require 'zeus/server/load_tracking'
+require 'zeus/server/client_handler'
+require 'zeus/server/command_runner'
+require 'zeus/server/process_tree_monitor'
+require 'zeus/server/acceptor_registration_monitor'
+
 module Zeus
   class Server
     extend Forwardable
-
-    autoload :Stage,                       'zeus/server/stage'
-    autoload :Acceptor,                    'zeus/server/acceptor'
-    autoload :FileMonitor,                 'zeus/server/file_monitor'
-    autoload :LoadTracking,                'zeus/server/load_tracking'
-    autoload :ClientHandler,               'zeus/server/client_handler'
-    autoload :CommandRunner,               'zeus/server/command_runner'
-    autoload :ProcessTreeMonitor,          'zeus/server/process_tree_monitor'
-    autoload :AcceptorRegistrationMonitor, 'zeus/server/acceptor_registration_monitor'
 
     def self.define!(&b)
       @@definition = Zeus::Plan::Evaluator.new.instance_eval(&b)
