@@ -42,6 +42,9 @@ module Zeus
         arguments = JSON.parse(@s_acceptor.readline.chomp)
 
         [terminal, exit_status_socket, arguments]
+      rescue IOError, Errno::EBADF
+        sleep 0.2
+        retry
       end
 
       def process_type

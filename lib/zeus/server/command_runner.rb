@@ -23,7 +23,7 @@ module Zeus
         @exit_status_socket = exit_status_socket
         @terminal = terminal
         Process.setsid
-        reconnect_activerecord!
+        reconnect_things!
         @s_acceptor << $$ << "\n"
         reopen_streams(terminal, terminal, terminal)
         ARGV.replace(arguments)
@@ -34,7 +34,8 @@ module Zeus
       end
 
       def return_process_exit_status
-        prepend_at_exit do
+        append_at_exit do
+          File.open("omg.log","a"){|f|f.puts(@exit_status_socket.inspect)}
           if $!.nil? || $!.is_a?(SystemExit) && $!.success?
             @exit_status_socket.puts(0)
           else
@@ -60,7 +61,21 @@ module Zeus
         $stderr.reopen(e)
       end
 
-      def reconnect_activerecord!
+      def reconnect_things!
+        reconnect_activerecord
+        restart_girl_friday
+      end
+
+      def restart_girl_friday
+        return unless defined?(GirlFriday::WorkQueue)
+        # The Actor is run in a thread, and threads don't persist post-fork.
+        # We just need to restart each one in the newly-forked process.
+        ObjectSpace.each_object(GirlFriday::WorkQueue) do |obj|
+          obj.send(:start)
+        end
+      end
+
+      def reconnect_activerecord
         ActiveRecord::Base.clear_all_connections! rescue nil
         ActiveRecord::Base.establish_connection   rescue nil
       end
