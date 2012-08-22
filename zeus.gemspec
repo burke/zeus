@@ -10,6 +10,7 @@ Gem::Specification.new do |gem|
 
   gem.files         = `git ls-files`.split("\n").reject{ |f| f =~ /xcodeproj/ }
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
+  gem.extensions    = ["ext/inotify-wrapper/extconf.rb"]
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.name          = "zeus"
   gem.require_paths = ["lib"]
