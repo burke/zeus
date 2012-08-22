@@ -28,11 +28,11 @@ module Zeus
       def handle_server_connection
         s_client = @listener.accept
 
-        data = JSON.parse(s_client.readline.chomp)
-        command, arguments = data.values_at('command', 'arguments')
-
         client_terminal = s_client.recv_io
         exit_status_socket = s_client.recv_io
+
+        data = JSON.parse(s_client.readline.chomp)
+        command, arguments = data.values_at('command', 'arguments')
 
         Thread.new {
           # This is a little ugly. Gist: Try to handshake the client to the acceptor.

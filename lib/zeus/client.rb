@@ -63,9 +63,9 @@ module Zeus
 
     def connect_to_server(command, arguments, slave, socket_path = Zeus::SOCKET_NAME)
       socket = UNIXSocket.new(socket_path)
-      socket << {command: command, arguments: arguments}.to_json << "\n"
       socket.send_io(slave)
       socket.send_io(@es2)
+      socket << {command: command, arguments: arguments}.to_json << "\n"
       slave.close
 
       pid = socket.readline.chomp.to_i
