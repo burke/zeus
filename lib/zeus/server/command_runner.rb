@@ -35,7 +35,6 @@ module Zeus
 
       def return_process_exit_status
         append_at_exit do
-          File.open("omg.log","a"){|f|f.puts(@exit_status_socket.inspect)}
           if $!.nil? || $!.is_a?(SystemExit) && $!.success?
             @exit_status_socket.puts(0)
           else
