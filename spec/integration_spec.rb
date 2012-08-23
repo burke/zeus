@@ -84,23 +84,10 @@ describe "Integration" do
   def start_and_run(commands, options={})
     start_output = ""
     t1 = Thread.new { record_start(start_output) }
-    sleep 0.1
+    sleep 0.2
     run_output = [*commands].map{ |cmd| zeus(cmd, options) }
     sleep 0.2
     t1.kill
     [start_output, run_output]
-  end
-
-  def kill_all_children
-    `kill -9 #{child_pids.join(" ")}`
-  end
-
-  def child_pids
-    pid = Process.pid
-    pipe = IO.popen("ps -ef | grep #{pid}")
-    pipe.readlines.map do |line|
-      parts = line.split(/\s+/)
-      parts[2] if parts[3] == pid.to_s and parts[2] != pipe.pid.to_s
-    end.compact
   end
 end

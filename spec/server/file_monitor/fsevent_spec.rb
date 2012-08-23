@@ -67,6 +67,7 @@ module Zeus::Server::FileMonitor
 
       Zeus.ui.should_receive(:info).with(%r{#{file.path}})
 
+      sleep 0.1
       FileUtils.touch(file.path)
       IO.select([fsevent.datasource], [], [], 3)[0] # just wait for the data to appear
       fsevent.on_datasource_event
