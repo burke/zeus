@@ -1,4 +1,3 @@
-require 'socket'
 begin
   require 'testrbl' # before bundler is setup so it does not need to be in the Gemfile
 rescue LoadError
