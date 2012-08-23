@@ -8,6 +8,10 @@ module Zeus
       Zeus::UI.stub(new: ui)
     end
 
+    after do
+      kill_all_children
+    end
+
     it "fails with unknown command" do
       ui.should_receive(:error).with(/Could not find task/m)
       Thrud.should_receive(:exit).with(1).and_raise(SystemExit)

@@ -15,3 +15,6 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
+ext/inotify-wrapper/inotify-wrapper
+ext/inotify-wrapper/Makefile
+*.o

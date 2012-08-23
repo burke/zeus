@@ -5,7 +5,12 @@ module Zeus
   class Server
     module FileMonitor
       class FSEvent
-        WRAPPER_PATH = File.expand_path("../../../../../ext/fsevents-wrapper/fsevents-wrapper", __FILE__)
+        if /darwin/ =~ RUBY_PLATFORM
+          MODULE = "fsevents"
+        else
+          MODULE = "inotify"
+        end
+        WRAPPER_PATH = File.expand_path("../../../../../ext/#{MODULE}-wrapper/#{MODULE}-wrapper", __FILE__)
 
         def datasource          ; @io_out ; end
         def on_datasource_event ; handle_changed_files ; end
