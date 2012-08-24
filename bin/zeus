@@ -1,8 +1,0 @@
-#!/usr/bin/env ruby
-
-if defined?(Bundler)
-  puts "\x1b[34mDon't run Zeus with `bundle exec`. It's unnecessarily slow.\x1b[0m"
-end
-
-require 'zeus'
-Zeus::CLI.start
