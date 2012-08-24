@@ -42,6 +42,14 @@ func makeUnixSocket(f *os.File) (*net.UnixConn, error) {
 	return unixConn, nil
 }
 
+func readFileDescriptorFromUnixSocket(sock *net.UnixConn) (fd int, err error) {
+	_, fd, err = readFromUnixSocket(sock)
+	if err != nil && fd < 0 {
+		err = errors.New("Invalid File Descriptor")
+	}
+	return 
+}
+
 func readFromUnixSocket(sock *net.UnixConn) (msg string, fd int, err error) {
 	buf := make([]byte, 1024) // if FD: 1 byte   ; else: varies
 	oob := make([]byte, 32)   // if FD: 24 bytes ; else: 0

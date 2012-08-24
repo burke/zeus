@@ -2,27 +2,16 @@ package zeus
 
 import (
 	"syscall"
+	"strings"
 	"os"
-	"encoding/json"
+	"time"
 	"os/exec"
 	"fmt"
+	"net"
 	"errors"
 )
 
-type StageBootInfo struct {
-	Pid int
-	Identifier string
-}
-
-func runInitialCommand(sock *os.File) {
-	cmd := exec.Command("/Users/burke/.rbenv/shims/ruby", "/Users/burke/go/src/github.com/burke/zeus/a.rb")
-	cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
-	cmd.ExtraFiles = []*os.File{sock}
-
-	go cmd.Run()
-}
-
-func Run () (error) {
+func Run (conf Config) (error) {
 	masterSockLocal, masterSockRemote, err := socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
 		return err
@@ -33,49 +22,75 @@ func Run () (error) {
 		return err
 	}
 
-	runInitialCommand(masterSockRemote)
+	go runInitialCommand(masterSockRemote, conf.Command)
+	go slaveRegistrationHandler(masterUSockLocal)
 
-	// Having just started the process, we expect an IO, which we convert to a UNIX domain socket
-	_, fd, err := readFromUnixSocket(masterUSockLocal)
-	if err != nil {
-		return err
-	}
-	if fd < 0 {
-		return errors.New("expected file descriptor, but got none")
-	}
-	clientFile := fdToFile(fd, "boot-sock")
-	clientSocket, err := makeUnixSocket(clientFile)
-	if err != nil {
-		return err
-	}
+	time.Sleep(500 * time.Millisecond)
 
-	// We now expect the client to use this fd they send us to send a JSON-encoded representation of their PID and identifier...
+	return nil
+}
+
+func runInitialCommand(sock *os.File, command string) {
+	parts := strings.SplitN(command, " ", 2)
+	executable := parts[0]
+	args := parts[1]
+	cmd := exec.Command(executable, args)
+	cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
+	cmd.ExtraFiles = []*os.File{sock}
+
+	cmd.Run()
+}
+
+func slaveRegistrationHandler(sock *net.UnixConn) {
+	for {
+		// Having just started the process, we expect an IO, which we convert to a UNIX domain socket
+		fd, err := readFileDescriptorFromUnixSocket(sock)
+		if err != nil {
+			fmt.Println(err)
+		}
+		clientFile := fdToFile(fd, "boot-sock")
+		clientSocket, err := makeUnixSocket(clientFile)
+		if err != nil {
+			fmt.Println(err)
+		}
+
+		go handleSlaveRegistration(clientSocket)
+	}
+}
+
+func handleSlaveRegistration(clientSocket *net.UnixConn) {
+	// We now expect the client to use this fd they send us to send a Pid&Identifier Message
 	msg, _, err := readFromUnixSocket(clientSocket)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
-	var bootInfo StageBootInfo
-	err = json.Unmarshal([]byte(msg), &bootInfo)
+	pid, identifier, err := parsePidMessage(msg)
+	fmt.Println(pid, identifier)
 	if err != nil {
-		return err
+		fmt.Println(err)
 	}
 
 	// Now that we have that, we look up and send the action for that identifier:
-	clientSocket.Write([]byte("File.open('omg.log','a'){|f|f.puts 'HAHA BUSINESS TIME'}"))
+	msg = createActionMessage("File.open('omg.log','a'){|f|f.puts 'HAHA BUSINESS TIME'}")
+	clientSocket.Write([]byte(msg))
 
 	// It will respond with its status
 	msg, _, err = readFromUnixSocket(clientSocket)
 	if err != nil {
-		return err
+		fmt.Println(err)
+	}
+	msg, err = parseActionResponseMessage(msg)
+	if err != nil {
+		fmt.Println(err)
 	}
 	if msg == "OK" {
-		clientSocket.Write([]byte("default_bundle"))
+		msg = createSpawnSlaveMessage("default_bundle")
+		clientSocket.Write([]byte(msg))
 	} else {
-		return errors.New(msg)
+		fmt.Println(errors.New(msg))
 	}
 
 	// And now we could instruct it to fork:
 
-	return nil
 }
 
