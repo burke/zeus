@@ -1,5 +1,6 @@
 ---
-command: "/usr/bin/env ruby -rzeus -e Zeus.boot"
+command: "/usr/bin/env ruby -rzeus -e Zeus::Slave.boot"
+
 plan:
   default_bundle:
     development_environment:
