@@ -2,7 +2,7 @@
 
 There are a number of different types of messages passed between Master and Slave processes.
 
-In the interest of simplifying Slave libraries, messages are send as single packets over a UNIX datagram socket,
+In the interest of simplifying Slave libraries, messages are sent as single packets over a UNIX datagram socket,
 with a single-letter prefix, followed by a colon, indicating the message type.
 
 #### Pid & Identifier message (`P`)
@@ -50,7 +50,7 @@ Example: `D:1234`
 
 #### Feature message (`F`)
 
-This is send frome the Slave to the Master to indicate it now depends on a file at a given path.
+This is sent from the Slave to the Master to indicate it now depends on a file at a given path.
 
 The path is expected to be the full, expanded path.
 
