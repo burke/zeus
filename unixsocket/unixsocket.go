@@ -1,4 +1,4 @@
-package zeus
+package unixsocket
 
 import (
 	"syscall"
@@ -12,23 +12,23 @@ import (
 // https://github.com/hanwen/go-fuse/blob/master/fuse/mount.go
 // http://code.google.com/p/go/source/browse/src/pkg/syscall/syscall_bsd.go?spec=svn982df2b2cb4b6001e8b60f9e8a000751e9a42198&name=982df2b2cb4b&r=982df2b2cb4b6001e8b60f9e8a000751e9a42198
 
-func fdToFile(fd int, name string) (*os.File) {
+func FdToFile(fd int, name string) (*os.File) {
 	return os.NewFile(uintptr(fd), name)
 }
 
-func socketpair(typ int) (a, b *os.File, err error) {
+func Socketpair(typ int) (a, b *os.File, err error) {
 	fd, err := syscall.Socketpair(syscall.AF_UNIX, typ, 0)
 	if err != nil {
 		e := os.NewSyscallError("socketpair", err.(syscall.Errno))
 		return nil, nil, e
 	}
 
-	a = fdToFile(fd[0], "socketpair-a")
-	b = fdToFile(fd[1], "socketpair-b")
+	a = FdToFile(fd[0], "socketpair-a")
+	b = FdToFile(fd[1], "socketpair-b")
 	return
 }
 
-func makeUnixSocket(f *os.File) (*net.UnixConn, error) {
+func MakeUnixSocket(f *os.File) (*net.UnixConn, error) {
 	fileConn, err := net.FileConn(f)
 	if err != nil {
 		return nil, err
@@ -42,15 +42,15 @@ func makeUnixSocket(f *os.File) (*net.UnixConn, error) {
 	return unixConn, nil
 }
 
-func readFileDescriptorFromUnixSocket(sock *net.UnixConn) (fd int, err error) {
-	_, fd, err = readFromUnixSocket(sock)
+func ReadFileDescriptorFromUnixSocket(sock *net.UnixConn) (fd int, err error) {
+	_, fd, err = ReadFromUnixSocket(sock)
 	if err != nil && fd < 0 {
 		err = errors.New("Invalid File Descriptor")
 	}
 	return 
 }
 
-func readFromUnixSocket(sock *net.UnixConn) (msg string, fd int, err error) {
+func ReadFromUnixSocket(sock *net.UnixConn) (msg string, fd int, err error) {
 	buf := make([]byte, 1024) // if FD: 1 byte   ; else: varies
 	oob := make([]byte, 32)   // if FD: 24 bytes ; else: 0
 

@@ -1,4 +1,4 @@
-package zeus
+package messages
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 	"errors"
 )
 
-func parsePidMessage(msg string) (int, string, error) {
+func ParsePidMessage(msg string) (int, string, error) {
 	parts := strings.SplitN(msg, ":", 3)
 	if parts[0] != "P" {
 		return -1, "", errors.New("Wrong message type!")
@@ -21,11 +21,11 @@ func parsePidMessage(msg string) (int, string, error) {
 	return pid, identifier, nil
 }
 
-func createActionMessage(action string) (string) {
+func CreateActionMessage(action string) (string) {
 	return "A:" + action
 }
 
-func parseActionResponseMessage(msg string) (string, error) {
+func ParseActionResponseMessage(msg string) (string, error) {
 	parts := strings.SplitN(msg, ":", 2)
 	if parts[0] != "R" {
 		return "", errors.New("Wrong message type!")
@@ -33,10 +33,11 @@ func parseActionResponseMessage(msg string) (string, error) {
 	return parts[1], nil
 }
 
-func createSpawnSlaveMessage(identifier string) (string) {
+func CreateSpawnSlaveMessage(identifier string) (string) {
 	return "S:" + identifier
 }
 
-func createSpawnCommandMessage(identifier string) (string) {
+func CreateSpawnCommandMessage(identifier string) (string) {
 	return "C:" + identifier
 }
+

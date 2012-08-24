@@ -16,8 +16,7 @@ The Slave determines whether it has been given an Identifier. If it is the first
 by the Master, and will not have one. When a Slave forks, it is passed an Identifier by the Master that it 
 passes along to the newly-forked process.
 
-The Slave sends a JSON-encoded hash of "pid" and "identifier", with "pid" being the integer pid of the current process,
-and "identifier" being the identifier, if there is one, or the empty string if none.
+The Slave sends a "Pid & Identifier" message containing the pid and the identifier (blank if initial process)
 
 #### 3. Action
 

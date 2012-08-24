@@ -5,10 +5,5 @@ import (
 )
 
 func main () {
-
-	conf := zeus.ParseConfig()
-
-	println(conf.Command)
-
-	zeus.Run(conf)
+	zeus.Pseudo()
 }
