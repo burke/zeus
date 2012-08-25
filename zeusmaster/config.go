@@ -1,7 +1,6 @@
-package config
+package zeusmaster
 
 import (
-	ptree "github.com/burke/zeus/processtree"
 	"goyaml"
 )
 
@@ -19,9 +18,9 @@ func parseConfig() (c config) {
 	return conf
 }
 
-func BuildTree() (*ptree.ProcessTree) {
+func BuildProcessTree() (*ProcessTree) {
 	conf := parseConfig()
-	tree := &ptree.ProcessTree{}
+	tree := &ProcessTree{}
 
 	tree.ExecCommand = conf.Command
 

@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/burke/zeus/zeus"
+	"github.com/burke/zeus/zeusmaster"
 )
 
 func main () {
-	zeus.Pseudo()
+	zeusmaster.Run()
 }

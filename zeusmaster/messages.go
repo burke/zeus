@@ -1,4 +1,4 @@
-package messages
+package zeusmaster
 
 import (
 	"strings"

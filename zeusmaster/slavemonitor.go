@@ -1,4 +1,4 @@
-package slavemonitor
+package zeusmaster
 
 import (
 	"syscall"
@@ -9,12 +9,10 @@ import (
 	"net"
 	"errors"
 
-	"github.com/burke/zeus/messages"
 	usock "github.com/burke/zeus/unixsocket"
-	ptree "github.com/burke/zeus/processtree"
 )
 
-func Run(tree *ptree.ProcessTree) {
+func StartSlaveMonitor(tree *ProcessTree) {
 	masterSockLocal, masterSockRemote, err := usock.Socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
 		panic(err)
@@ -63,14 +61,14 @@ func handleSlaveRegistration(clientSocket *net.UnixConn) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	pid, identifier, err := messages.ParsePidMessage(msg)
+	pid, identifier, err := ParsePidMessage(msg)
 	fmt.Println(pid, identifier)
 	if err != nil {
 		fmt.Println(err)
 	}
 
 	// Now that we have that, we look up and send the action for that identifier:
-	msg = messages.CreateActionMessage("File.open('omg.log','a'){|f|f.puts 'HAHA BUSINESS TIME'}")
+	msg = CreateActionMessage("File.open('omg.log','a'){|f|f.puts 'HAHA BUSINESS TIME'}")
 	clientSocket.Write([]byte(msg))
 
 	// It will respond with its status
@@ -78,12 +76,12 @@ func handleSlaveRegistration(clientSocket *net.UnixConn) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	msg, err = messages.ParseActionResponseMessage(msg)
+	msg, err = ParseActionResponseMessage(msg)
 	if err != nil {
 		fmt.Println(err)
 	}
 	if msg == "OK" {
-		msg = messages.CreateSpawnSlaveMessage("default_bundle")
+		msg = CreateSpawnSlaveMessage("default_bundle")
 		clientSocket.Write([]byte(msg))
 	} else {
 		fmt.Println(errors.New(msg))
