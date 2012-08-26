@@ -49,6 +49,7 @@ func (mon *SlaveMonitor) watchDeadSlaves() {
 
 func killSlave(slave *SlaveNode) {
 	pid := slave.Pid
+	fmt.Println("INFO:", slave.Name, "is being killed.")
 	syscall.Kill(pid, 9) // error implies already dead -- no worries.
 	slave.Pid = 0
 	slave.Socket = nil
@@ -135,5 +136,3 @@ func (mon *SlaveMonitor) handleSlaveRegistration(clientSocket *net.UnixConn) {
 	}
 
 }
-
-
