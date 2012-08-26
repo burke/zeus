@@ -16,7 +16,8 @@ type config struct {
 func BuildProcessTree() (*ProcessTree) {
 	conf := parseConfig()
 	tree := &ProcessTree{}
-	tree.nodesByName = make(map[string]*ProcessTreeNode)
+	tree.commandsByName = make(map[string]*CommandNode)
+	tree.slavesByName   = make(map[string]*SlaveNode)
 
 	tree.ExecCommand = conf.Command
 
@@ -33,11 +34,13 @@ func BuildProcessTree() (*ProcessTree) {
 
 func iterateItems(tree *ProcessTree, items map[string]string) {
 	for name, action := range items {
-		node := tree.FindNodeByName(name)
-		if node == nil {
+		if command := tree.FindCommandByName(name); command != nil {
+			command.Action = action
+		} else if slave := tree.FindSlaveByName(name) ; slave != nil {
+			slave.Action = action
+		} else {
 			panic("No map entry for " + name)
 		}
-		node.Action = action
 	}
 }
 

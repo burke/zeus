@@ -1,5 +1,5 @@
 ---
-command: "/usr/bin/env ruby -rzeus -e Zeus::Slave.boot"
+command: "/Users/burke/.rbenv/shims/ruby /Users/burke/go/src/github.com/burke/zeus/a.rb"
 
 plan:
   default_bundle:
@@ -18,7 +18,7 @@ plan:
 
 items:
   default_bundle: |
-    require 'rails/all'
+    File.open('omg.log','a'){|f|f.puts 'ZOMFG'}
   development_environment: |
     Bundler.require(:development)
   test_environment: |

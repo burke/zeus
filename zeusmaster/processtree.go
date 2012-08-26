@@ -1,9 +1,12 @@
 package zeusmaster
 
+import "net"
+
 type ProcessTree struct {
 	Root *SlaveNode
 	ExecCommand string
-	nodesByName map[string]*ProcessTreeNode
+	slavesByName map[string]*SlaveNode
+	commandsByName map[string]*CommandNode
 }
 
 type ProcessTreeNode struct {
@@ -13,6 +16,7 @@ type ProcessTreeNode struct {
 
 type SlaveNode struct {
 	ProcessTreeNode
+	Socket *net.UnixConn
 	Pid int
 	Slaves []*SlaveNode
 	Commands []*CommandNode
@@ -24,20 +28,27 @@ type CommandNode struct {
 	Aliases []string
 }
 
-func (tree *ProcessTree) NewCommandNode(name string, aliases []string) (*CommandNode) {
-	x := CommandNode{}
+func (tree *ProcessTree) NewCommandNode(name string, aliases []string) *CommandNode {
+	x := &CommandNode{}
 	x.Name = name
-	tree.nodesByName[name] = &x.ProcessTreeNode
-	return &x
+	tree.commandsByName[name] = x
+	return x
 }
 
-func (tree *ProcessTree) NewSlaveNode(name string) (*SlaveNode) {
-	x := SlaveNode{}
+func (tree *ProcessTree) NewSlaveNode(name string) *SlaveNode {
+	x := &SlaveNode{}
 	x.Name = name
-	tree.nodesByName[name] = &x.ProcessTreeNode
-	return &x
+	tree.slavesByName[name] = x
+	return x
 }
 
-func (tree *ProcessTree) FindNodeByName(name string) *ProcessTreeNode {
-	return tree.nodesByName[name]
+func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
+	if name == "" {
+		return tree.Root
+	}
+	return tree.slavesByName[name]
+}
+
+func (tree *ProcessTree) FindCommandByName(name string) *CommandNode {
+	return tree.commandsByName[name]
 }
