@@ -10,6 +10,7 @@ type ProcessTree struct {
 }
 
 type ProcessTreeNode struct {
+	Parent *SlaveNode
 	Name string
 	Action string
 }
@@ -28,15 +29,17 @@ type CommandNode struct {
 	Aliases []string
 }
 
-func (tree *ProcessTree) NewCommandNode(name string, aliases []string) *CommandNode {
+func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *SlaveNode) *CommandNode {
 	x := &CommandNode{}
+	x.Parent = parent
 	x.Name = name
 	tree.commandsByName[name] = x
 	return x
 }
 
-func (tree *ProcessTree) NewSlaveNode(name string) *SlaveNode {
+func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode {
 	x := &SlaveNode{}
+	x.Parent = parent
 	x.Name = name
 	tree.slavesByName[name] = x
 	return x

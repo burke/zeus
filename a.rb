@@ -49,11 +49,11 @@ def go(identifier="")
   # We are now 'connected'. From this point, we may receive requests to fork.
   loop do
     new_identifier = local.recv(1024)
-    # if new_identifier =~ /^command:/
-    #   fork { command(new_identifier) }
-    # else
-    #   fork { go(new_identifier) }
-    # end
+    if new_identifier =~ /^S:/
+      fork { go(new_identifier.sub(/^S:/,'')) }
+    else
+      fork { command(new_identifier.sub(/^C:/,'')) }
+    end
   end
 
 end

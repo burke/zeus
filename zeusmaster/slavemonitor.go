@@ -18,10 +18,7 @@ type SlaveMonitor struct {
 }
 
 func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File) {
-	monitor := &SlaveMonitor{tree: tree}
-
-	monitor.booted = make(chan string)
-	monitor.dead = make(chan string)
+	monitor := &SlaveMonitor{tree, make(chan string), make(chan string)}
 
 	go monitor.watchBootedSlaves()
 	go monitor.watchDeadSlaves()
@@ -44,8 +41,12 @@ func (mon *SlaveMonitor) watchDeadSlaves() {
 
 }
 
-func (mon *SlaveMonitor) bootSlave() {
-
+func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
+	if slave.Parent.Pid < 1 {
+		panic("Can't boot a slave with an unbooted parent")
+	}
+	msg := CreateSpawnSlaveMessage(slave.Name)
+	slave.Parent.Socket.Write([]byte(msg))
 }
 
 func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {

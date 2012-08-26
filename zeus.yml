@@ -18,12 +18,28 @@ plan:
 
 items:
   default_bundle: |
-    File.open('omg.log','a'){|f|f.puts 'ZOMFG'}
+    File.open('omg.log','a'){|f|f.puts 'default_bundle'}
   development_environment: |
-    Bundler.require(:development)
+    File.open('omg.log','a'){|f|f.puts 'development_environment'}
   test_environment: |
-    Bundler.require(:test)
+    File.open('omg.log','a'){|f|f.puts 'test_environment'}
+  prerake: |
+    File.open('omg.log','a'){|f|f.puts 'prerake'}
+  rake: |
+    File.open('omg.log','a'){|f|f.puts 'rake'}
   runner: |
-    omg
+    File.open('omg.log','a'){|f|f.puts 'runner'}
+  console: |
+    File.open('omg.log','a'){|f|f.puts 'console'}
+  testtask: |
+    File.open('omg.log','a'){|f|f.puts 'testtask'}
+  test_helper: |
+    File.open('omg.log','a'){|f|f.puts 'test_helper'}
+  testrb: |
+    File.open('omg.log','a'){|f|f.puts 'testrb'}
+  spec_helper: |
+    File.open('omg.log','a'){|f|f.puts 'spec_helper'}
+  rspec: |
+    File.open('omg.log','a'){|f|f.puts 'rspec'}
 
 
