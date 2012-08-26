@@ -1,21 +1,43 @@
 package zeusmaster
 
 type ProcessTree struct {
-	Root SlaveNode
+	Root *SlaveNode
 	ExecCommand string
+	nodesByName map[string]*ProcessTreeNode
+}
+
+type ProcessTreeNode struct {
+	Name string
+	Action string
 }
 
 type SlaveNode struct {
+	ProcessTreeNode
 	Pid int
-	Identifier string
-	Action string
-	Slaves []SlaveNode
-	Commands []CommandNode
+	Slaves []*SlaveNode
+	Commands []*CommandNode
 	Features map[string]bool
 }
 
 type CommandNode struct {
-	Identifier string
+	ProcessTreeNode
 	Aliases []string
-	Action string
+}
+
+func NewCommandNode(tree *ProcessTree, name string, aliases []string) (*CommandNode) {
+	x := CommandNode{}
+	x.Name = name
+	tree.nodesByName[name] = &x.ProcessTreeNode
+	return &x
+}
+
+func NewSlaveNode(tree *ProcessTree, name string) (*SlaveNode) {
+	x := SlaveNode{}
+	x.Name = name
+	tree.nodesByName[name] = &x.ProcessTreeNode
+	return &x
+}
+
+func (tree *ProcessTree) FindNodeByName(name string) *ProcessTreeNode {
+	return tree.nodesByName[name]
 }
