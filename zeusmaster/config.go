@@ -2,6 +2,9 @@ package zeusmaster
 
 import (
 	"goyaml"
+	"os"
+	"bufio"
+	"io/ioutil"
 )
 
 type config struct {
@@ -10,11 +13,15 @@ type config struct {
 	Items map[string]string
 }
 
-var zfile = "---\ncommand: \"/Users/burke/.rbenv/shims/ruby /Users/burke/go/src/github.com/burke/zeus/a.rb\"\nplan:\n  default_bundle:\n    development_environment:\n      prerake:\n        rake:\n      runner:\n      console:\n    test_environment:\n      testtask:\n      test_helper:\n        testrb:\n      spec_helper:\n        rspec:\n\nitems:\n  default_bundle: |\n    require 'rails/all'\n  development_environment: |\n    Bundler.require(:development)\n  test_environment: |\n    Bundler.require(:test)\n  runner: |\n    omg\n\n\n"
-
 func parseConfig() (c config) {
 	var conf config
-	goyaml.Unmarshal([]byte(zfile), &conf)
+
+	contents, err := readFile("zeus.yml")
+	if err != nil {
+		panic(err)
+	}
+
+	goyaml.Unmarshal(contents, &conf)
 	return conf
 }
 
@@ -25,4 +32,15 @@ func BuildProcessTree() (*ProcessTree) {
 	tree.ExecCommand = conf.Command
 
 	return tree
+}
+
+func readFile(path string) (contents []byte, err error) {
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	reader := bufio.NewReader(file)
+
+	contents, err = ioutil.ReadAll(reader)
+	return
 }
