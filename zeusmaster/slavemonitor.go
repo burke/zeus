@@ -1,6 +1,7 @@
 package zeusmaster
 
 import (
+	"syscall"
 	"strings"
 	"os"
 	"os/exec"
@@ -10,6 +11,8 @@ import (
 
 	usock "github.com/burke/zeus/unixsocket"
 )
+
+// TODO: Desperately need a mutex per-node.
 
 type SlaveMonitor struct {
 	tree *ProcessTree
@@ -38,7 +41,21 @@ func (mon *SlaveMonitor) watchBootedSlaves() {
 }
 
 func (mon *SlaveMonitor) watchDeadSlaves() {
+	for {
+		deadSlave := mon.tree.FindSlaveByName(<- mon.dead)
+		go killSlave(deadSlave)
+	}
+}
 
+func killSlave(slave *SlaveNode) {
+	pid := slave.Pid
+	syscall.Kill(pid, 9) // error implies already dead -- no worries.
+	slave.Pid = 0
+	slave.Socket = nil
+
+	for _, s := range slave.Slaves {
+		go killSlave(s)
+	}
 }
 
 func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {

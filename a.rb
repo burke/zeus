@@ -24,7 +24,8 @@ def handle_dead_children
 rescue Errno::ECHLD
 end
 
-def go(identifier="")
+def go(identifier=nil)
+  $0 = "zeus slave: #{identifier || "(root)"}"
   # okay, so I ahve this FD that I can use to send data to the master.
   fd = ENV['ZEUS_MASTER_FD'].to_i
   master = UNIXSocket.for_fd(fd)
