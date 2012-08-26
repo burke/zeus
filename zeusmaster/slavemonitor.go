@@ -1,7 +1,6 @@
 package zeusmaster
 
 import (
-	"syscall"
 	"strings"
 	"os"
 	"os/exec"
@@ -12,17 +11,7 @@ import (
 	usock "github.com/burke/zeus/unixsocket"
 )
 
-func StartSlaveMonitor(tree *ProcessTree) {
-	masterSockLocal, masterSockRemote, err := usock.Socketpair(syscall.SOCK_DGRAM)
-	if err != nil {
-		panic(err)
-	}
-
-	masterUSockLocal, err := usock.MakeUnixSocket(masterSockLocal)
-	if err != nil {
-		panic(err)
-	}
-
+func StartSlaveMonitor(tree *ProcessTree, masterUSockLocal *net.UnixConn, masterSockRemote *os.File) {
 	go runInitialCommand(masterSockRemote, tree.ExecCommand)
 	go slaveRegistrationHandler(masterUSockLocal)
 }
