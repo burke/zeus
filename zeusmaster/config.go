@@ -3,7 +3,6 @@ package zeusmaster
 import (
 	"goyaml"
 	"os"
-	"fmt"
 	"bufio"
 	"io/ioutil"
 )
@@ -52,7 +51,7 @@ func iteratePlan(tree *ProcessTree, plan map[interface{}]interface{}, parent *Sl
 		}
 
 		if subPlan, ok := v.(map[interface{}]interface{}); ok {
-			newNode := NewSlaveNode(tree, name)
+			newNode := tree.NewSlaveNode(name)
 			if parent == nil {
 				tree.Root = newNode
 			} else {
@@ -66,10 +65,10 @@ func iteratePlan(tree *ProcessTree, plan map[interface{}]interface{}, parent *Sl
 				for _, alias := range aliases {
 					strs = append(strs, alias.(string))
 				}
-				newNode = NewCommandNode(tree, name, strs)
+				newNode = tree.NewCommandNode(name, strs)
 			} else {
 				if v == nil {
-					newNode = NewCommandNode(tree, name, nil)
+					newNode = tree.NewCommandNode(name, nil)
 				} else {
 					panic("Invalid config file")
 				}

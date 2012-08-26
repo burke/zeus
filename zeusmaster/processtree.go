@@ -24,14 +24,14 @@ type CommandNode struct {
 	Aliases []string
 }
 
-func NewCommandNode(tree *ProcessTree, name string, aliases []string) (*CommandNode) {
+func (tree *ProcessTree) NewCommandNode(name string, aliases []string) (*CommandNode) {
 	x := CommandNode{}
 	x.Name = name
 	tree.nodesByName[name] = &x.ProcessTreeNode
 	return &x
 }
 
-func NewSlaveNode(tree *ProcessTree, name string) (*SlaveNode) {
+func (tree *ProcessTree) NewSlaveNode(name string) (*SlaveNode) {
 	x := SlaveNode{}
 	x.Name = name
 	tree.nodesByName[name] = &x.ProcessTreeNode
