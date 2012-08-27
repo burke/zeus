@@ -1,14 +1,15 @@
 require 'socket'
+require './fake_zeus'
 
 def report_error_to_master(local, e)
   local.write "R:FAIL"
 end
 
-def run_action(socket, action)
-  action.sub!(/^A:/,'')
-  eval action
+def run_action(socket, identifier)
+  FakeZeus.send(identifier)
   socket.write "R:OK"
 rescue Exception => e
+  File.open("wtf.log", "a") {|f| f.puts e.inspect , e.backtrace}
   report_error_to_master(socket, e)
 end
 
@@ -24,8 +25,9 @@ def handle_dead_children
 rescue Errno::ECHLD
 end
 
-def go(identifier=nil)
-  $0 = "zeus slave: #{identifier || "(root)"}"
+def go(identifier=:boot)
+  identifier = identifier.to_sym
+  $0 = "zeus slave: #{identifier}"
   # okay, so I ahve this FD that I can use to send data to the master.
   fd = ENV['ZEUS_MASTER_FD'].to_i
   master = UNIXSocket.for_fd(fd)
@@ -37,10 +39,8 @@ def go(identifier=nil)
   # Now I need to tell the master about my PID and ID
   local.write "P:#{Process.pid}:#{identifier}"
 
-  # So now we have to wait for the master to identify us and send our action.
-  # We'll run the action right away and then report status to the master.
-  action = local.recv(65536) # TODO: just chunk this?
-  run_action(local, action)
+  # Now we run the action and report its success/fail status to the master.
+  run_action(local, identifier)
 
   # the master wants to know about the files that running the action caused us to load.
   Thread.new { notify_newly_loaded_files }

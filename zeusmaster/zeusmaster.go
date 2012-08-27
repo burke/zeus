@@ -22,30 +22,41 @@ func Run() {
 		panic(err)
 	}
 
-	quit1 := make(chan bool, 1)
-	quit2 := make(chan bool, 1)
-	quit3 := make(chan bool, 1)
+	quit1 := make(chan bool)
+	quit2 := make(chan bool)
+	quit3 := make(chan bool)
 
-	StartSlaveMonitor(tree, localMasterUNIXSocket, remoteMasterSocket, quit1)
-	StartClientHandler(tree, quit2)
-	StartFileMonitor(tree, quit3)
+	go StartSlaveMonitor(tree, localMasterUNIXSocket, remoteMasterSocket, quit1)
+	go StartClientHandler(tree, quit2)
+	go StartFileMonitor(tree, quit3)
 
 	quit := make(chan bool, 1)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func(){
+		// FIXME: Unprecedented levels of jank, right here.
 		for _ = range c {
-			quit1 <- true
-			quit2 <- true
-			quit3 <- true
-			<- quit1
-			<- quit2
-			<- quit3
-			quit <- true
+			go func() {
+				quit1 <- true
+				<- quit1
+				quit <- true
+			}()
+			go func() {
+				quit2 <- true
+				<- quit2
+				quit <- true
+			}()
+			go func() {
+				quit3 <- true
+				<- quit3
+				quit <- true
+			}()
 		}
 	}()
 
+	<- quit
+	<- quit
 	<- quit
 }
 

@@ -16,7 +16,6 @@ type ProcessTreeNode struct {
 	mu sync.RWMutex
 	Parent *SlaveNode
 	Name string
-	Action string
 }
 
 type SlaveNode struct {

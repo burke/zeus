@@ -18,13 +18,11 @@ passes along to the newly-forked process.
 
 The Slave sends a "Pid & Identifier" message containing the pid and the identifier (blank if initial process)
 
-#### 3. Action
-
-The Master now sends, along `remote`, a string containing the code representing the action for this Slave.
-
-The Slave evaluates this code.
-
 #### 4. Action Result
+
+The Slave now executes the code it's intended to run by looking up the action
+in a collection of predefined actions indexed by identifier. In ruby this is implemented
+as a module that responds to a method named according to each identifier.
 
 If there were no runtime errors in evaluating the action, the Slave writes "OK" to `local`.
 

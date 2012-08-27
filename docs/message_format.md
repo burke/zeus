@@ -15,12 +15,6 @@ It is formed by joining the process's pid and identifier with a colon.
 
 Example: `P:1235:default_bundle`
 
-#### Action message (`A`, `SlaveMonitor`)
-
-This is sent from the Master to the Slave, and contains the action code to execute.
-
-Example: `A:require 'rails/all'\nBundler.require(:default)\n`
-
 #### Action response message (`R`, `SlaveMonitor`)
 
 This is sent from the Slave to the Master once the action has executed.
