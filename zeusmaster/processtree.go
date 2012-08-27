@@ -1,6 +1,9 @@
 package zeusmaster
 
-import "net"
+import (
+	"net"
+	"sync"
+)
 
 type ProcessTree struct {
 	Root *SlaveNode
@@ -10,6 +13,7 @@ type ProcessTree struct {
 }
 
 type ProcessTreeNode struct {
+	mu sync.RWMutex
 	Parent *SlaveNode
 	Name string
 	Action string

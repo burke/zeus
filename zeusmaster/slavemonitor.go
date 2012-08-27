@@ -12,8 +12,6 @@ import (
 	usock "github.com/burke/zeus/unixsocket"
 )
 
-// TODO: Desperately need a mutex per-node.
-
 type SlaveMonitor struct {
 	tree *ProcessTree
 	booted chan string
@@ -51,6 +49,9 @@ func (mon *SlaveMonitor) watchDeadSlaves() {
 }
 
 func killSlave(slave *SlaveNode) {
+	slave.mu.Lock()
+	defer slave.mu.Unlock()
+
 	pid := slave.Pid
 	fmt.Println("INFO:", slave.Name, "is being killed.")
 	syscall.Kill(pid, 9) // error implies already dead -- no worries.
@@ -111,6 +112,12 @@ func (mon *SlaveMonitor) handleSlaveRegistration(clientSocket *net.UnixConn) {
 	if node == nil {
 		panic("Unknown identifier")
 	}
+
+	// TODO: We actually don't really want to prevent killing this
+	// process while it's booting up.
+	node.mu.Lock()
+	defer node.mu.Unlock()
+
 	node.Pid = pid
 
 	if err != nil {

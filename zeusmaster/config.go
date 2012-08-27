@@ -1,11 +1,13 @@
 package zeusmaster
 
 import (
-	"goyaml"
+	"encoding/json"
 	"os"
 	"bufio"
 	"io/ioutil"
 )
+
+const configFile string = "zeus.json"
 
 type config struct {
 	Command string
@@ -21,39 +23,18 @@ func BuildProcessTree() (*ProcessTree) {
 
 	tree.ExecCommand = conf.Command
 
-	plan, ok := conf.Plan.(map[interface{}]interface{})
+	plan, ok := conf.Plan.(map[string]interface{})
 	if !ok {
 		panic("invalid config file")
 	}
-
 	iteratePlan(tree, plan, nil)
-	iterateItems(tree, conf.Items)
 
 	return tree
 }
 
-func iterateItems(tree *ProcessTree, items map[string]string) {
-	for name, action := range items {
-		if command := tree.FindCommandByName(name); command != nil {
-			command.Action = action
-		} else if slave := tree.FindSlaveByName(name) ; slave != nil {
-			slave.Action = action
-		} else {
-			panic("No map entry for " + name)
-		}
-	}
-}
-
-// so much ugly casting to deal with generic yaml. So much pain.
-// surely there's a nicer way to do this.
-func iteratePlan(tree *ProcessTree, plan map[interface{}]interface{}, parent *SlaveNode) {
-	for k, v := range plan {
-		name, ok := k.(string)
-		if !ok {
-			panic("key not a string")
-		}
-
-		if subPlan, ok := v.(map[interface{}]interface{}); ok {
+func iteratePlan(tree *ProcessTree, plan map[string]interface{}, parent *SlaveNode) {
+	for name, v := range plan {
+		if subPlan, ok := v.(map[string]interface{}); ok {
 			newNode := tree.NewSlaveNode(name, parent)
 			if parent == nil {
 				tree.Root = newNode
@@ -69,12 +50,10 @@ func iteratePlan(tree *ProcessTree, plan map[interface{}]interface{}, parent *Sl
 					strs = append(strs, alias.(string))
 				}
 				newNode = tree.NewCommandNode(name, strs, parent)
+			} else if v == nil {
+				newNode = tree.NewCommandNode(name, nil, parent)
 			} else {
-				if v == nil {
-					newNode = tree.NewCommandNode(name, nil, parent)
-				} else {
-					panic("Invalid config file")
-				}
+				panic("Invalid config file")
 			}
 			parent.Commands = append(parent.Commands, newNode)
 		}
@@ -84,12 +63,12 @@ func iteratePlan(tree *ProcessTree, plan map[interface{}]interface{}, parent *Sl
 func parseConfig() (c config) {
 	var conf config
 
-	contents, err := readFile("zeus.yml")
+	contents, err := readFile(configFile)
 	if err != nil {
 		panic(err)
 	}
 
-	goyaml.Unmarshal(contents, &conf)
+	json.Unmarshal(contents, &conf)
 	return conf
 }
 
