@@ -2,17 +2,20 @@
   "command": "/Users/burke/.rbenv/shims/ruby /Users/burke/go/src/github.com/burke/zeus/a.rb",
 
   "plan": {
-    "default_bundle": {
-      "development_environment": {
-        "prerake": {"rake": []},
-        "runner": ["r"],
-        "console": ["c"],
-        "server": ["s"]
-      },
-      "test_environment": {
-        "testtask": [],
-        "test_helper": {"testrb": []},
-        "spec_helper": {"rspec": []}
+    "boot": {
+      "default_bundle": {
+        "development_environment": {
+          "prerake": {"rake": []},
+          "runner": ["r"],
+          "console": ["c"],
+          "server": ["s"],
+          "generate": ["g"]
+        },
+        "test_environment": {
+          "testtask": [],
+          "test_helper": {"testrb": []},
+          "spec_helper": {"rspec": []}
+        }
       }
     }
   }
