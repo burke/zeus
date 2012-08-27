@@ -41,3 +41,14 @@ func CreateSpawnCommandMessage(identifier string) (string) {
 	return "C:" + identifier
 }
 
+func ParseClientCommandRequestMessage(msg string) (string, string, error) {
+	parts := strings.SplitN(msg, ":", 3)
+	if parts[0] != "Q" {
+		return "", "", errors.New("Wrong message type!")
+	}
+
+	command := parts[1]
+	arguments := parts[2]
+
+	return command, arguments, nil
+}

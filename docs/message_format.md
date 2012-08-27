@@ -38,6 +38,13 @@ This is sent from the Master to the Slave and contains the Identifier of a new C
 
 Example: `C:console`
 
+#### Client Command Request message (`Q`, `ClientHandler`)
+
+This is sent from the (external) Client process to the ClientHandler. It contains the reqeusted command
+identifier as well as any arguments (ie. the ARGV).
+
+Example: `Q:testrb:-Itest -I. test/unit/module_test.rb`
+
 #### Dead Child message (`D`, `SlaveMonitor`)
 
 This is sent from the Slave to the Master when one of its child processes has terminated.

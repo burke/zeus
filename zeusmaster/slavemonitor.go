@@ -2,6 +2,8 @@ package zeusmaster
 
 import (
 	"syscall"
+	"strconv"
+	"math/rand"
 	"strings"
 	"os"
 	"os/exec"
@@ -107,18 +109,19 @@ func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
 
 func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	// Having just started the process, we expect an IO, which we convert to a UNIX domain socket
-	clientFile := usock.FdToFile(fd, "boot-sock")
-	clientSocket, err := usock.MakeUnixSocket(clientFile)
+	fileName := strconv.Itoa(rand.Int())
+	slaveFile := usock.FdToFile(fd, fileName)
+	slaveSocket, err := usock.MakeUnixSocket(slaveFile)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	go mon.handleSlaveRegistration(clientSocket)
+	go mon.handleSlaveRegistration(slaveSocket)
 }
 
-func (mon *SlaveMonitor) handleSlaveRegistration(clientSocket *net.UnixConn) {
-	// We now expect the client to use this fd they send us to send a Pid&Identifier Message
-	msg, _, err := usock.ReadFromUnixSocket(clientSocket)
+func (mon *SlaveMonitor) handleSlaveRegistration(slaveSocket *net.UnixConn) {
+	// We now expect the slave to use this fd they send us to send a Pid&Identifier Message
+	msg, _, err := usock.ReadFromUnixSocket(slaveSocket)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -141,7 +144,7 @@ func (mon *SlaveMonitor) handleSlaveRegistration(clientSocket *net.UnixConn) {
 	}
 
 	// The slave will execute its action and respond with a status...
-	msg, _, err = usock.ReadFromUnixSocket(clientSocket)
+	msg, _, err = usock.ReadFromUnixSocket(slaveSocket)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -150,7 +153,7 @@ func (mon *SlaveMonitor) handleSlaveRegistration(clientSocket *net.UnixConn) {
 		fmt.Println(err)
 	}
 	if msg == "OK" {
-		node.Socket = clientSocket
+		node.Socket = slaveSocket
 		mon.booted <- identifier
 	} else {
 		// TODO: handle failed boots.

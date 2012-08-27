@@ -1,4 +1,5 @@
 require 'socket'
+require 'json'
 require './fake_zeus'
 
 def report_error_to_master(local, e)
@@ -50,12 +51,36 @@ def go(identifier=:boot)
   # We are now 'connected'. From this point, we may receive requests to fork.
   loop do
     new_identifier = local.recv(1024)
+    File.open("wtf.log", "a") {|f| f.puts "GOT #{new_identifier}"}
     if new_identifier =~ /^S:/
       fork { go(new_identifier.sub(/^S:/,'')) }
     else
-      fork { command(new_identifier.sub(/^C:/,'')) }
+      fork { command(new_identifier.sub(/^C:/,''), local) }
     end
   end
+
+end
+
+def command(identifier, sock)
+  local, remote = UNIXSocket.pair(:DGRAM)
+  sock.send_io(remote)
+
+  arguments = local.recv(1024)
+  File.open("wtf.log", "a") {|f| f.puts arguments.inspect }
+  client_terminal = local.recv_io
+
+  local.write "P:#{Process.pid}:\n"
+
+  $stdin.reopen(client_terminal)
+  $stdout.reopen(client_terminal)
+  $stderr.reopen(client_terminal)
+  ARGV.replace(JSON.parse(arguments))
+
+  # Process.setsid
+
+  FakeZeus.send(identifier)
+
+  puts "HOMG"
 
 end
 

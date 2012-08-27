@@ -42,12 +42,28 @@ func MakeUnixSocket(f *os.File) (*net.UnixConn, error) {
 	return unixConn, nil
 }
 
+func SendFdOverUnixSocket(sock *net.UnixConn, fd int) {
+	rights := syscall.UnixRights(fd)
+
+	dummyByte := []byte("x")
+	n, oobn, err := sock.WriteMsgUnix(dummyByte, rights, nil)
+	if err != nil {
+		fmt.Printf("SendFdOverUnixSocket WriteMsgUnix: %v %v\n", err, syscall.EINVAL)
+		return
+	}
+	if n != 1 || oobn != len(rights) {
+		fmt.Printf("SendFdOverUnixSocket WriteMsgUnix = %d, %d; want 1, %d\n", n, oobn, len(rights))
+		return
+	}
+
+}
+
 func ReadFileDescriptorFromUnixSocket(sock *net.UnixConn) (fd int, err error) {
 	_, fd, err = ReadFromUnixSocket(sock)
 	if err != nil && fd < 0 {
 		err = errors.New("Invalid File Descriptor")
 	}
-	return 
+	return
 }
 
 func ReadFromUnixSocket(sock *net.UnixConn) (msg string, fd int, err error) {
