@@ -20,7 +20,7 @@ type SlaveMonitor struct {
 	dead   chan string
 }
 
-func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File) {
+func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, quit chan bool) {
 	monitor := &SlaveMonitor{tree, make(chan string), make(chan string)}
 
 	go monitor.watchBootedSlaves()
@@ -28,6 +28,9 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File) 
 	go monitor.watchSlaveRegistrations(local)
 
 	monitor.startInitialProcess(remote)
+
+	<- quit
+	quit <- true
 }
 
 func (mon *SlaveMonitor) watchBootedSlaves() {

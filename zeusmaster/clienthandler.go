@@ -9,7 +9,7 @@ import (
 
 const zeusSockName string = ".zeus.sock"
 
-func StartClientHandler(tree *ProcessTree) {
+func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	path, _ := filepath.Abs(zeusSockName)
 	addr, err := net.ResolveUnixAddr("unix", path)
 	if err != nil {
@@ -21,12 +21,26 @@ func StartClientHandler(tree *ProcessTree) {
 	}
 	defer listener.Close()
 	defer removeSock(path)
-	for {
-		conn, err := listener.AcceptUnix()
-		if err != nil {
-			panic("Unable to accept Socket connection")
+
+	connections := make(chan *net.UnixConn)
+	go func() {
+		for {
+			if conn, err := listener.AcceptUnix() ; err != nil {
+				fmt.Println("Unable to accept Socket connection")
+			} else {
+				connections <- conn
+			}
 		}
-		go handleClientConnection(conn)
+	}()
+
+	for {
+		select {
+		case <- quit:
+			quit <- true
+			return
+		case conn := <- connections:
+			go handleClientConnection(conn)
+		}
 	}
 }
 
@@ -39,7 +53,7 @@ func removeSock(path string) {
 	}
 }
 
-func handleClientConnection(conn net.UnixConn) {
+func handleClientConnection(conn *net.UnixConn) {
 
 	// we have established first contact to the client.
 
@@ -49,10 +63,5 @@ func handleClientConnection(conn net.UnixConn) {
 
 	// Now we read a socket the client wants to use for exit status
 	// (can we just use the parameter conn?)
-
-}
-
-
-
 
 }

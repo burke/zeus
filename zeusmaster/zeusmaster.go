@@ -2,9 +2,8 @@ package zeusmaster
 
 import (
 	"syscall"
-	"time"
-	// "os"
-	// "os/signal"
+	"os"
+	"os/signal"
 
 	usock "github.com/burke/zeus/unixsocket"
 )
@@ -12,14 +11,6 @@ import (
 func Run() {
 	var tree *ProcessTree = BuildProcessTree()
 
-	// graceful shutdown...
-	// c := make(chan os.Signal, 1)
-	// signal.Notify(c, os.Interrupt)
-	// go function(){
-	// 	for sig := range c {
-	// 		// sig is a ^C, handle it
-	// 	}
-	// }()
 
 	localMasterSocket, remoteMasterSocket, err := usock.Socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
@@ -31,14 +22,31 @@ func Run() {
 		panic(err)
 	}
 
-	go StartSlaveMonitor(tree, localMasterUNIXSocket, remoteMasterSocket)
-	go StartClientHandler(tree)
-	go StartFileMonitor(tree)
+	quit1 := make(chan bool, 1)
+	quit2 := make(chan bool, 1)
+	quit3 := make(chan bool, 1)
 
-	for {
-		// is there a better way to sleep forever?
-		time.Sleep(1000 * time.Second)
-	}
+	StartSlaveMonitor(tree, localMasterUNIXSocket, remoteMasterSocket, quit1)
+	StartClientHandler(tree, quit2)
+	StartFileMonitor(tree, quit3)
+
+	quit := make(chan bool, 1)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func(){
+		for _ = range c {
+			quit1 <- true
+			quit2 <- true
+			quit3 <- true
+			<- quit1
+			<- quit2
+			<- quit3
+			quit <- true
+		}
+	}()
+
+	<- quit
 }
 
 
