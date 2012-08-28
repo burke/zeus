@@ -10,20 +10,21 @@ def run_action(socket, identifier)
   FakeZeus.send(identifier)
   socket.write "R:OK"
 rescue Exception => e
-  File.open("wtf.log", "a") {|f| f.puts e.inspect , e.backtrace}
   report_error_to_master(socket, e)
 end
 
 def notify_newly_loaded_files
 end
 
-def handle_dead_children
+def handle_dead_children(sock)
+  # TODO: It would be nice if it were impossible for this
+  # to interfere with the identifer -> IO thing.
   loop do
     pid = Process.wait(-1, Process::WNOHANG)
     break if pid.nil?
-    local.send("D:#{pid}")
+    # sock.send("D:#{pid}")
   end
-rescue Errno::ECHLD
+rescue Errno::ECHILD
 end
 
 def go(identifier=:boot)
@@ -51,7 +52,6 @@ def go(identifier=:boot)
   # We are now 'connected'. From this point, we may receive requests to fork.
   loop do
     new_identifier = local.recv(1024)
-    File.open("wtf.log", "a") {|f| f.puts "GOT #{new_identifier}"}
     if new_identifier =~ /^S:/
       fork { go(new_identifier.sub(/^S:/,'')) }
     else
@@ -64,9 +64,9 @@ end
 def command(identifier, sock)
   local, remote = UNIXSocket.pair(:DGRAM)
   sock.send_io(remote)
+  sock.close
 
   arguments = local.recv(1024)
-  File.open("wtf.log", "a") {|f| f.puts arguments.inspect }
   client_terminal = local.recv_io
 
   local.write "P:#{Process.pid}:\n"

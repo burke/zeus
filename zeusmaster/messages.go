@@ -21,10 +21,6 @@ func ParsePidMessage(msg string) (int, string, error) {
 	return pid, identifier, nil
 }
 
-func CreateActionMessage(action string) (string) {
-	return "A:" + action
-}
-
 func ParseActionResponseMessage(msg string) (string, error) {
 	parts := strings.SplitN(msg, ":", 2)
 	if parts[0] != "R" {
