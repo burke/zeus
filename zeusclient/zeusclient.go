@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"net"
+	"regexp"
 	"strings"
 	"strconv"
 	"syscall"
@@ -15,7 +16,11 @@ import (
 
 const (
 	zeusSockName = ".zeus.sock"
+	sigIntStr = "\x03"
+	sigQuitStr = "\x1C"
 )
+
+var signalRegex = regexp.MustCompile(sigIntStr + "|" + sigQuitStr)
 
 func Run() {
 	master, slave, err := pty.Open()
@@ -101,6 +106,15 @@ func Run() {
 			if err != nil {
 				eof <- true
 				break
+			}
+			// TODO: Since we have a byte array, this could actually just check integer values...
+			matches := signalRegex.FindAll(buf, 9999)
+			for _, match := range matches {
+				if m := string(match); m == sigIntStr {
+					syscall.Kill(pid, syscall.SIGINT)
+				} else if m == sigQuitStr {
+					syscall.Kill(pid, syscall.SIGQUIT)
+				}
 			}
 			master.Write(buf[:n])
 		}
