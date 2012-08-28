@@ -22,6 +22,7 @@ type SlaveNode struct {
 	ProcessTreeNode
 	Socket *net.UnixConn
 	Pid int
+	bootWait sync.RWMutex
 	Slaves []*SlaveNode
 	Commands []*CommandNode
 	Features map[string]bool
@@ -29,7 +30,21 @@ type SlaveNode struct {
 
 type CommandNode struct {
 	ProcessTreeNode
+	booting sync.RWMutex
 	Aliases []string
+}
+
+func (node *SlaveNode) WaitUntilBooted() {
+	node.bootWait.RLock()
+	node.bootWait.RUnlock()
+}
+
+func (node *SlaveNode) SignalBooted() {
+	node.bootWait.Unlock()
+}
+
+func (node *SlaveNode) SignalUnbooted() {
+	node.bootWait.Lock()
 }
 
 func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *SlaveNode) *CommandNode {
@@ -43,6 +58,7 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode {
 	x := &SlaveNode{}
 	x.Parent = parent
+	x.SignalUnbooted()
 	x.Name = name
 	tree.slavesByName[name] = x
 	return x

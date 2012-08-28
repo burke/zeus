@@ -154,6 +154,7 @@ func (mon *SlaveMonitor) handleSlaveRegistration(slaveSocket *net.UnixConn) {
 	}
 	if msg == "OK" {
 		node.Socket = slaveSocket
+		node.SignalBooted()
 		mon.booted <- identifier
 	} else {
 		// TODO: handle failed boots.

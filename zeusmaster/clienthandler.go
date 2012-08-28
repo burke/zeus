@@ -96,6 +96,7 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	// For now, we naively assume it's running...
 
 	// boot a command process and establish a socket connection to it.
+	slaveNode.WaitUntilBooted()
 	slaveNode.mu.Lock()
 	slaveNode.Socket.Write([]byte("C:console:"))
 
