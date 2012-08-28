@@ -1,16 +1,15 @@
 package zeusclient
 
 import (
-	"fmt"
 	"os"
-	"syscall"
-	"errors"
-	"unsafe"
+	"os/signal"
 	"net"
 	"strings"
 	"strconv"
+	"syscall"
 
 	"github.com/kr/pty"
+	"github.com/burke/ttyutils"
 	usock "github.com/burke/zeus/unixsocket"
 )
 
@@ -54,11 +53,15 @@ func Run() {
 	defer master.Close()
 	defer slave.Close()
 
-	if isTerminal(os.Stdout.Fd()) {
-		makeTerminalRaw(os.Stdout.Fd())
+	if ttyutils.IsTerminal(os.Stdout.Fd()) {
+		oldState, err := ttyutils.MakeTerminalRaw(os.Stdout.Fd())
+		if err != nil {
+			panic(err)
+		}
+		defer ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
 	}
 
-	mirrorWinsize(os.Stdout, master)
+	ttyutils.MirrorWinsize(os.Stdout, master)
 
 	addr, err := net.ResolveUnixAddr("unixgram", zeusSockName)
 	if err != nil {
@@ -87,6 +90,15 @@ func Run() {
 	if err != nil {
 		panic(err)
 	}
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGWINCH)
+	go func() {
+		for _ = range c {
+			ttyutils.MirrorWinsize(os.Stdout, master)
+			syscall.Kill(pid, syscall.SIGWINCH)
+		}
+	}()
 
 	println("PID:", pid)
 	var exitStatus int = -1
@@ -123,70 +135,3 @@ func Run() {
 
 }
 
-func isTerminal(fd uintptr) bool {
-	var termios struct_termios
-	_, _, err := syscall.Syscall6(syscall.SYS_IOCTL, fd, uintptr(sys_TIOCGETA), uintptr(unsafe.Pointer(&termios)), 0, 0, 0)
-	return err == 0
-}
-
-
-func mirrorWinsize(from, to *os.File) error {
-	var n int
-	err := ioctl(from.Fd(), syscall.TIOCGWINSZ, uintptr(unsafe.Pointer(&n)))
-	if err != nil {
-		return err
-	}
-	err = ioctl(to.Fd(), syscall.TIOCSWINSZ, uintptr(unsafe.Pointer(&n)))
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-func ioctl(fd uintptr, cmd uintptr, ptr uintptr) error {
-	_, _, e := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		fd,
-		cmd,
-		uintptr(unsafe.Pointer(ptr)),
-	)
-	if e != 0 {
-		return errors.New(fmt.Sprintf("ioctl failed! %s", e))
-	}
-	return nil
-}
-
-func makeTerminalRaw(fd uintptr) error {
-	var s struct_termios
-	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL, fd, uintptr(sys_TIOCGETA), uintptr(unsafe.Pointer(&s)), 0, 0, 0); err != 0 {
-		return err
-	}
-
-	s.c_iflag &^= sys_ISTRIP | sys_INLCR | sys_ICRNL | sys_IGNCR | sys_IXON | sys_IXOFF
-	s.c_lflag &^= sys_ECHO | sys_ICANON | sys_ISIG
-	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL, fd, uintptr(sys_TIOCSETA), uintptr(unsafe.Pointer(&s)), 0, 0, 0); err != 0 {
-		return err
-	}
-
-	return nil
-}
-
-
-// https://code.google.com/p/go/source/browse/ssh/terminal/util.go?repo=crypto&r=33d6505b6597ddd49a330ed2f8707bcb2c52318c
-/*
-func makeTerminalRaw(fd uintptr) error {
-	var s syscall.Termios
-	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL, fd, uintptr(syscall.TCGETS), uintptr(unsafe.Pointer(&s)), 0, 0, 0); err != 0 {
-		return err
-	}
-
-	s.Iflag &^= syscall.ISTRIP | syscall.INLCR | syscall.ICRNL | syscall.IGNCR | syscall.IXON | syscall.IXOFF
-	s.Lflag &^= syscall.ECHO | syscall.ICANON | syscall.ISIG
-	if _, _, err := syscall.Syscall6(syscall.SYS_IOCTL, fd, uintptr(syscall.TCSETS), uintptr(unsafe.Pointer(&s)), 0, 0, 0); err != 0 {
-		return err
-	}
-
-	return nil
-}
-
-*/
