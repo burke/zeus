@@ -1,11 +1,16 @@
 package main
 
 import (
-	// "github.com/burke/zeus/zeusmaster"
+	"os"
+
+	"github.com/burke/zeus/zeusmaster"
 	"github.com/burke/zeus/zeusclient"
 )
 
 func main () {
-	// zeusmaster.Run()
-	zeusclient.Run()
+	if len(os.Args) > 1 && os.Args[1] == "start" {
+		zeusmaster.Run()
+	} else {
+		zeusclient.Run()
+	}
 }

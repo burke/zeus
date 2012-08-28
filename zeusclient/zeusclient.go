@@ -6,8 +6,12 @@ import (
 	"syscall"
 	"errors"
 	"unsafe"
+	"net"
+	"strings"
+	"strconv"
 
 	"github.com/kr/pty"
+	usock "github.com/burke/zeus/unixsocket"
 )
 
 const (
@@ -23,6 +27,8 @@ const (
 	sys_ICANON = 0x100
 	sys_ISIG = 0x80
 	termios_NCCS = 20
+
+	zeusSockName = ".zeus.sock"
 )
 
 type tcflag_t uint64 // unsigned long
@@ -52,12 +58,70 @@ func Run() {
 		makeTerminalRaw(os.Stdout.Fd())
 	}
 
-	println("OMG")
-	println("ZOMFG")
+	mirrorWinsize(os.Stdout, master)
 
-	// command := "console"
+	addr, err := net.ResolveUnixAddr("unixgram", zeusSockName)
+	if err != nil {
+		panic("Can't resolve server address")
+	}
+
+	// TODO: WINCH
+	conn, err := net.DialUnix("unix", nil, addr)
+	if err != nil {
+		panic("Can't connect to Master")
+	}
+
+	msg := "Q:console:[]\n"
+	conn.Write([]byte(msg))
+
+	usock.SendFdOverUnixSocket(conn, int(slave.Fd()))
+	slave.Close()
+
+	msg, _, err = usock.ReadFromUnixSocket(conn)
+	if err != nil {
+		panic(err)
+	}
+
+	parts := strings.Split(msg, "\n")
+	pid, err := strconv.Atoi(parts[0])
+	if err != nil {
+		panic(err)
+	}
+
+	println("PID:", pid)
+	var exitStatus int = -1
+	if len(parts) > 2 {
+		exitStatus, err = strconv.Atoi(parts[0])
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	for {
+		buf := make([]byte,1024)
+		n, err := master.Read(buf)
+		if err != nil {
+			break
+		}
+		os.Stdout.Write(buf[:n])
+	}
+
+
+	if exitStatus == -1 {
+		msg, _, err = usock.ReadFromUnixSocket(conn)
+		if err != nil {
+			panic(err)
+		}
+		parts := strings.Split(msg, "\n")
+		exitStatus, err = strconv.Atoi(parts[0])
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	os.Exit(exitStatus)
+
 }
-
 
 func isTerminal(fd uintptr) bool {
 	var termios struct_termios

@@ -5,7 +5,7 @@ module FakeZeus
       if s.to_sym == :console
         exit 204
       elsif s.to_sym == :development_environment
-        raise "HOMG"
+        # raise "HOMG"
       end
     end
   end
