@@ -97,8 +97,20 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 
 	// boot a command process and establish a socket connection to it.
 	slaveNode.WaitUntilBooted()
+
+	if slaveNode.Error != "" {
+		// we can skip steps 3-5 as they deal with the command process we're not spawning.
+		// Write a fake pid (step 6)
+		conn.Write([]byte("0\n"))
+		// Write the error message to the terminal
+		clientFile.Write([]byte(slaveNode.Error))
+		// Skip step 7, and write an exit code to the client (step 8)
+		conn.Write([]byte("1\n"))
+		return
+	}
+
 	slaveNode.mu.Lock()
-	slaveNode.Socket.Write([]byte("C:console:"))
+	slaveNode.Socket.Write([]byte("C:console"))
 
 	commandFd, err := usock.ReadFileDescriptorFromUnixSocket(slaveNode.Socket)
 	slaveNode.mu.Unlock()
@@ -109,7 +121,7 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	commandFile := usock.FdToFile(commandFd, fileName)
 	defer commandFile.Close()
 
-	// Send the arguments to the command process (step 4)
+	// Send the arguments to the command process (step 3)
 	commandFile.Write([]byte(arguments)) // TODO: What if they're too long?
 
 	commandSocket, err := usock.MakeUnixSocket(commandFile)
@@ -118,7 +130,7 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	}
 	defer commandSocket.Close()
 
-	// Send the client terminal connection to the command process (step 3)
+	// Send the client terminal connection to the command process (step 4)
 	usock.SendFdOverUnixSocket(commandSocket, clientFd)
 
 	// Receive the pid from the command process (step 5)
@@ -132,7 +144,15 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	strPid := strconv.Itoa(intPid)
 	conn.Write([]byte(strPid + "\n"))
 
-	// Now we read a socket the client wants to use for exit status
-	// (can we just use the parameter conn?)
+	// Receive the exit status from the command (step 7)
+	msg, _, err = usock.ReadFromUnixSocket(commandSocket)
+	if err != nil {
+		println(err)
+	}
+
+	// Forward the exit status to the Client (step 8)
+	conn.Write([]byte(msg))
+
+	// Done! Hooray!
 
 }

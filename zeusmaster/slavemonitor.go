@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"fmt"
 	"net"
-	"errors"
 
 	usock "github.com/burke/zeus/unixsocket"
 )
@@ -77,10 +76,8 @@ func killSlave(slave *SlaveNode) {
 
 	pid := slave.Pid
 	fmt.Println("INFO:", slave.Name, "is being killed.")
-	println("Cleaning up slaves", pid)
 	syscall.Kill(pid, 9) // error implies already dead -- no worries.
-	slave.Pid = 0
-	slave.Socket = nil
+	slave.Wipe()
 
 	for _, s := range slave.Slaves {
 		go killSlave(s)
@@ -154,11 +151,10 @@ func (mon *SlaveMonitor) handleSlaveRegistration(slaveSocket *net.UnixConn) {
 	}
 	if msg == "OK" {
 		node.Socket = slaveSocket
-		node.SignalBooted()
-		mon.booted <- identifier
 	} else {
-		// TODO: handle failed boots.
-		fmt.Println(errors.New(msg))
+		node.RegisterError(msg)
 	}
+	node.SignalBooted()
+	mon.booted <- identifier
 
 }

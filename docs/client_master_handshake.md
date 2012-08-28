@@ -7,6 +7,10 @@
     4            ----------->     | Arguments
     5            <-----------     | pid
     6  <---------                 | pid
+           (time passes)
+    7            <-----------     | exit status
+    8  <---------                 | exit status
+
 
 #### 1. Command & Arguments (Client -> Master)
 
@@ -19,13 +23,13 @@ and any arguments to run with (ie. the ARGV). See message_format.md for more inf
 
 The Client then sends an IO over the server socket to be used for raw terminal IO.
 
-#### 3. Terminal IO (Master -> Command)
-
-The Master forks a new Command process and sends it the Terminal IO from the Client.
-
-#### 4. Arguments (Master -> Command)
+#### 3. Arguments (Master -> Command)
 
 The Master sends the Client arguments from step 1 to the Command.
+
+#### 4. Terminal IO (Master -> Command)
+
+The Master forks a new Command process and sends it the Terminal IO from the Client.
 
 #### 5. Pid (Command -> Master)
 
@@ -36,3 +40,18 @@ The Command process sends the Master its pid, using a Pid & Identifier message.
 The Master responds to the client with the pid of the newly-forked Command process.
 
 The Client is now connected to the Command process.
+
+#### 7. Exit status (Command -> Master)
+
+When the command terminates, it must send its exit code to the master. This is normally
+easiest to implement as a wrapper process that does the setsid, then forks the command
+and `waitpid`s on it.
+
+The form of this message is `{{code}}\n`, eg: `1\n`.
+
+#### 8. Exit status (Master -> Client)
+
+Finally, the Master forwards the exit status to the Client. The command cycle is now complete.
+
+The form of this message is `{{code}}\n`, eg: `1\n`.
+

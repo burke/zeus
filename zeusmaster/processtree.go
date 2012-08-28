@@ -22,6 +22,7 @@ type SlaveNode struct {
 	ProcessTreeNode
 	Socket *net.UnixConn
 	Pid int
+	Error string
 	bootWait sync.RWMutex
 	Slaves []*SlaveNode
 	Commands []*CommandNode
@@ -73,4 +74,17 @@ func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
 
 func (tree *ProcessTree) FindCommandByName(name string) *CommandNode {
 	return tree.commandsByName[name]
+}
+
+func (node *SlaveNode) RegisterError(msg string) {
+	node.Error = msg
+	for _, slave := range node.Slaves {
+		slave.RegisterError(msg)
+	}
+}
+
+func (node *SlaveNode) Wipe() {
+	node.Pid = 0
+	node.Socket = nil
+	node.Error = ""
 }

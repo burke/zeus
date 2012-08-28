@@ -2,8 +2,13 @@ require 'socket'
 require 'json'
 require './fake_zeus'
 
-def report_error_to_master(local, e)
-  local.write "R:FAIL"
+def report_error_to_master(local, error)
+  str = "R:"
+  str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
+  error.backtrace[1..-1].each do |line|
+    str << "\tfrom #{line}\n"
+  end
+  local.write str
 end
 
 def run_action(socket, identifier)
@@ -62,26 +67,34 @@ def go(identifier=:boot)
 end
 
 def command(identifier, sock)
+  $0 = "zeus runner: #{identifier}"
+  Process.setsid
+
   local, remote = UNIXSocket.pair(:DGRAM)
   sock.send_io(remote)
+  remote.close
   sock.close
 
   arguments = local.recv(1024)
-  client_terminal = local.recv_io
 
-  local.write "P:#{Process.pid}:\n"
+  pid = fork {
+    client_terminal = local.recv_io
+    local.write "P:#{Process.pid}:\n"
+    local.close
 
-  $stdin.reopen(client_terminal)
-  $stdout.reopen(client_terminal)
-  $stderr.reopen(client_terminal)
-  ARGV.replace(JSON.parse(arguments))
+    $stdin.reopen(client_terminal)
+    $stdout.reopen(client_terminal)
+    $stderr.reopen(client_terminal)
+    ARGV.replace(JSON.parse(arguments))
 
-  # Process.setsid
+    FakeZeus.send(identifier)
+  }
 
-  FakeZeus.send(identifier)
+  Process.wait(pid)
+  code = $?.exitstatus
 
-  puts "HOMG"
-
+  local.write "#{code}\n"
+  local.close
 end
 
 __FILE__ == $0 and go()
