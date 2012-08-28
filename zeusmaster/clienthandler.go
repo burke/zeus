@@ -59,6 +59,7 @@ func removeSock(path string) {
 
 // see docs/client_master_handshake.md
 func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
+	defer conn.Close()
 
 	// we have established first contact to the client.
 
@@ -87,6 +88,9 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 		fmt.Println("Expected FD, none received!")
 		return
 	}
+	fileName := strconv.Itoa(rand.Int())
+	clientFile := usock.FdToFile(clientFd, fileName)
+	defer clientFile.Close()
 
 	// We now need to fork a new command process.
 	// For now, we naively assume it's running...
@@ -100,8 +104,9 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	if err != nil {
 		fmt.Println("Couldn't start command process!", err)
 	}
-	fileName := strconv.Itoa(rand.Int())
+	fileName = strconv.Itoa(rand.Int())
 	commandFile := usock.FdToFile(commandFd, fileName)
+	defer commandFile.Close()
 
 	// Send the arguments to the command process (step 4)
 	commandFile.Write([]byte(arguments)) // TODO: What if they're too long?
@@ -110,11 +115,10 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	if err != nil {
 		fmt.Println("MakeUnixSocket", err)
 	}
+	defer commandSocket.Close()
 
 	// Send the client terminal connection to the command process (step 3)
 	usock.SendFdOverUnixSocket(commandSocket, clientFd)
-
-	println("PREPID")
 
 	// Receive the pid from the command process (step 5)
 	msg, _, err = usock.ReadFromUnixSocket(commandSocket)
@@ -122,9 +126,6 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 		println(err)
 	}
 	intPid, _, _ := ParsePidMessage(msg)
-
-	println("POSTPID")
-	println(msg)
 
 	// Send the pid to the client process (step 6)
 	strPid := strconv.Itoa(intPid)
