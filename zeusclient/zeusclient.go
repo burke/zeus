@@ -81,15 +81,32 @@ func Run() {
 		}
 	}
 
-	for {
-		buf := make([]byte,1024)
-		n, err := master.Read(buf)
-		if err != nil {
-			break
+	eof := make(chan bool)
+	go func() {
+		for {
+			buf := make([]byte,1024)
+			n, err := master.Read(buf)
+			if err != nil {
+				eof <- true
+				break
+			}
+			os.Stdout.Write(buf[:n])
 		}
-		os.Stdout.Write(buf[:n])
-	}
+	}()
 
+	go func() {
+		for {
+			buf := make([]byte,1024)
+			n, err := os.Stdin.Read(buf)
+			if err != nil {
+				eof <- true
+				break
+			}
+			master.Write(buf[:n])
+		}
+	}()
+
+	<- eof
 
 	if exitStatus == -1 {
 		msg, _, err = usock.ReadFromUnixSocket(conn)
