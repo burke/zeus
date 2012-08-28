@@ -1,7 +1,7 @@
 MAKEFLAGS = -s
 
 all:
-	go build
+	go build -o ../../build/zeus-$(GOOS)-$(GOARCH)
 
 clean:
 	go clean
