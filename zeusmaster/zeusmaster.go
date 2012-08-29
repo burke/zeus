@@ -6,11 +6,22 @@ import (
 	"os/signal"
 
 	usock "github.com/burke/zeus/unixsocket"
+	// slog "github.com/burke/zeus/shinylog"
 )
 
+var exitNow chan int
+var exitStatus int = 0
+
+func ExitNow(code int) {
+	exitNow <- code
+}
+
 func Run() {
+	println("\x1b[32mStarting \x1b[33mZ\x1b[31me\x1b[34mu\x1b[35ms\x1b[32m server\x1b[0m")
+
 	var tree *ProcessTree = BuildProcessTree()
 
+	exitNow = make(chan int)
 
 	localMasterSocket, remoteMasterSocket, err := usock.Socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
@@ -35,29 +46,37 @@ func Run() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func(){
+		<- c
 		// FIXME: Unprecedented levels of jank, right here.
-		for _ = range c {
-			go func() {
-				quit1 <- true
-				<- quit1
-				quit <- true
-			}()
-			go func() {
-				quit2 <- true
-				<- quit2
-				quit <- true
-			}()
-			go func() {
-				quit3 <- true
-				<- quit3
-				quit <- true
-			}()
-		}
+		terminateComponents(quit1, quit2, quit3, quit)
+	}()
+
+	go func() {
+		exitStatus = <- exitNow
+		terminateComponents(quit1, quit2, quit3, quit)
 	}()
 
 	<- quit
 	<- quit
 	<- quit
+
+	os.Exit(exitStatus)
 }
 
-
+func terminateComponents(quit1, quit2, quit3, quit chan bool) {
+	go func() {
+		quit1 <- true
+		<- quit1
+		quit <- true
+	}()
+	go func() {
+		quit2 <- true
+		<- quit2
+		quit <- true
+	}()
+	go func() {
+		quit3 <- true
+		<- quit3
+		quit <- true
+	}()
+}

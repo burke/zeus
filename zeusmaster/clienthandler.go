@@ -6,7 +6,6 @@ import (
 	"net"
 	"strconv"
 	"path/filepath"
-	"os"
 
 	usock "github.com/burke/zeus/unixsocket"
 )
@@ -24,7 +23,6 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 		panic("Can't create listener")
 	}
 	defer listener.Close()
-	defer removeSock(path)
 
 	connections := make(chan *net.UnixConn)
 	go func() {
@@ -45,15 +43,6 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 		case conn := <- connections:
 			go handleClientConnection(tree, conn)
 		}
-	}
-}
-
-func removeSock(path string) {
-	err := os.Remove(path)
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("REMOVED ", path)
 	}
 }
 

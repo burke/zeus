@@ -11,6 +11,7 @@ import (
 	"net"
 
 	usock "github.com/burke/zeus/unixsocket"
+	slog "github.com/burke/zeus/shinylog"
 )
 
 type SlaveMonitor struct {
@@ -53,7 +54,6 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, 
 }
 
 func (mon *SlaveMonitor) cleanupChildren() {
-	println("Cleaning up slaves")
 	killSlave(mon.tree.Root)
 }
 
@@ -66,6 +66,7 @@ func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
 }
 
 func (mon *SlaveMonitor) slaveDidDie(slaveName string) {
+	println("Stage `" + slaveName + "` died.")
 	deadSlave := mon.tree.FindSlaveByName(slaveName)
 	go killSlave(deadSlave)
 }
@@ -75,8 +76,10 @@ func killSlave(slave *SlaveNode) {
 	defer slave.mu.Unlock()
 
 	pid := slave.Pid
-	fmt.Println("INFO:", slave.Name, "is being killed.")
-	syscall.Kill(pid, 9) // error implies already dead -- no worries.
+	if pid > 0 {
+		fmt.Println("INFO:", slave.Name, "is being killed.")
+		syscall.Kill(pid, 9) // error implies already dead -- no worries.
+	}
 	slave.Wipe()
 
 	for _, s := range slave.Slaves {
@@ -101,7 +104,14 @@ func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
 	cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
 	cmd.ExtraFiles = []*os.File{sock}
 
+	// We want to let this process run "forever", but it will eventually
+	// die... either on program termination or when its dependencies change
+	// and we kill it.
 	cmd.Run()
+
+	slog.Red("Failed to initialize application from \x1b[33mzeus.json\x1b[31m.")
+	slog.Red("The json file is valid, but the \x1b[33mcommand\x1b[31m crashed.")
+	ExitNow(1)
 }
 
 func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
