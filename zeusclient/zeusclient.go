@@ -46,7 +46,6 @@ func Run() {
 		panic("Can't resolve server address")
 	}
 
-	// TODO: WINCH
 	conn, err := net.DialUnix("unix", nil, addr)
 	if err != nil {
 		panic("Can't connect to Master")
