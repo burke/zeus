@@ -11,6 +11,7 @@ import (
 
 	"github.com/kr/pty"
 	"github.com/burke/ttyutils"
+	slog "github.com/burke/zeus/shinylog"
 	usock "github.com/burke/zeus/unixsocket"
 )
 
@@ -23,7 +24,11 @@ const (
 
 var signalRegex = regexp.MustCompile(sigIntStr + "|" + sigQuitStr + "|" + sigTstpStr)
 
-func Run() {
+func Run(color bool) {
+	if !color {
+		slog.DisableColor()
+		DisableErrorColor()
+	}
 	master, slave, err := pty.Open()
 	if err != nil {
 		panic(err)
@@ -51,8 +56,7 @@ func Run() {
 		ErrorCantConnectToMaster()
 	}
 
-	// TODO: rest of args
-	msg := "Q:" + os.Args[1] + ":[]\n"
+	msg := CreateCommandAndArgumentsMessage(os.Args[1], os.Args[2:])
 	conn.Write([]byte(msg))
 
 	usock.SendFdOverUnixSocket(conn, int(slave.Fd()))

@@ -16,8 +16,12 @@ func ExitNow(code int) {
 	exitNow <- code
 }
 
-func Run() {
-	println("\x1b[32mStarting \x1b[33mZ\x1b[31me\x1b[34mu\x1b[35ms\x1b[32m server\x1b[0m")
+func Run(color bool) {
+	if !color {
+		slog.DisableColor()
+		DisableErrorColor()
+	}
+	slog.StartingZeus()
 
 	var tree *ProcessTree = BuildProcessTree()
 
