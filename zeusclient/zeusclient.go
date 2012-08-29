@@ -48,10 +48,11 @@ func Run() {
 
 	conn, err := net.DialUnix("unix", nil, addr)
 	if err != nil {
-		panic("Can't connect to Master")
+		ErrorCantConnectToMaster()
 	}
 
-	msg := "Q:console:[]\n"
+	// TODO: rest of args
+	msg := "Q:" + os.Args[1] + ":[]\n"
 	conn.Write([]byte(msg))
 
 	usock.SendFdOverUnixSocket(conn, int(slave.Fd()))
@@ -81,7 +82,6 @@ func Run() {
 		}
 	}()
 
-	println("PID:", pid)
 	var exitStatus int = -1
 	if len(parts) > 2 {
 		exitStatus, err = strconv.Atoi(parts[0])

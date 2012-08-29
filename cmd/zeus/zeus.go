@@ -19,9 +19,15 @@ func main () {
 		zeusInit()
 	} else if os.Args[1] == "commands" {
 		zeusCommands()
-	} else if os.Args[0] == "console" {
-		zeusclient.Run()
 	} else {
+		tree := zeusmaster.BuildProcessTree()
+		for name, _ := range tree.CommandsByName {
+			if os.Args[1] == name {
+				zeusclient.Run()
+				return
+			}
+		}
+
 		commandNotFound(os.Args[1])
 	}
 }
@@ -37,7 +43,10 @@ func zeusInit() {
 }
 
 func zeusCommands() {
-	println("\x1b[31mzeus-commands is not yet implemented.\x1b[0m")
+	tree := zeusmaster.BuildProcessTree()
+	for name, _ := range tree.CommandsByName {
+		println("zeus " + name)
+	}
 }
 
 func commandNotFound(command string) {

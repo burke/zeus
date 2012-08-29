@@ -8,8 +8,8 @@ import (
 type ProcessTree struct {
 	Root *SlaveNode
 	ExecCommand string
-	slavesByName map[string]*SlaveNode
-	commandsByName map[string]*CommandNode
+	SlavesByName map[string]*SlaveNode
+	CommandsByName map[string]*CommandNode
 }
 
 type ProcessTreeNode struct {
@@ -52,7 +52,7 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 	x := &CommandNode{}
 	x.Parent = parent
 	x.Name = name
-	tree.commandsByName[name] = x
+	tree.CommandsByName[name] = x
 	return x
 }
 
@@ -61,7 +61,7 @@ func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode
 	x.Parent = parent
 	x.SignalUnbooted()
 	x.Name = name
-	tree.slavesByName[name] = x
+	tree.SlavesByName[name] = x
 	return x
 }
 
@@ -69,11 +69,11 @@ func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
 	if name == "" {
 		return tree.Root
 	}
-	return tree.slavesByName[name]
+	return tree.SlavesByName[name]
 }
 
 func (tree *ProcessTree) FindCommandByName(name string) *CommandNode {
-	return tree.commandsByName[name]
+	return tree.CommandsByName[name]
 }
 
 func (node *SlaveNode) RegisterError(msg string) {
