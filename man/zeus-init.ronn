@@ -1,0 +1,10 @@
+zeus-init(1) -- Generate a template zeus.json
+=============================================
+
+## SYNOPSIS
+
+`zeus init`
+
+## DESCRIPTION
+
+Not yet implemented.

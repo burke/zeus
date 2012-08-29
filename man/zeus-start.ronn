@@ -1,0 +1,12 @@
+zeus-start(1) -- Start a zeus server
+====================================
+
+## SYNOPSIS
+
+`zeus start`
+
+## DESCRIPTION
+
+Start a server.
+
+TODO: Better docs.

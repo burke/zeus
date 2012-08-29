@@ -2,6 +2,7 @@ package zeusmaster
 
 import (
 	"fmt"
+	"time"
 	"math/rand"
 	"net"
 	"strconv"
@@ -20,7 +21,7 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	}
 	listener, err := net.ListenUnix("unix", addr)
 	if err != nil {
-		panic("Can't create listener")
+		ErrorCantCreateListener()
 	}
 	defer listener.Close()
 
@@ -28,7 +29,8 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	go func() {
 		for {
 			if conn, err := listener.AcceptUnix() ; err != nil {
-				fmt.Println("Unable to accept Socket connection")
+				errorUnableToAcceptSocketConnection()
+				time.Sleep(500 * time.Millisecond)
 			} else {
 				connections <- conn
 			}

@@ -1,5 +1,5 @@
 {
-  "command": "/Users/burke/.rbenv/shims/ruby -rzeus -eZeus.go",
+  "command": "/Users/burke/.rbenv/shims/ruby /Users/burke/go/src/github.com/burke/zeus/a.rb",
 
   "plan": {
     "boot": {

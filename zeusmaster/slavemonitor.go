@@ -59,7 +59,7 @@ func (mon *SlaveMonitor) cleanupChildren() {
 
 func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
 	bootedSlave := mon.tree.FindSlaveByName(slaveName)
-	fmt.Println("INFO:", bootedSlave.Name, "is booted.")
+	slog.SlaveBooted(bootedSlave.Name)
 	for _, slave := range bootedSlave.Slaves {
 		go mon.bootSlave(slave)
 	}
@@ -77,8 +77,12 @@ func killSlave(slave *SlaveNode) {
 
 	pid := slave.Pid
 	if pid > 0 {
-		fmt.Println("INFO:", slave.Name, "is being killed.")
-		syscall.Kill(pid, 9) // error implies already dead -- no worries.
+		err := syscall.Kill(pid, 9) // error implies already dead -- no worries.
+		if err != nil {
+			slog.SlaveKilled(slave.Name)
+		} else {
+			slog.SlaveDied(slave.Name)
+		}
 	}
 	slave.Wipe()
 
@@ -107,11 +111,12 @@ func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
 	// We want to let this process run "forever", but it will eventually
 	// die... either on program termination or when its dependencies change
 	// and we kill it.
-	cmd.Run()
-
-	slog.Red("Failed to initialize application from \x1b[33mzeus.json\x1b[31m.")
-	slog.Red("The json file is valid, but the \x1b[33mcommand\x1b[31m crashed.")
-	ExitNow(1)
+	output, err := cmd.CombinedOutput()
+	if err != nil && string(err.Error()[:11]) != "exit status" {
+		ErrorConfigCommandCouldntStart(err.Error())
+	} else {
+		ErrorConfigCommandCrashed(string(output))
+	}
 }
 
 func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {

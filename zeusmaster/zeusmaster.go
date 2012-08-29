@@ -6,7 +6,7 @@ import (
 	"os/signal"
 
 	usock "github.com/burke/zeus/unixsocket"
-	// slog "github.com/burke/zeus/shinylog"
+	slog "github.com/burke/zeus/shinylog"
 )
 
 var exitNow chan int
@@ -64,6 +64,8 @@ func Run() {
 }
 
 func terminateComponents(quit1, quit2, quit3, quit chan bool) {
+	SuppressErrors()
+	slog.Suppress()
 	go func() {
 		quit1 <- true
 		<- quit1

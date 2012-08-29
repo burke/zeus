@@ -1,0 +1,45 @@
+ZEUS(1) 							       ZEUS(1)
+
+
+
+NAME
+       zeus - Intelligent Application Multi-Preloader
+
+SYNOPSIS
+       zeus COMMAND [--no-color] [--verbose] [ARGS]
+
+DESCRIPTION
+       Zeus makes working with large codebases must less painful.
+
+       It  it  primarily  targeted  at ruby and other dynamic languages, where
+       application boot time can be tens of seconds, but can be made  to  work
+       for nearly any language.
+
+       Zeus works by booting your application up in stages, and accepting con-
+       nections to transform a booted process into something  useful  (e.g.  a
+       server).
+
+       To  use	zeus  with  a  Ruby  on  Rails	application,  install  the gem
+       'zeus-rails'.
+
+OPTIONS
+       --no-color
+	      Prints all output without color
+
+       --verbose
+	      Prints out additional logging information
+
+BUILTIN COMMANDS
+       zeus start(1) zeus-start.1.html
+	      Start a zeus server in the current directory using zeus.json
+
+       zeus init(1) zeus-init.1.html
+	      Generate a template zeus.json
+
+       zeus commands(1)
+	      List the commands defined by zeus.json
+
+
+
+
+				  August 2012			       ZEUS(1)

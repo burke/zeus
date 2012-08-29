@@ -25,7 +25,7 @@ func BuildProcessTree() (*ProcessTree) {
 
 	plan, ok := conf.Plan.(map[string]interface{})
 	if !ok {
-		panic("invalid config file")
+		ErrorConfigFileInvalidFormat()
 	}
 	iteratePlan(tree, plan, nil)
 
@@ -53,7 +53,7 @@ func iteratePlan(tree *ProcessTree, plan map[string]interface{}, parent *SlaveNo
 			} else if v == nil {
 				newNode = tree.NewCommandNode(name, nil, parent)
 			} else {
-				panic("Invalid config file")
+				ErrorConfigFileInvalidFormat()
 			}
 			parent.Commands = append(parent.Commands, newNode)
 		}
@@ -65,6 +65,7 @@ func parseConfig() (c config) {
 
 	contents, err := readFile(configFile)
 	if err != nil {
+		ErrorConfigFileInvalidJson()
 		panic(err)
 	}
 
