@@ -34,7 +34,6 @@ func Run(color bool) {
 		panic(err)
 	}
 	defer master.Close()
-	defer slave.Close()
 
 	if ttyutils.IsTerminal(os.Stdout.Fd()) {
 		oldState, err := ttyutils.MakeTerminalRaw(os.Stdout.Fd())

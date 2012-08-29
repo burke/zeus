@@ -52,7 +52,8 @@ def go(identifier=:boot)
   # the master wants to know about the files that running the action caused us to load.
   Thread.new { notify_newly_loaded_files }
 
-  trap("CHLD") { handle_dead_children(local) }
+  pid = Process.pid
+  trap("CHLD") { handle_dead_children(local) if Process.pid == pid }
 
   # We are now 'connected'. From this point, we may receive requests to fork.
   loop do
@@ -90,10 +91,13 @@ def command(identifier, sock)
     FakeZeus.send(identifier)
   }
 
+  File.open("f.log", "a") {|f|f.puts "A"}
   Process.wait(pid)
+  File.open("f.log", "a") {|f|f.puts "B"}
   code = $?.exitstatus
 
   local.write "#{code}\n"
+  File.open("f.log", "a") {|f|f.puts "C"}
   local.close
 end
 

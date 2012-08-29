@@ -11,7 +11,7 @@ SYNOPSIS
 DESCRIPTION
        Zeus makes working with large codebases much less painful.
 
-       It  it  primarily  targeted  at ruby and other dynamic languages, where
+       It  is  primarily  targeted  at ruby and other dynamic languages, where
        application boot time can be tens of seconds, but it  can  be  made  to
        work for nearly any language.
 

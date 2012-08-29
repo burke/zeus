@@ -101,7 +101,7 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	}
 
 	slaveNode.mu.Lock()
-	slaveNode.Socket.Write([]byte("C:console"))
+	slaveNode.Socket.Write([]byte("C:" + command))
 
 	commandFd, err := usock.ReadFileDescriptorFromUnixSocket(slaveNode.Socket)
 	slaveNode.mu.Unlock()
