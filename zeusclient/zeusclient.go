@@ -18,9 +18,10 @@ const (
 	zeusSockName = ".zeus.sock"
 	sigIntStr = "\x03"
 	sigQuitStr = "\x1C"
+	sigTstpStr = "\x1A"
 )
 
-var signalRegex = regexp.MustCompile(sigIntStr + "|" + sigQuitStr)
+var signalRegex = regexp.MustCompile(sigIntStr + "|" + sigQuitStr + "|" + sigTstpStr)
 
 func Run() {
 	master, slave, err := pty.Open()
@@ -69,11 +70,15 @@ func Run() {
 	}
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGWINCH)
+	signal.Notify(c, syscall.SIGWINCH, syscall.SIGCONT)
 	go func() {
-		for _ = range c {
-			ttyutils.MirrorWinsize(os.Stdout, master)
-			syscall.Kill(pid, syscall.SIGWINCH)
+		for sig := range c {
+			if sig == syscall.SIGCONT {
+				syscall.Kill(pid, syscall.SIGCONT)
+			} else if sig == syscall.SIGWINCH {
+				ttyutils.MirrorWinsize(os.Stdout, master)
+				syscall.Kill(pid, syscall.SIGWINCH)
+			}
 		}
 	}()
 
@@ -114,6 +119,9 @@ func Run() {
 					syscall.Kill(pid, syscall.SIGINT)
 				} else if m == sigQuitStr {
 					syscall.Kill(pid, syscall.SIGQUIT)
+				} else if m == sigTstpStr {
+					syscall.Kill(pid, syscall.SIGTSTP)
+					syscall.Kill(os.Getpid(), syscall.SIGTSTP)
 				}
 			}
 			master.Write(buf[:n])
