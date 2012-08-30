@@ -1,17 +1,16 @@
-#!/bin/sh
+platform = `uname -sm`
 
-case $(uname -sm) in
-  Darwin*)   zeus=zeus-darwin-amd64 ;;
-  Linux*64*) zeus=zeus-linux-amd64  ;;
-  Linux*)    zeus=zeus-linux-386    ;;
-  *)
-    echo "Zeus is not supported on your platform."
-    echo "It's not likely to ever be possible on Windows."
-    echo "If you're using another platform that you think should work easily, open an issue at:"
-    echo "https://github.com/burke/zeus/issues"
-    exit 1
-    ;;
-esac
+exe = case platform
+      when /^Darwin/    ; "zeus-darwin-amd64"
+      when /^Linux.*64/ ; "zeus-linux-amd64"
+      when /^Linux.*/   ; "zeus-linux-386"
+      else
+        puts "Zeus is not supported on your platform."
+        puts "It's not likely to ever be possible on Windows."
+        puts "If you're using another platform that you think should work easily, open an issue at:"
+        puts "https://github.com/burke/zeus/issues"
+        exit 1
+      end
 
-zeusgemdir=$(dirname $(dirname $0))
-exec $zeusgemdir/build/$zeus $*
+zeusgemdir = File.expand_path("../../", __FILE__)
+exec "#{zeusgemdir}/build/#{exe}", ARGV.join(" ")

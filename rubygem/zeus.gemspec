@@ -1,9 +1,15 @@
 # -*- encoding: utf-8 -*-
-begin
-  require File.expand_path('../lib/zeus/version', __FILE__)
-rescue LoadError
-  # this happens if the `version` rake task has not been run.
-end
+
+# This preamble is basically used to deal with bundler/gem_tasks, which loads the gemspec
+# on rake init, even though some prerequisites are not generated until `rake build` is invoked.
+version = begin
+            require File.expand_path('../lib/zeus/version', __FILE__)
+            Zeus::VERSION
+          rescue LoadError
+            "0.0.0"
+          end
+
+files = File.exist?('MANIFEST') ? File.read("MANIFEST").lines.map(&:chomp) : []
 
 Gem::Specification.new do |gem|
   gem.authors       = ["Burke Libbey"]
@@ -12,11 +18,11 @@ Gem::Specification.new do |gem|
   gem.summary       = %q{Zeus is an intelligent preloader for ruby applications. It allows normal development tasks to be run in a fraction of a second.}
   gem.homepage      = "http://zeus.is"
 
-  gem.files         = File.read('MANIFEST').lines.map(&:chomp)
+  gem.files         = files
   gem.executables   = ['zeus']
   gem.test_files    = []
   gem.name          = "zeus"
   gem.require_paths = ["lib"]
-  gem.version       = defined?(Zeus::VERSION) ? Zeus::VERSION : "0.0.0"
+  gem.version       = version
   gem.license       = "MIT"
 end

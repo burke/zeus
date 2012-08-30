@@ -101,10 +101,10 @@ func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
 
 func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
 	command := mon.tree.ExecCommand
-	parts := strings.SplitN(command, " ", 2)
+	parts := strings.Split(command, " ")
 	executable := parts[0]
-	args := parts[1]
-	cmd := exec.Command(executable, args)
+	args := parts[1:]
+	cmd := exec.Command(executable, args...)
 	cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
 	cmd.ExtraFiles = []*os.File{sock}
 

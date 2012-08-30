@@ -6,7 +6,7 @@ require 'pathname'
 ROOT_PATH = Pathname.new(File.expand_path("../../", __FILE__))
 RUBYGEM_PATH = Pathname.new(File.expand_path("../", __FILE__))
 
-task build: [:import_externals, :version]
+task build: [:import_externals, :version, :manifest]
 task default: :build
 
 task :import_externals do
