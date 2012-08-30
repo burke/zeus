@@ -65,8 +65,12 @@ func parseConfig() (c config) {
 
 	contents, err := readFile(configFile)
 	if err != nil {
-		ErrorConfigFileInvalidJson()
-		panic(err)
+		switch err.(type) {
+		case *os.PathError:
+			ErrorConfigFileMissing()
+		default:
+			ErrorConfigFileInvalidJson()
+		}
 	}
 
 	json.Unmarshal(contents, &conf)

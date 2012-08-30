@@ -127,6 +127,12 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	if err != nil {
 		fmt.Println(err)
 	}
+	if err = slaveSocket.SetReadBuffer(262144) ; err != nil {
+		fmt.Println(err)
+	}
+	if err = slaveSocket.SetWriteBuffer(262144) ; err != nil {
+		fmt.Println(err)
+	}
 
 	go mon.handleSlaveRegistration(slaveSocket)
 }

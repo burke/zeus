@@ -51,7 +51,7 @@ func main () {
 
 func execManPage(page string) {
 	path, _:= os.Getwd()
-	zeus := string(path) + "/man-comp/" + page
+	zeus := string(path) + "/man/build/" + page
 	syscall.Exec("/usr/bin/env", []string{"/usr/bin/env", "man", zeus}, os.Environ())
 }
 

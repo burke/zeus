@@ -2,6 +2,7 @@ package zeusmaster
 
 import (
 	"fmt"
+	"os"
 	slog "github.com/burke/zeus/shinylog"
 )
 
@@ -41,17 +42,27 @@ func ErrorConfigCommandCrashed(output string) {
 	}
 }
 
+// The config file is loaded before any goroutines arything is done that requires cleanup,
+// and our exitNow goroutine has not been spawned yet, so we will just explicitly exit
+// in the json-related errors..
+func ErrorConfigFileMissing() {
+	if !suppressErrors {
+		slog.Red("Required config file " + yellow + "zeus.json" + red + " found in the current directory.")
+		os.Exit(1)
+	}
+}
+
 func ErrorConfigFileInvalidJson() {
 	if !suppressErrors {
 		slog.Red("The config file " + yellow + "zeus.json" + red + " contains invalid JSON and could not be parsed.")
-		ExitNow(1)
+		os.Exit(1)
 	}
 }
 
 func ErrorConfigFileInvalidFormat() {
 	if !suppressErrors {
 		slog.Red("The config file " + yellow + "zeus.json" + red + " is not in the correct format.")
-		ExitNow(1)
+		os.Exit(1)
 	}
 }
 
