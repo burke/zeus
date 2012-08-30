@@ -6,6 +6,7 @@ import (
 
 	"github.com/burke/zeus/zeusmaster"
 	"github.com/burke/zeus/zeusclient"
+	"github.com/burke/zeus/zeusversion"
 )
 
 var color bool = true
@@ -27,6 +28,8 @@ func main () {
 		execManPage("zeus")
 	} else if args[0] == "help" {
 		commandSpecificHelp(args)
+	} else if args[0] == "version" || args[0] == "--version" {
+		println("Zeus version " + zeusversion.VERSION)
 	} else if args[0] == "start" {
 		zeusmaster.Run(color)
 	} else if args[0] == "init" {

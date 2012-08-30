@@ -1,0 +1,17 @@
+#!/bin/sh
+
+case $(uname -sm) in
+  Darwin*)   zeus=zeus-darwin-amd64 ;;
+  Linux*64*) zeus=zeus-linux-amd64  ;;
+  Linux*)    zeus=zeus-linux-386    ;;
+  *)
+    echo "Zeus is not supported on your platform."
+    echo "It's not likely to ever be possible on Windows."
+    echo "If you're using another platform that you think should work easily, open an issue at:"
+    echo "https://github.com/burke/zeus/issues"
+    exit 1
+    ;;
+esac
+
+zeusgemdir=$(dirname $(dirname $0))
+exec $zeusgemdir/build/$zeus $*

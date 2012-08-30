@@ -1,13 +1,17 @@
 require 'ronn'
 
+task default: 'man:gen'
+
+task clean: 'man:clean'
+
 namespace :man do
-  directory "man-comp"
+  directory "build"
 
-  Dir["man/*.ronn"].each do |ronn|
+  Dir["src/*.ronn"].each do |ronn|
     basename = File.basename(ronn, ".ronn")
-    roff = "man-comp/#{basename}"
+    roff = "build/#{basename}"
 
-    file roff => ["man-comp", ronn] do
+    file roff => ["build", ronn] do
       sh "#{Gem.ruby} -S ronn --roff --pipe #{ronn} > #{roff}"
     end
 
@@ -19,11 +23,11 @@ namespace :man do
   end
 
   desc "Build the man pages"
-  task :build => "man:build_all_pages"
+  task :gen => "man:build_all_pages"
 
   desc "Clean up from the built man pages"
   task :clean do
-    rm_rf "man-comp"
+    rm_rf "build"
   end
 end
 

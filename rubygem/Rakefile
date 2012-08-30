@@ -1,0 +1,57 @@
+#!/usr/bin/env rake
+require "bundler/gem_tasks"
+require 'fileutils'
+require 'pathname'
+
+ROOT_PATH = Pathname.new(File.expand_path("../../", __FILE__))
+RUBYGEM_PATH = Pathname.new(File.expand_path("../", __FILE__))
+
+task build: [:import_externals, :version]
+task default: :build
+
+task :import_externals do
+  puts "building rubygem"
+
+  Rake::Task[:clean].invoke
+
+  FileUtils.rm_r(RUBYGEM_PATH + "man") rescue nil
+  FileUtils.rm_r(RUBYGEM_PATH + "build") rescue nil
+
+  # manpages
+  FileUtils.mkdir(RUBYGEM_PATH + "man")
+  FileUtils.cp_r(ROOT_PATH + "man/build", RUBYGEM_PATH + "man")
+
+  # multi-arch binaries
+  FileUtils.cp_r(ROOT_PATH + "build", RUBYGEM_PATH + "build")
+
+  Rake::Task[:manifest].invoke
+  Rake::Task[:build].invoke
+end
+
+task :version do
+  version = File.read('../VERSION').chomp
+  File.open('lib/zeus/version.rb', 'w') { |f| f.puts <<END
+module Zeus
+  VERSION = "#{version}"
+end
+END
+  }
+end
+
+task :manifest do
+  files = `find . -type file | sed 's|^\./||'`.lines.map(&:chomp)
+  exceptions = [
+    /.gitignore$/,
+    /^MANIFEST$/,
+    /^pkg\//,
+  ]
+  files.reject! { |f| exceptions.any? {|ex| f =~ ex }}
+  File.open('MANIFEST', 'w') {|f| f.puts files.join("\n") }
+end
+
+task :clean do
+  FileUtils.rm(RUBYGEM_PATH + "lib/zeus/version.rb") rescue nil
+  FileUtils.rm_r(RUBYGEM_PATH + "man") rescue nil
+  FileUtils.rm_r(RUBYGEM_PATH + "build") rescue nil
+end
+

@@ -6,6 +6,11 @@ module ZeusRails
 
   class << self
 
+    def after_fork
+      reconnect_activerecord
+      restart_girl_friday
+    end
+
     def boot
       require BOOT_PATH
       require 'rails/all'
@@ -107,5 +112,23 @@ module ZeusRails
     def rspec
       exit RSpec::Core::Runner.run(ARGV)
     end
+
+
+    private
+
+    def restart_girl_friday
+      return unless defined?(GirlFriday::WorkQueue)
+      # The Actor is run in a thread, and threads don't persist post-fork.
+      # We just need to restart each one in the newly-forked process.
+      ObjectSpace.each_object(GirlFriday::WorkQueue) do |obj|
+        obj.send(:start)
+      end
+    end
+
+    def reconnect_activerecord
+      ActiveRecord::Base.clear_all_connections! rescue nil
+      ActiveRecord::Base.establish_connection   rescue nil
+    end
+
   end
 end

@@ -3,7 +3,6 @@
 .bundle
 .config
 .yardoc
-build/*
 Gemfile.lock
 InstalledFiles
 _yardoc
@@ -16,9 +15,5 @@ spec/reports
 test/tmp
 test/version_tmp
 tmp
-*.log
-build/*
-man/build/*
-rubygem/man/*
-rubygem/build/*
-zeusversion/zeusversion.go
+lib/zeus/version.rb
+MANIFEST
