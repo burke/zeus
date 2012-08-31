@@ -22,3 +22,4 @@ man/build/*
 rubygem/man/*
 rubygem/build/*
 zeusversion/zeusversion.go
+.DS_Store

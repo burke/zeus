@@ -7,7 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		8280E8D615C7303000CDF59C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 8280E8D515C7303000CDF59C /* main.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
+		82BB6EF315F1359700C709C3 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 82BB6EF215F1359700C709C3 /* main.m */; settings = {COMPILER_FLAGS = "-fno-objc-arc"; }; };
 		82DC011D15C6EE760098E42A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82DC011C15C6EE760098E42A /* Foundation.framework */; };
 		82DC012B15C6F2620098E42A /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 82DC012A15C6F2620098E42A /* CoreServices.framework */; };
 /* End PBXBuildFile section */
@@ -25,7 +25,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		8280E8D515C7303000CDF59C /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		82BB6EF215F1359700C709C3 /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = SOURCE_ROOT; };
 		82DC011815C6EE760098E42A /* fsevents-wrapper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "fsevents-wrapper"; sourceTree = BUILT_PRODUCTS_DIR; };
 		82DC011C15C6EE760098E42A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		82DC012215C6EE760098E42A /* fsevents-wrapper-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "fsevents-wrapper-Prefix.pch"; sourceTree = "<group>"; };
@@ -74,7 +74,7 @@
 		82DC011E15C6EE760098E42A /* fsevents-wrapper */ = {
 			isa = PBXGroup;
 			children = (
-				8280E8D515C7303000CDF59C /* main.m */,
+				82BB6EF215F1359700C709C3 /* main.m */,
 				82DC012115C6EE760098E42A /* Supporting Files */,
 			);
 			path = "fsevents-wrapper";
@@ -139,7 +139,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8280E8D615C7303000CDF59C /* main.m in Sources */,
+				82BB6EF315F1359700C709C3 /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -63,10 +63,10 @@ int maybeAddFileToWatchList(char *line)
     CFStringRef file = CFStringCreateWithCString(NULL, line, kCFStringEncodingASCII);
     struct stat buf;
     
-    if ([_fileIsWatched valueForKey:(__bridge NSString *)file]) {
+    if ([_fileIsWatched valueForKey:(NSString *)file]) {
         return 0;
     } else if (stat(line, &buf) == 0) {
-        [_fileIsWatched setValue:@"yes" forKey:(__bridge NSString *)file];
+        [_fileIsWatched setValue:@"yes" forKey:(NSString *)file];
         CFArrayAppendValue(_watchedFiles, file);
         return 1;
     } else {

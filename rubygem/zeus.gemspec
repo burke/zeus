@@ -19,6 +19,7 @@ Gem::Specification.new do |gem|
   gem.homepage      = "http://zeus.is"
 
   gem.files         = files
+  gem.extensions    = ["ext/inotify-wrapper/extconf.rb"]
   gem.executables   = ['zeus']
   gem.test_files    = []
   gem.name          = "zeus"
