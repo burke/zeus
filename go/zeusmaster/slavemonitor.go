@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"net"
 
-	usock "github.com/burke/zeus/unixsocket"
-	slog "github.com/burke/zeus/shinylog"
+	usock "github.com/burke/zeus/go/unixsocket"
+	slog "github.com/burke/zeus/go/shinylog"
 )
 
 type SlaveMonitor struct {

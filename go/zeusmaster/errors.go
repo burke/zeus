@@ -3,7 +3,7 @@ package zeusmaster
 import (
 	"fmt"
 	"os"
-	slog "github.com/burke/zeus/shinylog"
+	slog "github.com/burke/zeus/go/shinylog"
 )
 
 var suppressErrors bool = false

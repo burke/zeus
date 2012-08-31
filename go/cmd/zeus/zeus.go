@@ -2,11 +2,12 @@ package main
 
 import (
 	"os"
+	"strings"
 	"syscall"
 
-	"github.com/burke/zeus/zeusmaster"
-	"github.com/burke/zeus/zeusclient"
-	"github.com/burke/zeus/zeusversion"
+	"github.com/burke/zeus/go/zeusmaster"
+	"github.com/burke/zeus/go/zeusclient"
+	"github.com/burke/zeus/go/zeusversion"
 )
 
 var color bool = true
@@ -38,7 +39,7 @@ func main () {
 		zeusCommands()
 	} else {
 		tree := zeusmaster.BuildProcessTree()
-		for name, _ := range tree.CommandsByName {
+		for _, name := range tree.AllCommandsAndAliases() {
 			if args[0] == name {
 				zeusclient.Run(color)
 				return
@@ -75,8 +76,13 @@ func zeusInit() {
 
 func zeusCommands() {
 	tree := zeusmaster.BuildProcessTree()
-	for name, _ := range tree.CommandsByName {
-		println("zeus " + name)
+	for name, command := range tree.CommandsByName {
+		alia := strings.Join(command.Aliases, ", ")
+		var aliasPart string
+		if len(alia) > 0 {
+			aliasPart = " (alias: " + alia + ")"
+		}
+		println("zeus " + name + aliasPart)
 	}
 }
 

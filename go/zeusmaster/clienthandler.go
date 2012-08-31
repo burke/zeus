@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"path/filepath"
 
-	usock "github.com/burke/zeus/unixsocket"
+	usock "github.com/burke/zeus/go/unixsocket"
 )
 
 const zeusSockName string = ".zeus.sock"

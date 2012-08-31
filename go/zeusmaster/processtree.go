@@ -52,6 +52,7 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 	x := &CommandNode{}
 	x.Parent = parent
 	x.Name = name
+	x.Aliases = aliases
 	tree.CommandsByName[name] = x
 	return x
 }
@@ -88,3 +89,15 @@ func (node *SlaveNode) Wipe() {
 	node.Socket = nil
 	node.Error = ""
 }
+
+func (tree *ProcessTree) AllCommandsAndAliases() []string {
+	var values []string
+	for name, command := range tree.CommandsByName {
+		values = append(values, name)
+		for _, alias := range command.Aliases {
+			values = append(values, alias)
+		}
+	}
+	return values
+}
+

@@ -46,8 +46,8 @@ func iteratePlan(tree *ProcessTree, plan map[string]interface{}, parent *SlaveNo
 			var newNode *CommandNode
 			if aliases, ok := v.([]interface{}); ok {
 				strs := make([]string, len(aliases))
-				for _, alias := range aliases {
-					strs = append(strs, alias.(string))
+				for i, alias := range aliases {
+					strs[i] = alias.(string)
 				}
 				newNode = tree.NewCommandNode(name, strs, parent)
 			} else if v == nil {

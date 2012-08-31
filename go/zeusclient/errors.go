@@ -2,7 +2,7 @@ package zeusclient
 
 import (
 	"os"
-	slog "github.com/burke/zeus/shinylog"
+	slog "github.com/burke/zeus/go/shinylog"
 )
 
 var (
