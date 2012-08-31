@@ -1,162 +1,0 @@
-Tfsevents-wrapper
-v5
-r1
-cCheck dependencies
-cCompileC build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m normal x86_64 objective-c com.apple.compilers.llvm.clang.1_0.compiler
-cCompileC build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m normal i386 objective-c com.apple.compilers.llvm.clang.1_0.compiler
-cLd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper normal x86_64
-cLd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper normal i386
-cCreateUniversalBinary /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper normal "x86_64 i386"
-cGenerateDSYMFile /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk
-c000000004F90F72900000000000000CC
-t1334900521
-s204
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/CoreServices.framework/CoreServices
-c00000000501166D20000000000007B40
-t1343317714
-s31552
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/CoreServices.framework/Headers/CoreServices.h
-c00000000501166D20000000000000401
-t1343317714
-s1025
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/Foundation.framework/Foundation
-c00000000501166D200000000000AE03C
-t1343317714
-s712764
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/System/Library/Frameworks/Foundation.framework/Headers/Foundation.h
-c00000000501166D20000000000001534
-t1343317714
-s5428
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/fcntl.h
-c00000000501166D700000000000003EA
-t1343317719
-s1002
-
-N/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk/usr/include/sys/stat.h
-c00000000501166D70000000000004B2F
-t1343317719
-s19247
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper
-t1346437029
-s48160
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM
-t1346437029
-s102
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper
-t1346437029
-s15392
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper.LinkFileList
-c000000005040FFA5000000000000008E
-t1346437029
-s142
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.o
-t1346437029
-s14204
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper
-t1346437029
-s27056
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper.LinkFileList
-c000000005040FFA50000000000000090
-t1346437029
-s144
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.o
-t1346437029
-s15800
-
-N/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m
-c000000005040FE530000000000000DB8
-t1346436691
-s3512
-i<Foundation/Foundation.h>
-i<CoreServices/CoreServices.h>
-i<sys/stat.h>
-i<fcntl.h>
-
-CCheck dependencies
-r0
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection18"Check dependencies4c8ed34239f1b541^ad30ed4239f1b541^---0#1#0#--18"Check dependencies36"4E42BB39-DE78-49C5-9B72-E10558AECE8E-
-
-CCompileC build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m normal i386 objective-c com.apple.compilers.llvm.clang.1_0.compiler
-s368129829.114226
-e368129829.653481
-r1
-xCompileC
-xbuild/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.o
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m
-xnormal
-xi386
-xobjective-c
-xcom.apple.compilers.llvm.clang.1_0.compiler
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection69"Compile /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.me2901d2537f1b541^454aa72537f1b541^---0#0#0#-19%DVTDocumentLocation2@77"file://localhost/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m0000000000000000^3118"CompileC build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.o main.m normal i386 objective-c com.apple.compilers.llvm.clang.1_0.compiler    cd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c -arch i386 -fmessage-length=0 -std=gnu99 -fobjc-arc -Wno-trigraphs -fpascal-strings -Os -Wno-missing-field-initializers -Wno-missing-prototypes -Wreturn-type -Wno-implicit-atomic-properties -Wno-receiver-is-weak -Wduplicate-method-match -Wformat -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-sign-compare -Wshorten-64-to-32 -Wpointer-sign -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wno-undeclared-selector -Wno-deprecated-implementations -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk -fasm-blocks -Wprotocol -Wdeprecated-declarations -mmacosx-version-min=10.7 -g -fvisibility=hidden -Wno-sign-conversion "-DIBOutlet=__attribute__((iboutlet))" "-DIBOutletCollection(ClassName)=__attribute__((iboutletcollection(ClassName)))" "-DIBAction=void)__attribute__((ibaction)" -iquote /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-generated-files.hmap -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-own-target-headers.hmap -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-all-target-headers.hmap -iquote /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-project-headers.hmap -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/DerivedSources/i386 -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/DerivedSources -F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release -fno-objc-arc -MMD -MT dependencies -MF /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.d --serialize-diagnostics /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.dia -c /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m -o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/main.o36"A816AC1D-3F56-4AAA-9AF6-201A9BB4E72B-
-
-CCompileC build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m normal x86_64 objective-c com.apple.compilers.llvm.clang.1_0.compiler
-s368129829.114221
-e368129829.631259
-r1
-xCompileC
-xbuild/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.o
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m
-xnormal
-xx86_64
-xobjective-c
-xcom.apple.compilers.llvm.clang.1_0.compiler
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection69"Compile /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.mef911d2537f1b541^d89aa12537f1b541^---0#0#0#-19%DVTDocumentLocation2@77"file://localhost/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m0000000000000000^3132"CompileC build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.o main.m normal x86_64 objective-c com.apple.compilers.llvm.clang.1_0.compiler    cd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents    setenv LANG en_US.US-ASCII    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -x objective-c -arch x86_64 -fmessage-length=0 -std=gnu99 -fobjc-arc -Wno-trigraphs -fpascal-strings -Os -Wno-missing-field-initializers -Wno-missing-prototypes -Wreturn-type -Wno-implicit-atomic-properties -Wno-receiver-is-weak -Wduplicate-method-match -Wformat -Wno-missing-braces -Wparentheses -Wswitch -Wno-unused-function -Wno-unused-label -Wno-unused-parameter -Wunused-variable -Wunused-value -Wuninitialized -Wno-unknown-pragmas -Wno-shadow -Wno-four-char-constants -Wno-conversion -Wno-sign-compare -Wshorten-64-to-32 -Wpointer-sign -Wno-newline-eof -Wno-selector -Wno-strict-selector-match -Wno-undeclared-selector -Wno-deprecated-implementations -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk -fasm-blocks -Wprotocol -Wdeprecated-declarations -mmacosx-version-min=10.7 -g -fvisibility=hidden -Wno-sign-conversion "-DIBOutlet=__attribute__((iboutlet))" "-DIBOutletCollection(ClassName)=__attribute__((iboutletcollection(ClassName)))" "-DIBAction=void)__attribute__((ibaction)" -iquote /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-generated-files.hmap -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-own-target-headers.hmap -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-all-target-headers.hmap -iquote /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/fsevents-wrapper-project-headers.hmap -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/include -I/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/DerivedSources/x86_64 -I/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/DerivedSources -F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release -fno-objc-arc -MMD -MT dependencies -MF /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.d --serialize-diagnostics /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.dia -c /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/main.m -o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/main.o36"87DBBF07-25E6-4691-83C5-CFB8429F1E25-
-
-CCreateUniversalBinary /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper normal "x86_64 i386"
-s368129829.708031
-e368129829.717636
-r1
-xCreateUniversalBinary
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper
-xnormal
-xx86_64 i386
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection109"Create universal binary /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper7573b52537f1b541^aab6b72537f1b541^---0#0#0#-19%DVTDocumentLocation2@101"file://localhost/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper0000008bc4041042^553"CreateUniversalBinary build/Release/fsevents-wrapper normal "x86_64 i386"    cd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents    lipo -create /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper -output /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper36"022565A0-4A01-4A5B-867E-7736B30A74F1-
-
-CGenerateDSYMFile /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper
-s368129829.724602
-e368129829.744493
-r1
-xGenerateDSYMFile
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection101"Generating /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM7899b92537f1b541^2498be2537f1b541^---0#0#0#-19%DVTDocumentLocation2@106"file://localhost/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM000000000080d041^426"GenerateDSYMFile build/Release/fsevents-wrapper.dSYM build/Release/fsevents-wrapper    cd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/dsymutil /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper -o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release/fsevents-wrapper.dSYM36"6820A34C-3285-4EB2-9E17-0873A0723FFA-
-
-CLd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper normal i386
-s368129829.660420
-e368129829.701120
-r1
-xLd
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper
-xnormal
-xi386
-old: warning: directory not found for option '-L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'
-old: warning: directory not found for option '-F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection156"Link /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper4c33a92537f1b541^b37eb32537f1b541^-234"ld: warning: directory not found for option '-L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'ld: warning: directory not found for option '-F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'2(21%IDEActivityLogMessage2@103"Directory not found for option '-L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'-368129829#0#117#-1#-23%DVTTextDocumentLocation3@-0000000000000000^18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#0#32"Apple Mach-O Linker (ld) Warning--2@103"Directory not found for option '-F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'-368129829#117#117#-1#-3@-0000000000000000^18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#0#32"Apple Mach-O Linker (ld) Warning--0#0#0#--1007"Ld build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper normal i386    cd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents    setenv MACOSX_DEPLOYMENT_TARGET 10.7    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch i386 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk -L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release -F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release -filelist /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper.LinkFileList -mmacosx-version-min=10.7 -fobjc-arc -fobjc-link-runtime -framework CoreServices -framework Foundation -o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/i386/fsevents-wrapper36"63C4DAF9-BCF6-42B1-B268-C493AA0C525F-
-
-CLd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper normal x86_64
-s368129829.637923
-e368129829.680593
-r1
-xLd
-x/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper
-xnormal
-xx86_64
-old: warning: directory not found for option '-L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'
-old: warning: directory not found for option '-F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'
-lSLF05#21%IDEActivityLogSection1@2#32"com.apple.dt.IDE.BuildLogSection158"Link /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper8b70a32537f1b541^473bae2537f1b541^-234"ld: warning: directory not found for option '-L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'ld: warning: directory not found for option '-F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'2(21%IDEActivityLogMessage2@103"Directory not found for option '-L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'-368129829#0#117#-1#-23%DVTTextDocumentLocation3@-0000000000000000^18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#0#32"Apple Mach-O Linker (ld) Warning--2@103"Directory not found for option '-F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release'-368129829#117#117#-1#-3@-0000000000000000^18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#18446744073709551615#0#32"Apple Mach-O Linker (ld) Warning--0#0#0#--1017"Ld build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper normal x86_64    cd /Users/burke/go/src/github.com/burke/zeus/ext/fsevents    setenv MACOSX_DEPLOYMENT_TARGET 10.7    /Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang -arch x86_64 -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.7.sdk -L/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release -F/Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/Release -filelist /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper.LinkFileList -mmacosx-version-min=10.7 -fobjc-arc -fobjc-link-runtime -framework CoreServices -framework Foundation -o /Users/burke/go/src/github.com/burke/zeus/ext/fsevents/build/fsevents-wrapper.build/Release/fsevents-wrapper.build/Objects-normal/x86_64/fsevents-wrapper36"EEFDCA80-DF20-4914-B7D4-D8BDEDFFEE30-
-

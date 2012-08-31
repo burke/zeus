@@ -3,7 +3,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-
 static CFMutableArrayRef _watchedFiles;
 static FSEventStreamRef  _activeStream;
 static NSMutableDictionary *_fileIsWatched;

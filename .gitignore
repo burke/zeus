@@ -21,5 +21,6 @@ build/*
 man/build/*
 rubygem/man/*
 rubygem/build/*
-zeusversion/zeusversion.go
+go/zeusversion/zeusversion.go
 .DS_Store
+ext/fsevents/build/*
