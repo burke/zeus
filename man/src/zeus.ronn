@@ -11,7 +11,9 @@ Zeus makes working with large codebases much less painful.
 
 It is primarily targeted at ruby and other dynamic languages,
 where application boot time can be tens of seconds, but it can be
-made to work for nearly any language.
+made to work for nearly any language. However, zeus does not work
+well with multithreaded applications. It relies heavily on `fork(2)`,
+which is largely incompatible with multithreaded systems.
 
 Zeus lets you define common tasks, and preloads all of them in the
 background. When you ask to run them, zeus transparently connects

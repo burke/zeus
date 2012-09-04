@@ -71,6 +71,9 @@ func ReadFromUnixSocket(sock *net.UnixConn) (msg string, fd int, err error) {
 	oob := make([]byte, 32)   // if FD: 24 bytes ; else: 0
 
 	n, oobn, _, _, err := sock.ReadMsgUnix(buf, oob)
+	if err != nil {
+		return "", -1, err
+	}
 	if oobn == 0 {
 		return string(buf[:n]), -1, nil
 	} else {
