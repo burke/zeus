@@ -2,7 +2,7 @@ MAKEFLAGS = -s
 
 default: darwin
 
-all: linux-386 linux-amd64 darwin manpages gem
+all: darwin linux-386 linux-amd64 manpages gem
 
 manpages:
 	cd man; /usr/bin/env rake
@@ -28,6 +28,9 @@ darwin: goversion fsevents
 
 goversion:
 	cd go/zeusversion ; /usr/bin/env ruby ./genversion.rb
+
+install: all
+	gem install rubygem/pkg/*.gem --no-ri --no-rdoc
 
 clean:
 	cd go/cmd/zeus; $(MAKE) clean
