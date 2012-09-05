@@ -1,8 +1,15 @@
 require 'socket'
 require 'json'
 
+require 'zeus/load_tracking'
+
 module Zeus
   class << self
+
+    def add_extra_feature(path)
+      $untracked_features ||= []
+      $untracked_features << path
+    end
 
     attr_accessor :plan
 
@@ -23,7 +30,17 @@ module Zeus
       report_error_to_master(socket, e)
     end
 
-    def notify_newly_loaded_files
+    def notify_features(sock, features)
+      File.open("feature.log","a") { |f|
+        features.each do |t|
+          begin
+            sock.write "F:#{t}\n"
+          rescue Errno::ENOBUFS
+            sleep 0.2
+            retry
+          end
+        end
+      }
     end
 
     def handle_dead_children(sock)
@@ -52,10 +69,12 @@ module Zeus
       local.write "P:#{Process.pid}:#{identifier}"
 
       # Now we run the action and report its success/fail status to the master.
-      run_action(local, identifier)
+      features = features_loaded_by {
+        run_action(local, identifier)
+      }
 
       # the master wants to know about the files that running the action caused us to load.
-      Thread.new { notify_newly_loaded_files }
+      Thread.new { notify_features(local, features) }
 
       pid = Process.pid
       trap("CHLD") { handle_dead_children(local) if Process.pid == pid }
@@ -70,6 +89,18 @@ module Zeus
         end
       end
 
+    end
+
+    def all_features
+      untracked = defined?($untracked_features) ? $untracked_features : []
+      $LOADED_FEATURES + untracked
+    end
+
+    def features_loaded_by(&block)
+      old_features = all_features()
+      yield
+      new_features = all_features() - old_features
+      return new_features
     end
 
     def command(identifier, sock)

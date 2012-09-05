@@ -37,6 +37,7 @@ func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode
 	x.Parent = parent
 	x.SignalUnbooted()
 	x.Name = name
+	x.Features = make(map[string]bool)
 	x.ClientCommandPTYFileDescriptor = make(chan int)
 	tree.SlavesByName[name] = x
 	return x
@@ -70,7 +71,7 @@ func (tree *ProcessTree) KillNodesWithFeature(file string) {
 
 func (node *SlaveNode) killNodesWithFeature(tree *ProcessTree, file string) {
 	if node.Features[file] {
-		node.Kill(tree, )
+		node.Kill(tree)
 	} else {
 		for _, s := range node.Slaves {
 			s.killNodesWithFeature(tree, file)

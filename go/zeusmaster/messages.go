@@ -27,7 +27,7 @@ func ParseFeatureMessage(msg string) (string, error) {
 	if parts[0] != "F" {
 		return "", errors.New("Wrong message type!")
 	}
-	return parts[1], nil
+	return strings.TrimSpace(parts[1]), nil
 }
 
 func ParseActionResponseMessage(msg string) (string, error) {
