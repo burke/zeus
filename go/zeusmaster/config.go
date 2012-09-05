@@ -19,7 +19,7 @@ func BuildProcessTree() (*ProcessTree) {
 	conf := parseConfig()
 	tree := &ProcessTree{}
 	tree.SlavesByName   = make(map[string]*SlaveNode)
-	tree.Dead = make(chan *SlaveNode)
+	tree.Restart = make(chan *SlaveNode)
 
 	tree.ExecCommand = conf.Command
 

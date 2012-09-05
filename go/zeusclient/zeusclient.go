@@ -4,7 +4,6 @@ import (
 	"os"
 	"os/signal"
 	"net"
-	"regexp"
 	"strings"
 	"strconv"
 	"syscall"
@@ -17,18 +16,17 @@ import (
 
 const (
 	zeusSockName = ".zeus.sock"
-	sigIntStr = "\x03"
-	sigQuitStr = "\x1C"
-	sigTstpStr = "\x1A"
+	sigInt  = 3 // todo: this doesn't seem unicode-friendly...
+	sigQuit = 28
+	sigTstp = 26
 )
-
-var signalRegex = regexp.MustCompile(sigIntStr + "|" + sigQuitStr + "|" + sigTstpStr)
 
 func Run(color bool) {
 	if !color {
 		slog.DisableColor()
 		DisableErrorColor()
 	}
+
 	master, slave, err := pty.Open()
 	if err != nil {
 		panic(err)
@@ -67,7 +65,14 @@ func Run(color bool) {
 	}
 
 	parts := strings.Split(msg, "\n")
-	pid, err := strconv.Atoi(parts[0])
+	commandPid, err := strconv.Atoi(parts[0])
+	defer func() {
+		if commandPid > 0 {
+			// Just in case.
+			syscall.Kill(commandPid, 9)
+		}
+	}()
+
 	if err != nil {
 		panic(err)
 	}
@@ -77,10 +82,10 @@ func Run(color bool) {
 	go func() {
 		for sig := range c {
 			if sig == syscall.SIGCONT {
-				syscall.Kill(pid, syscall.SIGCONT)
+				syscall.Kill(commandPid, syscall.SIGCONT)
 			} else if sig == syscall.SIGWINCH {
 				ttyutils.MirrorWinsize(os.Stdout, master)
-				syscall.Kill(pid, syscall.SIGWINCH)
+				syscall.Kill(commandPid, syscall.SIGWINCH)
 			}
 		}
 	}()
@@ -107,22 +112,21 @@ func Run(color bool) {
 	}()
 
 	go func() {
+			buf := make([]byte, 8192)
 		for {
-			buf := make([]byte,1024)
 			n, err := os.Stdin.Read(buf)
 			if err != nil {
 				eof <- true
 				break
 			}
-			// TODO: Since we have a byte array, this could actually just check integer values...
-			matches := signalRegex.FindAll(buf, 9999)
-			for _, match := range matches {
-				if m := string(match); m == sigIntStr {
-					syscall.Kill(pid, syscall.SIGINT)
-				} else if m == sigQuitStr {
-					syscall.Kill(pid, syscall.SIGQUIT)
-				} else if m == sigTstpStr {
-					syscall.Kill(pid, syscall.SIGTSTP)
+			for i := 0; i < n ; i++ {
+				switch buf[i] {
+				case sigInt:
+					syscall.Kill(commandPid, syscall.SIGINT)
+				case sigQuit:
+					syscall.Kill(commandPid, syscall.SIGQUIT)
+				case sigTstp:
+					syscall.Kill(commandPid, syscall.SIGTSTP)
 					syscall.Kill(os.Getpid(), syscall.SIGTSTP)
 				}
 			}

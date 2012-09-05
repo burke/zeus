@@ -15,6 +15,7 @@ type SlaveNode struct {
 	Socket *net.UnixConn
 	Pid int
 	Error string
+	isBooted bool
 	bootWait sync.RWMutex
 	Slaves []*SlaveNode
 	Commands []*CommandNode
@@ -56,11 +57,17 @@ func (node *SlaveNode) WaitUntilBooted() {
 }
 
 func (node *SlaveNode) SignalBooted() {
-	node.bootWait.Unlock()
+	if !node.isBooted {
+		node.bootWait.Unlock()
+		node.isBooted = true
+	}
 }
 
 func (node *SlaveNode) SignalUnbooted() {
-	node.bootWait.Lock()
+	if node.isBooted {
+		node.bootWait.Lock()
+		node.isBooted = false
+	}
 }
 
 func (node *SlaveNode) RegisterError(msg string) {
@@ -71,25 +78,49 @@ func (node *SlaveNode) RegisterError(msg string) {
 }
 
 func (node *SlaveNode) Wipe() {
-	node.mu.Lock()
-	defer node.mu.Unlock()
-
-	pid := node.Pid
-	if pid > 0 {
-		err := syscall.Kill(pid, 9) // error implies already dead -- no worries.
-		if err == nil {
-			slog.SlaveKilled(node.Name)
-		} else {
-			slog.SlaveDied(node.Name)
-		}
-	}
 	node.Pid = 0
 	node.Socket = nil
 	node.Error = ""
 }
 
+// true if process was killed; false otherwise
+func (node *SlaveNode) tryKillProcess() bool {
+	if node.Pid > 0 {
+		err := syscall.Kill(node.Pid, 9)
+		return err == nil
+	}
+	return false
+}
+
 func (node *SlaveNode) crashed() {
+	node.tryKillProcess()
+	// whether or not it was actually dead, our socket was.
+	// so just report it as dead already.
 	slog.SlaveDied(node.Name)
+}
+
+// unceremoniously kill the process. We just need to tidy
+// up before program exit.
+func (node *SlaveNode) Shutdown() {
+	// don't lock the mutex. Just shut down. this is run in a signal handler.
+	node.tryKillProcess()
+}
+
+func (node *SlaveNode) Restart(restart chan *SlaveNode) {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+
+	if processWasKilled := node.tryKillProcess() ; processWasKilled {
+		slog.SlaveKilled(node.Name)
+		node.SignalUnbooted()
+		node.Wipe()
+		// if it's not running? I guess... it's starting up already?
+		restart <- node
+	}
+
+	for _, s := range node.Slaves {
+		go s.Restart(restart)
+	}
 }
 
 // We want to make this the single interface point with the socket.
@@ -117,22 +148,5 @@ func (node *SlaveNode) handleFeatureMessage(msg string) {
 	} else {
 		node.Features[file] = true
 		AddFile(file)
-	}
-}
-
-func (node *SlaveNode) Restart(tree *ProcessTree) {
-
-
-	for _, s := range node.Slaves {
-		go s.Restart(tree)
-	}
-}
-
-func (node *SlaveNode) Kill(tree *ProcessTree) {
-	node.Wipe()
-	tree.Dead <- node
-
-	for _, s := range node.Slaves {
-		go s.Kill(tree)
 	}
 }

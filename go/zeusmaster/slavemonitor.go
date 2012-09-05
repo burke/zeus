@@ -45,12 +45,16 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, 
 			monitor.slaveDidBeginRegistration(fd)
 		case name := <- monitor.booted:
 			monitor.slaveDidBoot(name)
+		case node := <- monitor.tree.Restart:
+			go monitor.bootSlave(node)
 		}
 	}
 }
 
 func (mon *SlaveMonitor) cleanupChildren() {
-	println("STOP ALL CHILDREN FROM REBOOTING AND KILL THEM")
+	for _, slave := range mon.tree.SlavesByName {
+		slave.Shutdown()
+	}
 }
 
 func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
