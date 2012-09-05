@@ -1,7 +1,6 @@
 package zeusmaster
 
 import (
-	"syscall"
 	"strconv"
 	"math/rand"
 	"strings"
@@ -17,11 +16,10 @@ import (
 type SlaveMonitor struct {
 	tree *ProcessTree
 	booted chan string
-	dead   chan string
 }
 
 func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, quit chan bool) {
-	monitor := &SlaveMonitor{tree, make(chan string), make(chan string)}
+	monitor := &SlaveMonitor{tree, make(chan string)}
 
 	// We just want this unix socket to be a channel so we can select on it...
 	registeringFds := make(chan int, 3)
@@ -47,8 +45,8 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, 
 			monitor.slaveDidBeginRegistration(fd)
 		case name := <- monitor.booted:
 			monitor.slaveDidBoot(name)
-		case name := <- monitor.dead:
-			monitor.slaveDidDie(name)
+		case node := <- monitor.tree.Dead:
+			monitor.slaveDidDie(node)
 		}
 	}
 }
@@ -65,25 +63,15 @@ func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
 	}
 }
 
-func (mon *SlaveMonitor) slaveDidDie(slaveName string) {
-	println("Stage `" + slaveName + "` died.")
-	deadSlave := mon.tree.FindSlaveByName(slaveName)
-	go killSlave(deadSlave)
+func (mon *SlaveMonitor) slaveDidDie(slave *SlaveNode) {
+	slave.Wipe()
+	go mon.bootSlave(slave)
 }
 
 func killSlave(slave *SlaveNode) {
 	slave.mu.Lock()
 	defer slave.mu.Unlock()
 
-	pid := slave.Pid
-	if pid > 0 {
-		err := syscall.Kill(pid, 9) // error implies already dead -- no worries.
-		if err != nil {
-			slog.SlaveKilled(slave.Name)
-		} else {
-			slog.SlaveDied(slave.Name)
-		}
-	}
 	slave.Wipe()
 
 	for _, s := range slave.Slaves {
@@ -92,11 +80,11 @@ func killSlave(slave *SlaveNode) {
 }
 
 func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
-	if slave.Parent.Pid < 1 {
-		panic("Can't boot a slave with an unbooted parent")
-	}
+	slave.Parent.WaitUntilBooted()
 	msg := CreateSpawnSlaveMessage(slave.Name)
+	slave.Parent.mu.Lock()
 	slave.Parent.Socket.Write([]byte(msg))
+	slave.Parent.mu.Unlock()
 }
 
 func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {

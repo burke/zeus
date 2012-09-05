@@ -20,6 +20,7 @@ func BuildProcessTree() (*ProcessTree) {
 	tree := &ProcessTree{}
 	tree.CommandsByName = make(map[string]*CommandNode)
 	tree.SlavesByName   = make(map[string]*SlaveNode)
+	tree.Dead = make(chan *SlaveNode)
 
 	tree.ExecCommand = conf.Command
 

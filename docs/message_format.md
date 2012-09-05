@@ -45,12 +45,6 @@ identifier as well as any arguments (ie. the ARGV).
 
 Example: `Q:testrb:-Itest -I. test/unit/module_test.rb`
 
-#### Dead Child message (`D`, `SlaveMonitor`)
-
-This is sent from the Slave to the Master when one of its child processes has terminated.
-
-Example: `D:1234`
-
 #### Feature message (`F`, `FileMonitor`)
 
 This is sent from the Slave to the Master to indicate it now depends on a file at a given path.

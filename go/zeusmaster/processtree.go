@@ -9,6 +9,7 @@ type ProcessTree struct {
 	ExecCommand string
 	SlavesByName map[string]*SlaveNode
 	CommandsByName map[string]*CommandNode
+	Dead chan *SlaveNode
 }
 
 type ProcessTreeNode struct {

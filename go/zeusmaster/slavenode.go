@@ -72,6 +72,18 @@ func (node *SlaveNode) RegisterError(msg string) {
 }
 
 func (node *SlaveNode) Wipe() {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+
+	pid := node.Pid
+	if pid > 0 {
+		err := syscall.Kill(pid, 9) // error implies already dead -- no worries.
+		if err == nil {
+			slog.SlaveKilled(node.Name)
+		} else {
+			slog.SlaveDied(node.Name)
+		}
+	}
 	node.Pid = 0
 	node.Socket = nil
 	node.Error = ""
@@ -110,21 +122,8 @@ func (node *SlaveNode) handleFeatureMessage(msg string) {
 }
 
 func (node *SlaveNode) Kill(tree *ProcessTree) {
-	node.mu.Lock()
-	defer node.mu.Unlock()
-
-	pid := node.Pid
-	if pid > 0 {
-		err := syscall.Kill(pid, 9) // error implies already dead -- no worries.
-		if err != nil {
-			slog.SlaveKilled(node.Name)
-		} else {
-			slog.SlaveDied(node.Name)
-		}
-		node.SignalUnbooted()
-		// tree.Dead <- node.Name
-	}
 	node.Wipe()
+	tree.Dead <- node
 
 	for _, s := range node.Slaves {
 		go s.Kill(tree)

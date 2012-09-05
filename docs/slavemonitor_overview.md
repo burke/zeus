@@ -18,7 +18,6 @@ The Slave Monitor has a few primary concerns:
 
 * Booting a Slave
 * Knowing when to boot a Slave
-* Watching for dead children and updating the process tree.
 
 A slave should be booted when it is not running, but its parent is (or it is
 the root state).
