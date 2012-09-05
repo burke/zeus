@@ -18,8 +18,7 @@ type SlaveNode struct {
 	Slaves []*SlaveNode
 	Commands []*CommandNode
 	Features map[string]bool
-	ClientNegotiationMessages chan string
-	ClientNegotiationFileDescriptors chan int // TODO multiplex this onto the prev.
+	ClientCommandPTYFileDescriptor chan int
 }
 
 func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn, booted chan string) {
@@ -99,9 +98,9 @@ func (node *SlaveNode) handleMessages() {
 }
 
 func (node *SlaveNode) pushFdMessage(fd int) {
-	node.ClientNegotiationFileDescriptors <- fd
+	node.ClientCommandPTYFileDescriptor <- fd
 }
 
 func (node *SlaveNode) pushMessage(message string) {
-	node.ClientNegotiationMessages <- message
+	println("GOT MESSAGE", message)
 }

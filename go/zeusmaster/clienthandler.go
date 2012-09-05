@@ -104,8 +104,8 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	slaveNode.Socket.Write([]byte("C:" + command))
 	slaveNode.mu.Unlock()
 
-	// TODO: deadline? what happens if this never comes?
-	commandFd := <- slaveNode.ClientNegotiationFileDescriptors
+	// TODO: deadline? how to respond if this is never sent?
+	commandFd := <- slaveNode.ClientCommandPTYFileDescriptor
 	if err != nil {
 		fmt.Println("Couldn't start command process!", err)
 	}

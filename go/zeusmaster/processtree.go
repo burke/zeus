@@ -37,8 +37,7 @@ func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode
 	x.Parent = parent
 	x.SignalUnbooted()
 	x.Name = name
-	x.ClientNegotiationMessages = make(chan string)
-	x.ClientNegotiationFileDescriptors = make(chan int)
+	x.ClientCommandPTYFileDescriptor = make(chan int)
 	tree.SlavesByName[name] = x
 	return x
 }
