@@ -76,13 +76,13 @@ func zeusInit() {
 
 func zeusCommands() {
 	tree := zeusmaster.BuildProcessTree()
-	for name, command := range tree.CommandsByName {
+	for _, command := range tree.Commands {
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string
 		if len(alia) > 0 {
 			aliasPart = " (alias: " + alia + ")"
 		}
-		println("zeus " + name + aliasPart)
+		println("zeus " + command.Name + aliasPart)
 	}
 }
 

@@ -8,7 +8,7 @@ type ProcessTree struct {
 	Root *SlaveNode
 	ExecCommand string
 	SlavesByName map[string]*SlaveNode
-	CommandsByName map[string]*CommandNode
+	Commands []*CommandNode
 	Dead chan *SlaveNode
 }
 
@@ -29,7 +29,7 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 	x.Parent = parent
 	x.Name = name
 	x.Aliases = aliases
-	tree.CommandsByName[name] = x
+	tree.Commands = append(tree.Commands, x)
 	return x
 }
 
@@ -51,14 +51,24 @@ func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
 	return tree.SlavesByName[name]
 }
 
-func (tree *ProcessTree) FindCommandByName(name string) *CommandNode {
-	return tree.CommandsByName[name]
+func (tree *ProcessTree) FindCommand(requested string) *CommandNode {
+	for _, command := range tree.Commands {
+		if command.Name == requested {
+			return command
+		}
+		for _, alias := range command.Aliases {
+			if alias == requested {
+				return command
+			}
+		}
+	}
+	return nil
 }
 
 func (tree *ProcessTree) AllCommandsAndAliases() []string {
 	var values []string
-	for name, command := range tree.CommandsByName {
-		values = append(values, name)
+	for _, command := range tree.Commands {
+		values = append(values, command.Name)
 		for _, alias := range command.Aliases {
 			values = append(values, alias)
 		}
@@ -66,16 +76,16 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 	return values
 }
 
-func (tree *ProcessTree) KillNodesWithFeature(file string) {
-	tree.Root.killNodesWithFeature(tree, file)
+func (tree *ProcessTree) RestartNodesWithFeature(file string) {
+	tree.Root.restartNodesWithFeature(tree, file)
 }
 
-func (node *SlaveNode) killNodesWithFeature(tree *ProcessTree, file string) {
+func (node *SlaveNode) restartNodesWithFeature(tree *ProcessTree, file string) {
 	if node.Features[file] {
-		node.Kill(tree)
+		node.Restart(tree)
 	} else {
 		for _, s := range node.Slaves {
-			s.killNodesWithFeature(tree, file)
+			s.restartNodesWithFeature(tree, file)
 		}
 	}
 }

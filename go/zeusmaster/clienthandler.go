@@ -66,11 +66,12 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 		return
 	}
 
-	commandNode := tree.FindCommandByName(command)
+	commandNode := tree.FindCommand(command)
 	if commandNode == nil {
 		fmt.Println("ERROR: Node not found!: ", command)
 		return
 	}
+	command = commandNode.Name // resolve aliases
 	slaveNode := commandNode.Parent
 
 	// Now we read the terminal IO socket to use for raw IO (step 2)

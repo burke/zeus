@@ -45,14 +45,12 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, 
 			monitor.slaveDidBeginRegistration(fd)
 		case name := <- monitor.booted:
 			monitor.slaveDidBoot(name)
-		case node := <- monitor.tree.Dead:
-			monitor.slaveDidDie(node)
 		}
 	}
 }
 
 func (mon *SlaveMonitor) cleanupChildren() {
-	killSlave(mon.tree.Root)
+	println("STOP ALL CHILDREN FROM REBOOTING AND KILL THEM")
 }
 
 func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
@@ -60,22 +58,6 @@ func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
 	slog.SlaveBooted(bootedSlave.Name)
 	for _, slave := range bootedSlave.Slaves {
 		go mon.bootSlave(slave)
-	}
-}
-
-func (mon *SlaveMonitor) slaveDidDie(slave *SlaveNode) {
-	slave.Wipe()
-	go mon.bootSlave(slave)
-}
-
-func killSlave(slave *SlaveNode) {
-	slave.mu.Lock()
-	defer slave.mu.Unlock()
-
-	slave.Wipe()
-
-	for _, s := range slave.Slaves {
-		go killSlave(s)
 	}
 }
 

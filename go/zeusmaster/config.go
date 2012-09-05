@@ -18,7 +18,6 @@ type config struct {
 func BuildProcessTree() (*ProcessTree) {
 	conf := parseConfig()
 	tree := &ProcessTree{}
-	tree.CommandsByName = make(map[string]*CommandNode)
 	tree.SlavesByName   = make(map[string]*SlaveNode)
 	tree.Dead = make(chan *SlaveNode)
 

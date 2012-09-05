@@ -93,7 +93,7 @@ func handleLoadedFileNotification(file string) {
 
 func handleChangedFileNotification(tree *ProcessTree, file string) {
 	slog.Yellow("Dependency change at " + file)
-	tree.KillNodesWithFeature(file)
+	tree.RestartNodesWithFeature(file)
 }
 
 

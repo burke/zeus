@@ -50,7 +50,6 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn
 	go node.handleMessages()
 }
 
-
 func (node *SlaveNode) WaitUntilBooted() {
 	node.bootWait.RLock()
 	node.bootWait.RUnlock()
@@ -118,6 +117,14 @@ func (node *SlaveNode) handleFeatureMessage(msg string) {
 	} else {
 		node.Features[file] = true
 		AddFile(file)
+	}
+}
+
+func (node *SlaveNode) Restart(tree *ProcessTree) {
+
+
+	for _, s := range node.Slaves {
+		go s.Restart(tree)
 	}
 }
 
