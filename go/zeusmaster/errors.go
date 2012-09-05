@@ -78,3 +78,16 @@ func errorUnableToAcceptSocketConnection() {
 		slog.Red("Unable to accept socket connection.")
 	}
 }
+
+func errorFailedReadFromWatcher(err error) {
+	if !suppressErrors {
+		slog.Red("Failed to read from FileSystem watcher process: " + err.Error())
+	}
+}
+
+func ErrorFileMonitorWrapperCrashed(err error) {
+	if !suppressErrors {
+		slog.Red("The FileSystem watcher process crashed: " + err.Error())
+		ExitNow(1)
+	}
+}

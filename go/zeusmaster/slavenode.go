@@ -3,6 +3,7 @@ package zeusmaster
 import (
 	"net"
 	"fmt"
+	"syscall"
 	"sync"
 
 	usock "github.com/burke/zeus/go/unixsocket"
@@ -90,17 +91,42 @@ func (node *SlaveNode) handleMessages() {
 			node.crashed()
 			return
 		} else if fd > 0 {
-			node.pushFdMessage(fd)
+			// File descriptors are sent during client negotiation
+			node.ClientCommandPTYFileDescriptor <- fd
 		} else {
-			node.pushMessage(msg)
+			// Every other message indicates a feature loaded, and should be sent to filemonitor.
+			node.handleFeatureMessage(msg)
 		}
 	}
 }
 
-func (node *SlaveNode) pushFdMessage(fd int) {
-	node.ClientCommandPTYFileDescriptor <- fd
+func (node *SlaveNode) handleFeatureMessage(msg string) {
+	if file, err := ParseFeatureMessage(msg) ; err != nil {
+		fmt.Println("slavenode.go:handleFeatureMessage:", err)
+	} else {
+		node.Features[file] = true
+		AddFile(file)
+	}
 }
 
-func (node *SlaveNode) pushMessage(message string) {
-	println("GOT MESSAGE", message)
+func (node *SlaveNode) Kill(tree *ProcessTree) {
+	node.mu.Lock()
+	defer node.mu.Unlock()
+
+	pid := node.Pid
+	if pid > 0 {
+		err := syscall.Kill(pid, 9) // error implies already dead -- no worries.
+		if err != nil {
+			slog.SlaveKilled(node.Name)
+		} else {
+			slog.SlaveDied(node.Name)
+		}
+		node.SignalUnbooted()
+		// tree.Dead <- node.Name
+	}
+	node.Wipe()
+
+	for _, s := range node.Slaves {
+		go s.Kill(tree)
+	}
 }

@@ -64,3 +64,16 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 	return values
 }
 
+func (tree *ProcessTree) KillNodesWithFeature(file string) {
+	tree.Root.killNodesWithFeature(tree, file)
+}
+
+func (node *SlaveNode) killNodesWithFeature(tree *ProcessTree, file string) {
+	if node.Features[file] {
+		node.Kill(tree, )
+	} else {
+		for _, s := range node.Slaves {
+			s.killNodesWithFeature(tree, file)
+		}
+	}
+}
