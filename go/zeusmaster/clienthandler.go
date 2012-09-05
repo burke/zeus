@@ -102,9 +102,10 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 
 	slaveNode.mu.Lock()
 	slaveNode.Socket.Write([]byte("C:" + command))
-
-	commandFd, err := usock.ReadFileDescriptorFromUnixSocket(slaveNode.Socket)
 	slaveNode.mu.Unlock()
+
+	// TODO: deadline? what happens if this never comes?
+	commandFd := <- slaveNode.ClientNegotiationFileDescriptors
 	if err != nil {
 		fmt.Println("Couldn't start command process!", err)
 	}

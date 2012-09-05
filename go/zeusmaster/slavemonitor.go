@@ -134,10 +134,6 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 		fmt.Println(err)
 	}
 
-	go mon.handleSlaveRegistration(slaveSocket)
-}
-
-func (mon *SlaveMonitor) handleSlaveRegistration(slaveSocket *net.UnixConn) {
 	// We now expect the slave to use this fd they send us to send a Pid&Identifier Message
 	msg, _, err := usock.ReadFromUnixSocket(slaveSocket)
 	if err != nil {
@@ -145,37 +141,11 @@ func (mon *SlaveMonitor) handleSlaveRegistration(slaveSocket *net.UnixConn) {
 	}
 	pid, identifier, err := ParsePidMessage(msg)
 
-	node := mon.tree.FindSlaveByName(identifier)
-	if node == nil {
+	slaveNode := mon.tree.FindSlaveByName(identifier)
+	if slaveNode == nil {
 		panic("Unknown identifier")
 	}
 
-	// TODO: We actually don't really want to prevent killing this
-	// process while it's booting up.
-	node.mu.Lock()
-	defer node.mu.Unlock()
-
-	node.Pid = pid
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-	// The slave will execute its action and respond with a status...
-	msg, _, err = usock.ReadFromUnixSocket(slaveSocket)
-	if err != nil {
-		fmt.Println(err)
-	}
-	msg, err = ParseActionResponseMessage(msg)
-	if err != nil {
-		fmt.Println(err)
-	}
-	if msg == "OK" {
-		node.Socket = slaveSocket
-	} else {
-		node.RegisterError(msg)
-	}
-	node.SignalBooted()
-	mon.booted <- identifier
-
+	go slaveNode.Run(identifier, pid, slaveSocket, mon.booted)
 }
+
