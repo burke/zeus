@@ -8,7 +8,7 @@ This screencast gives a quick overview of how to use zeus with Rails.
 
 More technically speaking, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is on the horizon.
 
-## Requirements (for use with ruby)
+## Requirements (for use with Rails)
 
 * OS X 10.7+ (Linux support coming soon!)
 * Ruby 1.9+
@@ -45,4 +45,4 @@ Run some commands:
 
 ## Hacking
 
-See [`docs/README.md`](docs/README.md)
+See [`docs/overview.md`](/burke/zeus/docs/overview.md)
