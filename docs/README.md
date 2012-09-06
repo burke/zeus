@@ -44,6 +44,7 @@ The `ClientHandler` listens on a socket for incoming requests from Client proces
 The `FileMonitor`'s job is to restart slaves when one of their dependencies has changed. Slaves are expected to report back with a list of files they have loaded. The `FileMonitor` listens for these messages and registers them with an external process that watches the filesystem for changes. When the external process reports a change, the `FileMonitor` restarts any slaves that have loaded that file.
 
 * [`filemonitor.go`](../go/zeusmaster/filemonitor.go)
+* [`fsevents/main.m`](../ext/fsevents/main.m)
 
 ### 4. SlaveMonitor
 
@@ -71,4 +72,4 @@ When the remote process exits, it reports its exit status, which the client proc
 The Slave processes boot the actual application, and run commands. See [`master_slave_handshake.md`](master_slave_handshake.md), and the ruby implementation in the `rubygem` directory.
 
 * [`zeus.rb`](../rubygem/lib/zeus.rb)
-* [`zeus.rb`](../rubygem/lib/zeus/rails.rb)
+* [`zeus/rails.rb`](../rubygem/lib/zeus/rails.rb)
