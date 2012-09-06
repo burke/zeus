@@ -17,9 +17,9 @@ end
 Zeus.plan = Zeus::Rails.new
 ```
 
-Note that an instance of this class is assigned to `Zeus.plan`. Zeus calls methods on `Zeus.plan` to boot the application
+Note that an instance of this class is assigned to `Zeus.plan`. Zeus calls methods on `Zeus.plan` to boot the application. If you follow any path to a leaf node in the tree -- for example, boot, default_bundle, development_environment, prerake -- those methods are essentially called in sequence to construct an environment for a command (rake, in this case) to run in. Zeus forks the ruby process between each step, and can restart from any of these forks.
 
-If you wanted to create your own plan, you could subclass this:
+If you wanted to create your own plan, you could subclass `Zeus::Rails`:
 
 ```ruby
 # /path/to/my_app/lib/my_zeus_plan.rb
@@ -40,3 +40,5 @@ Zeus.plan = MyPlan
     // ...
   }
 }
+
+Alternatively, you could subclass `Zeus::Plan` to create a completely fresh plan with no predefined behaviour.
