@@ -1,12 +1,12 @@
 package zeusmaster
 
 import (
-	"strconv"
+	"fmt"
 	"math/rand"
-	"strings"
 	"os"
 	"os/exec"
-	"fmt"
+	"strconv"
+	"strings"
 
 	"github.com/burke/zeus/go/unixsocket"
 )
@@ -40,11 +40,11 @@ func StartSlaveMonitor(tree *ProcessTree, local *unixsocket.Usock, remote *os.Fi
 
 	for {
 		select {
-		case <- quit:
+		case <-quit:
 			quit <- true
 			monitor.cleanupChildren()
 			return
-		case fd := <- registeringFds:
+		case fd := <-registeringFds:
 			monitor.slaveDidBeginRegistration(fd)
 		}
 	}
@@ -73,7 +73,7 @@ func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
 			restartNow <- true
 		}()
 
-		<- restartNow
+		<-restartNow
 		slave.Kill()
 	}
 }
@@ -109,7 +109,7 @@ func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
 			restartNow <- true
 		}()
 
-		<- restartNow
+		<-restartNow
 		mon.tree.Root.Kill()
 	}
 }
@@ -122,10 +122,10 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	if err = slaveUsock.Conn.SetReadBuffer(262144) ; err != nil {
+	if err = slaveUsock.Conn.SetReadBuffer(262144); err != nil {
 		fmt.Println(err)
 	}
-	if err = slaveUsock.Conn.SetWriteBuffer(262144) ; err != nil {
+	if err = slaveUsock.Conn.SetWriteBuffer(262144); err != nil {
 		fmt.Println(err)
 	}
 
@@ -143,4 +143,3 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 
 	go slaveNode.Run(identifier, pid, slaveUsock)
 }
-

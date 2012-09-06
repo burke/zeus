@@ -2,7 +2,10 @@ MAKEFLAGS = -s
 
 default: darwin
 
-all: darwin linux-386 linux-amd64 manpages gem
+all: fmt darwin linux-386 linux-amd64 manpages gem
+
+fmt:
+	for i in `find . -name '*.go'` ; do echo "go fmt $$i" ; go fmt $$i; done
 
 manpages:
 	cd man; /usr/bin/env rake

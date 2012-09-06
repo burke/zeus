@@ -1,24 +1,24 @@
 package zeusclient
 
 import (
+	"net"
 	"os"
 	"os/signal"
-	"net"
-	"strings"
 	"strconv"
+	"strings"
 	"syscall"
 
-	"github.com/kr/pty"
 	"github.com/burke/ttyutils"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+	"github.com/kr/pty"
 )
 
 const (
 	zeusSockName = ".zeus.sock"
-	sigInt  = 3 // todo: this doesn't seem unicode-friendly...
-	sigQuit = 28
-	sigTstp = 26
+	sigInt       = 3 // todo: this doesn't seem unicode-friendly...
+	sigQuit      = 28
+	sigTstp      = 26
 )
 
 func Run(color bool) {
@@ -104,7 +104,7 @@ func doRun(color bool) int {
 	eof := make(chan bool)
 	go func() {
 		for {
-			buf := make([]byte,1024)
+			buf := make([]byte, 1024)
 			n, err := master.Read(buf)
 			if err != nil {
 				eof <- true
@@ -115,14 +115,14 @@ func doRun(color bool) int {
 	}()
 
 	go func() {
-			buf := make([]byte, 8192)
+		buf := make([]byte, 8192)
 		for {
 			n, err := os.Stdin.Read(buf)
 			if err != nil {
 				eof <- true
 				break
 			}
-			for i := 0; i < n ; i++ {
+			for i := 0; i < n; i++ {
 				switch buf[i] {
 				case sigInt:
 					syscall.Kill(commandPid, syscall.SIGINT)
@@ -137,7 +137,7 @@ func doRun(color bool) int {
 		}
 	}()
 
-	<- eof
+	<-eof
 
 	if exitStatus == -1 {
 		msg, _, err = usock.ReadMessage()
@@ -153,4 +153,3 @@ func doRun(color bool) int {
 
 	return exitStatus
 }
-

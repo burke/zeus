@@ -2,11 +2,11 @@ package zeusmaster
 
 import (
 	"fmt"
-	"time"
 	"math/rand"
 	"net"
-	"strconv"
 	"path/filepath"
+	"strconv"
+	"time"
 
 	"github.com/burke/zeus/go/unixsocket"
 )
@@ -28,7 +28,7 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	connections := make(chan *unixsocket.Usock)
 	go func() {
 		for {
-			if conn, err := listener.AcceptUnix() ; err != nil {
+			if conn, err := listener.AcceptUnix(); err != nil {
 				errorUnableToAcceptSocketConnection()
 				time.Sleep(500 * time.Millisecond)
 			} else {
@@ -39,10 +39,10 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 
 	for {
 		select {
-		case <- quit:
+		case <-quit:
 			quit <- true
 			return
-		case conn := <- connections:
+		case conn := <-connections:
 			go handleClientConnection(tree, conn)
 		}
 	}
@@ -107,7 +107,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	slaveNode.mu.Unlock()
 
 	// TODO: deadline? how to respond if this is never sent?
-	commandFd := <- slaveNode.ClientCommandPTYFileDescriptor
+	commandFd := <-slaveNode.ClientCommandPTYFileDescriptor
 	if err != nil {
 		fmt.Println("Couldn't start command process!", err)
 	}

@@ -2,10 +2,10 @@ package zeusmaster
 
 import (
 	"io"
-	"path"
-	"strings"
 	"os"
 	"os/exec"
+	"path"
+	"strings"
 
 	slog "github.com/burke/zeus/go/shinylog"
 )
@@ -31,12 +31,12 @@ func StartFileMonitor(tree *ProcessTree, quit chan bool) {
 
 	for {
 		select {
-		case <- quit:
+		case <-quit:
 			quit <- true
 			return
-		case path := <- filesToWatch:
+		case path := <-filesToWatch:
 			go handleLoadedFileNotification(path)
-		case path := <- filesChanged:
+		case path := <-filesChanged:
 			go handleChangedFileNotification(tree, path)
 		}
 	}
@@ -52,7 +52,7 @@ func startWrapper() {
 	if watcherOut, err = cmd.StdoutPipe(); err != nil {
 		panic(err)
 	}
-	if watcherErr, err = cmd.StderrPipe() ; err != nil {
+	if watcherErr, err = cmd.StderrPipe(); err != nil {
 		panic(err)
 	}
 
@@ -95,7 +95,6 @@ func handleChangedFileNotification(tree *ProcessTree, file string) {
 	slog.Yellow("Dependency change at " + file)
 	tree.RestartNodesWithFeature(file)
 }
-
 
 func startWatchingFile(file string) {
 	watcherIn.Write([]byte(file + "\n"))

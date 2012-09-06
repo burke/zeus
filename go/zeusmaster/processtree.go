@@ -5,16 +5,16 @@ import (
 )
 
 type ProcessTree struct {
-	Root *SlaveNode
-	ExecCommand string
+	Root         *SlaveNode
+	ExecCommand  string
 	SlavesByName map[string]*SlaveNode
-	Commands []*CommandNode
+	Commands     []*CommandNode
 }
 
 type ProcessTreeNode struct {
-	mu sync.RWMutex
+	mu     sync.RWMutex
 	Parent *SlaveNode
-	Name string
+	Name   string
 }
 
 type CommandNode struct {
@@ -34,7 +34,7 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 
 func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
 	if name == "" {
-	return tree.Root
+		return tree.Root
 	}
 	return tree.SlavesByName[name]
 }

@@ -1,24 +1,24 @@
 package zeusmaster
 
 import (
-	"encoding/json"
-	"os"
 	"bufio"
+	"encoding/json"
 	"io/ioutil"
+	"os"
 )
 
 const configFile string = "zeus.json"
 
 type config struct {
 	Command string
-	Plan interface{}
-	Items map[string]string
+	Plan    interface{}
+	Items   map[string]string
 }
 
-func BuildProcessTree() (*ProcessTree) {
+func BuildProcessTree() *ProcessTree {
 	conf := parseConfig()
 	tree := &ProcessTree{}
-	tree.SlavesByName   = make(map[string]*SlaveNode)
+	tree.SlavesByName = make(map[string]*SlaveNode)
 
 	tree.ExecCommand = conf.Command
 
@@ -75,7 +75,6 @@ func parseConfig() (c config) {
 	json.Unmarshal(contents, &conf)
 	return conf
 }
-
 
 func readFile(path string) (contents []byte, err error) {
 	file, err := os.Open(path)

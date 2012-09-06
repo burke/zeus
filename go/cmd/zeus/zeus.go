@@ -1,20 +1,20 @@
 package main
 
 import (
+	"io"
 	"os"
+	"path"
 	"strings"
 	"syscall"
-	"path"
-	"io"
 
-	"github.com/burke/zeus/go/zeusmaster"
 	"github.com/burke/zeus/go/zeusclient"
+	"github.com/burke/zeus/go/zeusmaster"
 	"github.com/burke/zeus/go/zeusversion"
 )
 
 var color bool = true
 
-func main () {
+func main() {
 	if len(os.Args) == 1 {
 		execManPage("zeus")
 	}

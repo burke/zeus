@@ -1,9 +1,9 @@
 package zeusmaster
 
 import (
-	"strings"
-	"strconv"
 	"errors"
+	"strconv"
+	"strings"
 )
 
 func ParsePidMessage(msg string) (int, string, error) {
@@ -21,7 +21,6 @@ func ParsePidMessage(msg string) (int, string, error) {
 	return pid, identifier, nil
 }
 
-
 func ParseFeatureMessage(msg string) (string, error) {
 	parts := strings.SplitN(msg, ":", 2)
 	if parts[0] != "F" {
@@ -38,11 +37,11 @@ func ParseActionResponseMessage(msg string) (string, error) {
 	return parts[1], nil
 }
 
-func CreateSpawnSlaveMessage(identifier string) (string) {
+func CreateSpawnSlaveMessage(identifier string) string {
 	return "S:" + identifier
 }
 
-func CreateSpawnCommandMessage(identifier string) (string) {
+func CreateSpawnCommandMessage(identifier string) string {
 	return "C:" + identifier
 }
 

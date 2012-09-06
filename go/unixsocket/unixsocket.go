@@ -1,13 +1,13 @@
 package unixsocket
 
 import (
-	"syscall"
-	"sync"
-	"strings"
-	"os"
 	"errors"
-	"net"
 	"fmt"
+	"net"
+	"os"
+	"strings"
+	"sync"
+	"syscall"
 )
 
 // http://code.google.com/p/rsc/source/browse/fuse/mount_linux.go
@@ -16,14 +16,14 @@ import (
 
 type Usock struct {
 	Conn *net.UnixConn
-	mu sync.Mutex
+	mu   sync.Mutex
 }
 
 func NewUsock(conn *net.UnixConn) *Usock {
 	return &Usock{Conn: conn}
 }
 
-func FdToFile(fd int, name string) (*os.File) {
+func FdToFile(fd int, name string) *os.File {
 	return os.NewFile(uintptr(fd), name)
 }
 
@@ -112,7 +112,7 @@ func (usock *Usock) ReadMessage() (msg string, fd int, err error) {
 		return "", -1, err
 	}
 	if oobn > 0 { // we got a file descriptor.
-		if fd, err := extractFileDescriptorFromOOB(oob[:oobn]) ; err != nil {
+		if fd, err := extractFileDescriptorFromOOB(oob[:oobn]); err != nil {
 			return "", -1, err
 		} else {
 			return "", fd, nil
@@ -128,7 +128,7 @@ func (usock *Usock) readNullTerminatedMessage(soFar string) (string, error) {
 	if len(soFar) == len(trimmed) {
 		buf := make([]byte, 1024) // if FD: 1 byte   ; else: varies
 		oob := make([]byte, 32)   // if FD: 24 bytes ; else: 0
-		if n, oobn, _, _, err := usock.Conn.ReadMsgUnix(buf, oob) ; err != nil {
+		if n, oobn, _, _, err := usock.Conn.ReadMsgUnix(buf, oob); err != nil {
 			return "", err
 		} else if oobn > 0 {
 			return "", errors.New("Got a file descriptor before a message was terminated. Had read: " + soFar)

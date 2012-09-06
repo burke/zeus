@@ -2,8 +2,8 @@ package zeusmaster
 
 import (
 	"fmt"
-	"os"
 	slog "github.com/burke/zeus/go/shinylog"
+	"os"
 )
 
 var suppressErrors bool = false
@@ -13,9 +13,9 @@ func SuppressErrors() {
 }
 
 var (
-	red = "\x1b[31m"
+	red    = "\x1b[31m"
 	yellow = "\x1b[33m"
-	reset = "\x1b[0m"
+	reset  = "\x1b[0m"
 )
 
 func DisableErrorColor() {

@@ -1,12 +1,12 @@
 package zeusmaster
 
 import (
-	"syscall"
 	"os"
 	"os/signal"
+	"syscall"
 
-	"github.com/burke/zeus/go/unixsocket"
 	slog "github.com/burke/zeus/go/shinylog"
+	"github.com/burke/zeus/go/unixsocket"
 )
 
 var exitNow chan int
@@ -49,20 +49,20 @@ func Run(color bool) {
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	go func(){
-		<- c
+	go func() {
+		<-c
 		// FIXME: Unprecedented levels of jank, right here.
 		terminateComponents(quit1, quit2, quit3, quit)
 	}()
 
 	go func() {
-		exitStatus = <- exitNow
+		exitStatus = <-exitNow
 		terminateComponents(quit1, quit2, quit3, quit)
 	}()
 
-	<- quit
-	<- quit
-	<- quit
+	<-quit
+	<-quit
+	<-quit
 
 	os.Exit(exitStatus)
 }
@@ -72,17 +72,17 @@ func terminateComponents(quit1, quit2, quit3, quit chan bool) {
 	slog.Suppress()
 	go func() {
 		quit1 <- true
-		<- quit1
+		<-quit1
 		quit <- true
 	}()
 	go func() {
 		quit2 <- true
-		<- quit2
+		<-quit2
 		quit <- true
 	}()
 	go func() {
 		quit3 <- true
-		<- quit3
+		<-quit3
 		quit <- true
 	}()
 }

@@ -1,27 +1,27 @@
 package zeusmaster
 
 import (
-	"net"
 	"fmt"
-	"syscall"
+	"net"
 	"strings"
 	"sync"
+	"syscall"
 
-	"github.com/burke/zeus/go/unixsocket"
 	slog "github.com/burke/zeus/go/shinylog"
+	"github.com/burke/zeus/go/unixsocket"
 )
 
 type SlaveNode struct {
 	ProcessTreeNode
-	Socket *net.UnixConn
-	Pid int
-	Error string
-	isBooted bool
-	bootWait *sync.Cond
-	restartWait *sync.Cond
-	Slaves []*SlaveNode
-	Commands []*CommandNode
-	Features map[string]bool
+	Socket                         *net.UnixConn
+	Pid                            int
+	Error                          string
+	isBooted                       bool
+	bootWait                       *sync.Cond
+	restartWait                    *sync.Cond
+	Slaves                         []*SlaveNode
+	Commands                       []*CommandNode
+	Features                       map[string]bool
 	ClientCommandPTYFileDescriptor chan int
 }
 
@@ -151,7 +151,7 @@ func (node *SlaveNode) Kill() {
 	node.mu.Lock()
 	defer node.mu.Unlock()
 
-	if processWasKilled := node.tryKillProcess() ; processWasKilled {
+	if processWasKilled := node.tryKillProcess(); processWasKilled {
 		slog.SlaveKilled(node.Name)
 		node.Wipe()
 		// TODO: See if this works if not done via goroutine
@@ -166,7 +166,7 @@ func (node *SlaveNode) handleMessages() {
 	socket := node.Socket
 	usock := unixsocket.NewUsock(socket)
 	for {
-		if msg, fd, err := usock.ReadMessage() ; err != nil {
+		if msg, fd, err := usock.ReadMessage(); err != nil {
 			node.crashed()
 			return
 		} else if fd > 0 {
@@ -181,7 +181,7 @@ func (node *SlaveNode) handleMessages() {
 }
 
 func (node *SlaveNode) handleFeatureMessage(msg string) {
-	if file, err := ParseFeatureMessage(msg) ; err != nil {
+	if file, err := ParseFeatureMessage(msg); err != nil {
 		fmt.Println("slavenode.go:handleFeatureMessage:", err)
 	} else {
 		node.Features[file] = true
