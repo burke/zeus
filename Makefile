@@ -9,6 +9,7 @@ manpages:
 
 gem: fsevents
 	mkdir -p rubygem/ext/fsevents-wrapper
+	cp -r examples rubygem
 	cp build/fsevents-wrapper rubygem/ext/fsevents-wrapper
 	cd rubygem; /usr/bin/env rake
 

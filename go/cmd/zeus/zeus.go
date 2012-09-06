@@ -5,6 +5,7 @@ import (
 	"strings"
 	"syscall"
 	"path"
+	"io"
 
 	"github.com/burke/zeus/go/zeusmaster"
 	"github.com/burke/zeus/go/zeusclient"
@@ -74,7 +75,30 @@ func reset() string {
 }
 
 func zeusInit() {
-	println(red() + "zeus-init is not yet implemented." + reset())
+	binaryPath := os.Args[0]
+	gemDir := path.Dir(path.Dir(binaryPath))
+	jsonPath := path.Join(gemDir, "examples/zeus.json")
+	wd, _ := os.Getwd()
+	targetPath := path.Join(wd, "zeus.json")
+	src, err := os.Open(jsonPath)
+	if err != nil {
+		println(red() + "Could not open template file" + reset())
+		return
+	}
+	defer src.Close()
+
+	dst, err := os.OpenFile(targetPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
+	if err != nil {
+		println(red() + "Could not create zeus.json" + reset())
+		return
+	}
+	defer dst.Close()
+
+	_, err = io.Copy(dst, src)
+	if err != nil {
+		println(red() + "Could not write to zeus.json" + reset())
+	}
+	println("Wrote zeus.json")
 }
 
 func zeusCommands() {

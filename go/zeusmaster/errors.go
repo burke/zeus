@@ -47,7 +47,7 @@ func ErrorConfigCommandCrashed(output string) {
 // in the json-related errors..
 func ErrorConfigFileMissing() {
 	if !suppressErrors {
-		slog.Red("Required config file " + yellow + "zeus.json" + red + " found in the current directory.")
+		slog.Red("Required config file " + yellow + "zeus.json" + red + " not found in the current directory.")
 		os.Exit(1)
 	}
 }

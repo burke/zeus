@@ -7,4 +7,4 @@ zeus-init(1) -- Generate a template zeus.json
 
 ## DESCRIPTION
 
-Not yet implemented.
+Creates a `zeus.json` file in the current directory. This example file is useful for rails applications, but can be modified to suit your needs.
