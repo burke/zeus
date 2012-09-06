@@ -8,10 +8,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/burke/pty"
 	"github.com/burke/ttyutils"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
-	"github.com/kr/pty"
 )
 
 const (
