@@ -22,6 +22,10 @@ const (
 )
 
 func Run(color bool) {
+	os.Exit(doRun(color))
+}
+
+func doRun(color bool) int {
 	if !color {
 		slog.DisableColor()
 		DisableErrorColor()
@@ -32,7 +36,6 @@ func Run(color bool) {
 		panic(err)
 	}
 	defer master.Close()
-
 	if ttyutils.IsTerminal(os.Stdout.Fd()) {
 		oldState, err := ttyutils.MakeTerminalRaw(os.Stdout.Fd())
 		if err != nil {
@@ -148,7 +151,6 @@ func Run(color bool) {
 		}
 	}
 
-	os.Exit(exitStatus)
-
+	return exitStatus
 }
 
