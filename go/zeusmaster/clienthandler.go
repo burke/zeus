@@ -101,8 +101,9 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 		return
 	}
 
+	msg = CreateSpawnCommandMessage(command)
 	slaveNode.mu.Lock()
-	slaveNode.Socket.Write([]byte("C:" + command))
+	slaveNode.Socket.Write([]byte(msg))
 	slaveNode.mu.Unlock()
 
 	// TODO: deadline? how to respond if this is never sent?

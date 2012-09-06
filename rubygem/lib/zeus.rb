@@ -19,28 +19,26 @@ module Zeus
       error.backtrace[1..-1].each do |line|
         str << "\tfrom #{line}\n"
       end
-      File.open("a.log","a"){|f|f.puts str}
+      str << "\0"
       local.write str
     end
 
     def run_action(socket, identifier)
       plan.send(identifier)
-      socket.write "R:OK"
+      socket.write "R:OK\0"
     rescue Exception => e
       report_error_to_master(socket, e)
     end
 
     def notify_features(sock, features)
-      File.open("feature.log","a") { |f|
-        features.each do |t|
-          begin
-            sock.write "F:#{t}\n"
-          rescue Errno::ENOBUFS
-            sleep 0.2
-            retry
-          end
+      features.each do |t|
+        begin
+          sock.write "F:#{t}\0"
+        rescue Errno::ENOBUFS
+          sleep 0.2
+          retry
         end
-      }
+      end
     end
 
     def handle_dead_children(sock)
@@ -66,7 +64,7 @@ module Zeus
       master.send_io(remote)
 
       # Now I need to tell the master about my PID and ID
-      local.write "P:#{Process.pid}:#{identifier}"
+      local.write "P:#{Process.pid}:#{identifier}\0"
 
       # Now we run the action and report its success/fail status to the master.
       features = features_loaded_by {
@@ -76,19 +74,16 @@ module Zeus
       # the master wants to know about the files that running the action caused us to load.
       Thread.new { notify_features(local, features) }
 
-      pid = Process.pid
-      trap("CHLD") { handle_dead_children(local) if Process.pid == pid }
-
       # We are now 'connected'. From this point, we may receive requests to fork.
       loop do
         new_identifier = local.recv(1024)
+        new_identifier.chomp!("\0")
         if new_identifier =~ /^S:/
           fork { plan.after_fork ; go(new_identifier.sub(/^S:/,'')) }
         else
           fork { plan.after_fork ; command(new_identifier.sub(/^C:/,''), local) }
         end
       end
-
     end
 
     def all_features
@@ -113,11 +108,12 @@ module Zeus
       sock.close
 
       arguments = local.recv(1024)
+      arguments.chomp!("\0")
 
       pid = fork {
         plan.after_fork
         client_terminal = local.recv_io
-        local.write "P:#{Process.pid}:\n"
+        local.write "P:#{Process.pid}:\0"
         local.close
 
         $stdin.reopen(client_terminal)
@@ -128,13 +124,10 @@ module Zeus
         plan.send(identifier)
       }
 
-      File.open("f.log", "a") {|f|f.puts "A"}
       Process.wait(pid)
-      File.open("f.log", "a") {|f|f.puts "B"}
       code = $?.exitstatus
 
-      local.write "#{code}\n"
-      File.open("f.log", "a") {|f|f.puts "C"}
+      local.write "#{code}\0"
       local.close
     end
 

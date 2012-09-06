@@ -60,6 +60,7 @@ func Run(color bool) {
 	slave.Close()
 
 	msg, _, err = usock.ReadFromUnixSocket(conn)
+	msg = strings.TrimRight(msg, "\000")
 	if err != nil {
 		panic(err)
 	}
@@ -138,6 +139,7 @@ func Run(color bool) {
 
 	if exitStatus == -1 {
 		msg, _, err = usock.ReadFromUnixSocket(conn)
+		msg = strings.TrimRight(msg, "\000")
 		if err != nil {
 			panic(err)
 		}

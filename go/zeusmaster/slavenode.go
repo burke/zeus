@@ -4,6 +4,7 @@ import (
 	"net"
 	"fmt"
 	"syscall"
+	"strings"
 	"sync"
 
 	usock "github.com/burke/zeus/go/unixsocket"
@@ -48,6 +49,7 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn
 
 	// The slave will execute its action and respond with a status...
 	msg, _, err := usock.ReadFromUnixSocket(slaveSocket)
+	msg = strings.TrimRight(msg, "\000")
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -172,6 +174,7 @@ func (node *SlaveNode) handleMessages() {
 			node.ClientCommandPTYFileDescriptor <- fd
 		} else {
 			// Every other message indicates a feature loaded, and should be sent to filemonitor.
+			msg = strings.TrimRight(msg, "\000")
 			node.handleFeatureMessage(msg)
 		}
 	}

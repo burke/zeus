@@ -6,13 +6,17 @@ import (
 	"errors"
 )
 
+func trim(msg string) string {
+	return strings.TrimRight(msg, "\n\000")
+}
+
 func ParsePidMessage(msg string) (int, string, error) {
 	parts := strings.SplitN(msg, ":", 3)
 	if parts[0] != "P" {
 		return -1, "", errors.New("Wrong message type!")
 	}
 
-	identifier := parts[2]
+	identifier := trim(parts[2])
 	pid, err := strconv.Atoi(parts[1])
 	if err != nil {
 		return -1, "", err
@@ -35,15 +39,15 @@ func ParseActionResponseMessage(msg string) (string, error) {
 	if parts[0] != "R" {
 		return "", errors.New("Wrong message type!")
 	}
-	return parts[1], nil
+	return trim(parts[1]), nil
 }
 
 func CreateSpawnSlaveMessage(identifier string) (string) {
-	return "S:" + identifier
+	return "S:" + identifier + "\000"
 }
 
 func CreateSpawnCommandMessage(identifier string) (string) {
-	return "C:" + identifier
+	return "C:" + identifier + "\000"
 }
 
 func ParseClientCommandRequestMessage(msg string) (string, string, error) {
@@ -53,7 +57,7 @@ func ParseClientCommandRequestMessage(msg string) (string, string, error) {
 	}
 
 	command := parts[1]
-	arguments := parts[2]
+	arguments := trim(parts[2])
 
 	return command, arguments, nil
 }
