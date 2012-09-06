@@ -6,5 +6,5 @@ import (
 
 func CreateCommandAndArgumentsMessage(command string, args []string) string {
 	encoded, _ := json.Marshal(args)
-	return "Q:" + command + ":" + string(encoded) + "\n"
+	return "Q:" + command + ":" + string(encoded)
 }

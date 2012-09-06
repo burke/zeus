@@ -52,11 +52,10 @@ func Run(color bool) {
 	if err != nil {
 		ErrorCantConnectToMaster()
 	}
+	usock := unixsocket.NewUsock(conn)
 
 	msg := CreateCommandAndArgumentsMessage(os.Args[1], os.Args[2:])
-	conn.Write([]byte(msg))
-
-	usock := unixsocket.NewUsock(conn)
+	usock.WriteMessage(msg)
 	usock.WriteFD(int(slave.Fd()))
 	slave.Close()
 

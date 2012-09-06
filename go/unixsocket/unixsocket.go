@@ -2,6 +2,7 @@ package unixsocket
 
 import (
 	"syscall"
+	"sync"
 	"strings"
 	"os"
 	"errors"
@@ -15,10 +16,11 @@ import (
 
 type Usock struct {
 	Conn *net.UnixConn
+	mu sync.Mutex
 }
 
 func NewUsock(conn *net.UnixConn) *Usock {
-	return &Usock{conn}
+	return &Usock{Conn: conn}
 }
 
 func FdToFile(fd int, name string) (*os.File) {
@@ -102,21 +104,40 @@ func (usock *Usock) ReadMessage() (msg string, fd int, err error) {
 	buf := make([]byte, 1024) // if FD: 1 byte   ; else: varies
 	oob := make([]byte, 32)   // if FD: 24 bytes ; else: 0
 
+	usock.mu.Lock()
+	defer usock.mu.Unlock()
+
 	n, oobn, _, _, err := usock.Conn.ReadMsgUnix(buf, oob)
 	if err != nil {
 		return "", -1, err
 	}
-	if oobn == 0 {
-		msg := strings.TrimRight(string(buf[:n]), "\000")
-		return msg, -1, nil
-	} else {
+	if oobn > 0 { // we got a file descriptor.
 		if fd, err := extractFileDescriptorFromOOB(oob[:oobn]) ; err != nil {
 			return "", -1, err
 		} else {
 			return "", fd, nil
 		}
 	}
-	return "", -1, nil // just to satisfy the stupid compiler...
+
+	msg, err = usock.readNullTerminatedMessage(string(buf[:n]))
+	return msg, -1, err
+}
+
+func (usock *Usock) readNullTerminatedMessage(soFar string) (string, error) {
+	trimmed := strings.TrimRight(soFar, "\000")
+	if len(soFar) == len(trimmed) {
+		buf := make([]byte, 1024) // if FD: 1 byte   ; else: varies
+		oob := make([]byte, 32)   // if FD: 24 bytes ; else: 0
+		if n, oobn, _, _, err := usock.Conn.ReadMsgUnix(buf, oob) ; err != nil {
+			return "", err
+		} else if oobn > 0 {
+			return "", errors.New("Got a file descriptor before a message was terminated. Had read: " + soFar)
+		} else {
+			return usock.readNullTerminatedMessage(soFar + string(buf[:n]))
+		}
+	}
+	// The message was null-terminated. Return it.
+	return trimmed, nil
 }
 
 func extractFileDescriptorFromOOB(oob []byte) (int, error) {

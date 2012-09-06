@@ -39,11 +39,11 @@ func ParseActionResponseMessage(msg string) (string, error) {
 }
 
 func CreateSpawnSlaveMessage(identifier string) (string) {
-	return "S:" + identifier + "\000"
+	return "S:" + identifier
 }
 
 func CreateSpawnCommandMessage(identifier string) (string) {
-	return "C:" + identifier + "\000"
+	return "C:" + identifier
 }
 
 func ParseClientCommandRequestMessage(msg string) (string, string, error) {
