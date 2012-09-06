@@ -2,11 +2,11 @@
 
 Zeus is composed of three components:
 
-1. The Master Process. This is written in Go, and coordinates all the other processes. It connects Clients to Slaves and handles reloading when files change.
+1. [The Master Process](../go/zeusmaster). This is written in Go, and coordinates all the other processes. It connects Clients to Slaves and handles reloading when files change.
 
-2. Clients. The Client is also written in Go. It sends a command to the Master, and has its streams wired up to a Command process, to make it appear to be running locally.
+2. [Clients](../go/zeusclient). The Client is also written in Go. It sends a command to the Master, and has its streams wired up to a Command process, to make it appear to be running locally.
 
-3. Slaves/Commands. These are the target application. A small shim, written in the target language, manages the communication between the application and the Master process, and boots the application in phases.
+3. [Slaves/Commands](../rubygem). These are the target application. A small shim, written in the target language, manages the communication between the application and the Master process, and boots the application in phases. Though the Master and Client are completely language-agnostic, currently ruby is the only language for which a Slave shim exists.
 
 See: [`terminology.md`](terminology.md)
 
