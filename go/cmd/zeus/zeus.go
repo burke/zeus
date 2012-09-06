@@ -4,6 +4,7 @@ import (
 	"os"
 	"strings"
 	"syscall"
+	"path"
 
 	"github.com/burke/zeus/go/zeusmaster"
 	"github.com/burke/zeus/go/zeusclient"
@@ -51,8 +52,10 @@ func main () {
 }
 
 func execManPage(page string) {
-	path, _:= os.Getwd()
-	zeus := string(path) + "/man/build/" + page
+	binaryPath := os.Args[0]
+	gemDir := path.Dir(path.Dir(binaryPath))
+	manDir := path.Join(gemDir, "man/build")
+	zeus := path.Join(manDir, page)
 	syscall.Exec("/usr/bin/env", []string{"/usr/bin/env", "man", zeus}, os.Environ())
 }
 
