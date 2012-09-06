@@ -4,6 +4,9 @@ require 'json'
 require 'zeus/load_tracking'
 
 module Zeus
+  class Plan
+  end
+
   class << self
 
     def add_extra_feature(path)
