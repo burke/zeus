@@ -11,7 +11,7 @@ import (
 	"github.com/kr/pty"
 	"github.com/burke/ttyutils"
 	slog "github.com/burke/zeus/go/shinylog"
-	usock "github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/unixsocket"
 )
 
 const (
@@ -56,16 +56,16 @@ func Run(color bool) {
 	msg := CreateCommandAndArgumentsMessage(os.Args[1], os.Args[2:])
 	conn.Write([]byte(msg))
 
-	usock.SendFdOverUnixSocket(conn, int(slave.Fd()))
+	usock := unixsocket.NewUsock(conn)
+	usock.WriteFD(int(slave.Fd()))
 	slave.Close()
 
-	msg, _, err = usock.ReadFromUnixSocket(conn)
-	msg = strings.TrimRight(msg, "\000")
+	msg, _, err = usock.ReadMessage()
 	if err != nil {
 		panic(err)
 	}
 
-	parts := strings.Split(msg, "\n")
+	parts := strings.Split(msg, "\000")
 	commandPid, err := strconv.Atoi(parts[0])
 	defer func() {
 		if commandPid > 0 {
@@ -138,12 +138,11 @@ func Run(color bool) {
 	<- eof
 
 	if exitStatus == -1 {
-		msg, _, err = usock.ReadFromUnixSocket(conn)
-		msg = strings.TrimRight(msg, "\000")
+		msg, _, err = usock.ReadMessage()
 		if err != nil {
 			panic(err)
 		}
-		parts := strings.Split(msg, "\n")
+		parts := strings.Split(msg, "\000")
 		exitStatus, err = strconv.Atoi(parts[0])
 		if err != nil {
 			panic(err)

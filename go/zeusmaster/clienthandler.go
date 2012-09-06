@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"path/filepath"
 
-	usock "github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/unixsocket"
 )
 
 const zeusSockName string = ".zeus.sock"
@@ -25,14 +25,14 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	}
 	defer listener.Close()
 
-	connections := make(chan *net.UnixConn)
+	connections := make(chan *unixsocket.Usock)
 	go func() {
 		for {
 			if conn, err := listener.AcceptUnix() ; err != nil {
 				errorUnableToAcceptSocketConnection()
 				time.Sleep(500 * time.Millisecond)
 			} else {
-				connections <- conn
+				connections <- unixsocket.NewUsock(conn)
 			}
 		}
 	}()
@@ -49,13 +49,13 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 }
 
 // see docs/client_master_handshake.md
-func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
-	defer conn.Close()
+func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
+	defer usock.Close()
 
 	// we have established first contact to the client.
 
 	// we first read the command and arguments specified from the connection. (step 1)
-	msg, _, err := usock.ReadFromUnixSocket(conn)
+	msg, _, err := usock.ReadMessage()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -75,13 +75,13 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	slaveNode := commandNode.Parent
 
 	// Now we read the terminal IO socket to use for raw IO (step 2)
-	clientFd, err := usock.ReadFileDescriptorFromUnixSocket(conn)
+	clientFd, err := usock.ReadFD()
 	if err != nil {
 		fmt.Println("Expected FD, none received!")
 		return
 	}
 	fileName := strconv.Itoa(rand.Int())
-	clientFile := usock.FdToFile(clientFd, fileName)
+	clientFile := unixsocket.FdToFile(clientFd, fileName)
 	defer clientFile.Close()
 
 	// We now need to fork a new command process.
@@ -93,11 +93,11 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 	if slaveNode.Error != "" {
 		// we can skip steps 3-5 as they deal with the command process we're not spawning.
 		// Write a fake pid (step 6)
-		conn.Write([]byte("0\n"))
+		usock.WriteMessage("0")
 		// Write the error message to the terminal
 		clientFile.Write([]byte(slaveNode.Error))
 		// Skip step 7, and write an exit code to the client (step 8)
-		conn.Write([]byte("1\n"))
+		usock.WriteMessage("1")
 		return
 	}
 
@@ -112,23 +112,24 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 		fmt.Println("Couldn't start command process!", err)
 	}
 	fileName = strconv.Itoa(rand.Int())
-	commandFile := usock.FdToFile(commandFd, fileName)
+	commandFile := unixsocket.FdToFile(commandFd, fileName)
 	defer commandFile.Close()
 
 	// Send the arguments to the command process (step 3)
 	commandFile.Write([]byte(arguments)) // TODO: What if they're too long?
 
-	commandSocket, err := usock.MakeUnixSocket(commandFile)
+	commandSocket, err := unixsocket.MakeUnixSocket(commandFile)
 	if err != nil {
 		fmt.Println("MakeUnixSocket", err)
 	}
 	defer commandSocket.Close()
 
 	// Send the client terminal connection to the command process (step 4)
-	usock.SendFdOverUnixSocket(commandSocket, clientFd)
+	commandUsock := unixsocket.NewUsock(commandSocket)
+	commandUsock.WriteFD(clientFd)
 
 	// Receive the pid from the command process (step 5)
-	msg, _, err = usock.ReadFromUnixSocket(commandSocket)
+	msg, _, err = commandUsock.ReadMessage()
 	if err != nil {
 		println(err)
 	}
@@ -136,16 +137,16 @@ func handleClientConnection(tree *ProcessTree, conn *net.UnixConn) {
 
 	// Send the pid to the client process (step 6)
 	strPid := strconv.Itoa(intPid)
-	conn.Write([]byte(strPid + "\n"))
+	usock.WriteMessage(strPid)
 
 	// Receive the exit status from the command (step 7)
-	msg, _, err = usock.ReadFromUnixSocket(commandSocket)
+	msg, _, err = commandUsock.ReadMessage()
 	if err != nil {
 		println(err)
 	}
 
 	// Forward the exit status to the Client (step 8)
-	conn.Write([]byte(msg))
+	usock.WriteMessage(msg)
 
 	// Done! Hooray!
 

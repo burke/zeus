@@ -7,7 +7,7 @@ import (
 	"strings"
 	"sync"
 
-	usock "github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/unixsocket"
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
@@ -39,7 +39,7 @@ func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode
 	return x
 }
 
-func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn) {
+func (node *SlaveNode) Run(identifier string, pid int, slaveUsock *unixsocket.Usock) {
 	// TODO: We actually don't really want to prevent killing this
 	// process while it's booting up.
 	node.mu.Lock()
@@ -48,8 +48,7 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn
 	node.Pid = pid
 
 	// The slave will execute its action and respond with a status...
-	msg, _, err := usock.ReadFromUnixSocket(slaveSocket)
-	msg = strings.TrimRight(msg, "\000")
+	msg, _, err := slaveUsock.ReadMessage()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -58,7 +57,7 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn
 		fmt.Println(err)
 	}
 	if msg == "OK" {
-		node.Socket = slaveSocket
+		node.Socket = slaveUsock.Conn
 	} else {
 		node.RegisterError(msg)
 	}
@@ -165,8 +164,9 @@ func (node *SlaveNode) Kill() {
 //can pick them up. (notably, clienthandler.)
 func (node *SlaveNode) handleMessages() {
 	socket := node.Socket
+	usock := unixsocket.NewUsock(socket)
 	for {
-		if msg, fd, err := usock.ReadFromUnixSocket(socket) ; err != nil {
+		if msg, fd, err := usock.ReadMessage() ; err != nil {
 			node.crashed()
 			return
 		} else if fd > 0 {

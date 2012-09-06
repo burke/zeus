@@ -7,23 +7,22 @@ import (
 	"os"
 	"os/exec"
 	"fmt"
-	"net"
 
-	usock "github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/unixsocket"
 )
 
 type SlaveMonitor struct {
 	tree *ProcessTree
 }
 
-func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, quit chan bool) {
+func StartSlaveMonitor(tree *ProcessTree, local *unixsocket.Usock, remote *os.File, quit chan bool) {
 	monitor := &SlaveMonitor{tree}
 
 	// We just want this unix socket to be a channel so we can select on it...
 	registeringFds := make(chan int, 3)
 	go func() {
 		for {
-			fd, err := usock.ReadFileDescriptorFromUnixSocket(local)
+			fd, err := local.ReadFD()
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -118,20 +117,20 @@ func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
 func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	// Having just started the process, we expect an IO, which we convert to a UNIX domain socket
 	fileName := strconv.Itoa(rand.Int())
-	slaveFile := usock.FdToFile(fd, fileName)
-	slaveSocket, err := usock.MakeUnixSocket(slaveFile)
+	slaveFile := unixsocket.FdToFile(fd, fileName)
+	slaveUsock, err := unixsocket.NewUsockFromFile(slaveFile)
 	if err != nil {
 		fmt.Println(err)
 	}
-	if err = slaveSocket.SetReadBuffer(262144) ; err != nil {
+	if err = slaveUsock.Conn.SetReadBuffer(262144) ; err != nil {
 		fmt.Println(err)
 	}
-	if err = slaveSocket.SetWriteBuffer(262144) ; err != nil {
+	if err = slaveUsock.Conn.SetWriteBuffer(262144) ; err != nil {
 		fmt.Println(err)
 	}
 
 	// We now expect the slave to use this fd they send us to send a Pid&Identifier Message
-	msg, _, err := usock.ReadFromUnixSocket(slaveSocket)
+	msg, _, err := slaveUsock.ReadMessage()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -142,6 +141,6 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 		panic("Unknown identifier")
 	}
 
-	go slaveNode.Run(identifier, pid, slaveSocket)
+	go slaveNode.Run(identifier, pid, slaveUsock)
 }
 

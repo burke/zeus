@@ -5,7 +5,7 @@ import (
 	"os"
 	"os/signal"
 
-	usock "github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/unixsocket"
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
@@ -27,12 +27,12 @@ func Run(color bool) {
 
 	exitNow = make(chan int)
 
-	localMasterSocket, remoteMasterSocket, err := usock.Socketpair(syscall.SOCK_DGRAM)
+	localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
 		panic(err)
 	}
 
-	localMasterUNIXSocket, err := usock.MakeUnixSocket(localMasterSocket)
+	localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
 	if err != nil {
 		panic(err)
 	}
@@ -41,7 +41,7 @@ func Run(color bool) {
 	quit2 := make(chan bool)
 	quit3 := make(chan bool)
 
-	go StartSlaveMonitor(tree, localMasterUNIXSocket, remoteMasterSocket, quit1)
+	go StartSlaveMonitor(tree, localMasterSocket, remoteMasterFile, quit1)
 	go StartClientHandler(tree, quit2)
 	go StartFileMonitor(tree, quit3)
 
