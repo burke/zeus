@@ -9,7 +9,6 @@ type ProcessTree struct {
 	ExecCommand string
 	SlavesByName map[string]*SlaveNode
 	Commands []*CommandNode
-	Restart chan *SlaveNode
 }
 
 type ProcessTreeNode struct {
@@ -30,18 +29,6 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 	x.Name = name
 	x.Aliases = aliases
 	tree.Commands = append(tree.Commands, x)
-	return x
-}
-
-func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode {
-	x := &SlaveNode{}
-	x.Parent = parent
-	x.isBooted = false
-	x.bootWait.Lock()
-	x.Name = name
-	x.Features = make(map[string]bool)
-	x.ClientCommandPTYFileDescriptor = make(chan int)
-	tree.SlavesByName[name] = x
 	return x
 }
 
@@ -83,7 +70,7 @@ func (tree *ProcessTree) RestartNodesWithFeature(file string) {
 
 func (node *SlaveNode) restartNodesWithFeature(tree *ProcessTree, file string) {
 	if node.Features[file] {
-		node.Restart(tree.Restart)
+		node.RequestRestart()
 	} else {
 		for _, s := range node.Slaves {
 			s.restartNodesWithFeature(tree, file)

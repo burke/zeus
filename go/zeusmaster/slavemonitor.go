@@ -10,16 +10,14 @@ import (
 	"net"
 
 	usock "github.com/burke/zeus/go/unixsocket"
-	slog "github.com/burke/zeus/go/shinylog"
 )
 
 type SlaveMonitor struct {
 	tree *ProcessTree
-	booted chan string
 }
 
 func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, quit chan bool) {
-	monitor := &SlaveMonitor{tree, make(chan string)}
+	monitor := &SlaveMonitor{tree}
 
 	// We just want this unix socket to be a channel so we can select on it...
 	registeringFds := make(chan int, 3)
@@ -33,7 +31,13 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, 
 		}
 	}()
 
-	go monitor.startInitialProcess(remote)
+	for _, slave := range monitor.tree.SlavesByName {
+		if slave.Parent == nil {
+			go monitor.startInitialProcess(remote)
+		} else {
+			go monitor.bootSlave(slave)
+		}
+	}
 
 	for {
 		select {
@@ -43,10 +47,6 @@ func StartSlaveMonitor(tree *ProcessTree, local *net.UnixConn, remote *os.File, 
 			return
 		case fd := <- registeringFds:
 			monitor.slaveDidBeginRegistration(fd)
-		case name := <- monitor.booted:
-			monitor.slaveDidBoot(name)
-		case node := <- monitor.tree.Restart:
-			go monitor.bootSlave(node)
 		}
 	}
 }
@@ -57,20 +57,26 @@ func (mon *SlaveMonitor) cleanupChildren() {
 	}
 }
 
-func (mon *SlaveMonitor) slaveDidBoot(slaveName string) {
-	bootedSlave := mon.tree.FindSlaveByName(slaveName)
-	slog.SlaveBooted(bootedSlave.Name)
-	for _, slave := range bootedSlave.Slaves {
-		go mon.bootSlave(slave)
-	}
-}
-
 func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
-	slave.Parent.WaitUntilBooted()
-	msg := CreateSpawnSlaveMessage(slave.Name)
-	slave.Parent.mu.Lock()
-	slave.Parent.Socket.Write([]byte(msg))
-	slave.Parent.mu.Unlock()
+	for {
+		slave.Parent.WaitUntilBooted()
+
+		msg := CreateSpawnSlaveMessage(slave.Name)
+		slave.Parent.Socket.Write([]byte(msg))
+
+		restartNow := make(chan bool)
+		go func() {
+			slave.Parent.WaitUntilUnbooted()
+			restartNow <- true
+		}()
+		go func() {
+			slave.WaitUntilRestartRequested()
+			restartNow <- true
+		}()
+
+		<- restartNow
+		slave.Kill()
+	}
 }
 
 func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
@@ -120,6 +126,6 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 		panic("Unknown identifier")
 	}
 
-	go slaveNode.Run(identifier, pid, slaveSocket, mon.booted)
+	go slaveNode.Run(identifier, pid, slaveSocket)
 }
 

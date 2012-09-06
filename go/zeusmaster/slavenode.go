@@ -16,14 +16,29 @@ type SlaveNode struct {
 	Pid int
 	Error string
 	isBooted bool
-	bootWait sync.RWMutex
+	bootWait *sync.Cond
+	restartWait *sync.Cond
 	Slaves []*SlaveNode
 	Commands []*CommandNode
 	Features map[string]bool
 	ClientCommandPTYFileDescriptor chan int
 }
 
-func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn, booted chan string) {
+func (tree *ProcessTree) NewSlaveNode(name string, parent *SlaveNode) *SlaveNode {
+	x := &SlaveNode{}
+	x.Parent = parent
+	x.isBooted = false
+	x.Name = name
+	var mutex sync.Mutex
+	x.bootWait = sync.NewCond(&mutex)
+	x.restartWait = sync.NewCond(&mutex)
+	x.Features = make(map[string]bool)
+	x.ClientCommandPTYFileDescriptor = make(chan int)
+	tree.SlavesByName[name] = x
+	return x
+}
+
+func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn) {
 	// TODO: We actually don't really want to prevent killing this
 	// process while it's booting up.
 	node.mu.Lock()
@@ -46,28 +61,53 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveSocket *net.UnixConn
 		node.RegisterError(msg)
 	}
 	node.SignalBooted()
-	booted <- identifier
+	slog.SlaveBooted(node.Name)
 
 	go node.handleMessages()
 }
 
 func (node *SlaveNode) WaitUntilBooted() {
-	node.bootWait.RLock()
-	node.bootWait.RUnlock()
+	node.bootWait.L.Lock()
+	for !node.isBooted {
+		node.bootWait.Wait()
+	}
+	node.bootWait.L.Unlock()
+}
+
+func (node *SlaveNode) WaitUntilUnbooted() {
+	node.bootWait.L.Lock()
+	for node.isBooted {
+		node.bootWait.Wait()
+	}
+	node.bootWait.L.Unlock()
 }
 
 func (node *SlaveNode) SignalBooted() {
+	node.bootWait.L.Lock()
 	if !node.isBooted {
-		node.bootWait.Unlock()
 		node.isBooted = true
+		node.bootWait.Broadcast()
 	}
+	node.bootWait.L.Unlock()
 }
 
 func (node *SlaveNode) SignalUnbooted() {
+	node.bootWait.L.Lock()
 	if node.isBooted {
-		node.bootWait.Lock()
 		node.isBooted = false
+		node.bootWait.Broadcast()
 	}
+	node.bootWait.L.Unlock()
+}
+
+func (node *SlaveNode) RequestRestart() {
+	node.restartWait.Broadcast()
+}
+
+func (node *SlaveNode) WaitUntilRestartRequested() {
+	node.restartWait.L.Lock()
+	node.restartWait.Wait()
+	node.restartWait.L.Unlock()
 }
 
 func (node *SlaveNode) RegisterError(msg string) {
@@ -106,20 +146,15 @@ func (node *SlaveNode) Shutdown() {
 	node.tryKillProcess()
 }
 
-func (node *SlaveNode) Restart(restart chan *SlaveNode) {
+func (node *SlaveNode) Kill() {
 	node.mu.Lock()
 	defer node.mu.Unlock()
 
 	if processWasKilled := node.tryKillProcess() ; processWasKilled {
 		slog.SlaveKilled(node.Name)
-		node.SignalUnbooted()
 		node.Wipe()
-		// if it's not running? I guess... it's starting up already?
-		restart <- node
-	}
-
-	for _, s := range node.Slaves {
-		go s.Restart(restart)
+		// TODO: See if this works if not done via goroutine
+		go node.SignalUnbooted()
 	}
 }
 
