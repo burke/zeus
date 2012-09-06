@@ -80,22 +80,38 @@ func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
 }
 
 func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
-	command := mon.tree.ExecCommand
-	parts := strings.Split(command, " ")
-	executable := parts[0]
-	args := parts[1:]
-	cmd := exec.Command(executable, args...)
-	cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
-	cmd.ExtraFiles = []*os.File{sock}
+	for {
+		command := mon.tree.ExecCommand
+		parts := strings.Split(command, " ")
+		executable := parts[0]
+		args := parts[1:]
+		cmd := exec.Command(executable, args...)
+		cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
+		cmd.ExtraFiles = []*os.File{sock}
 
-	// We want to let this process run "forever", but it will eventually
-	// die... either on program termination or when its dependencies change
-	// and we kill it.
-	output, err := cmd.CombinedOutput()
-	if err != nil && string(err.Error()[:11]) != "exit status" {
-		ErrorConfigCommandCouldntStart(err.Error())
-	} else {
-		ErrorConfigCommandCrashed(string(output))
+		// We want to let this process run "forever", but it will eventually
+		// die... either on program termination or when its dependencies change
+		// and we kill it. when it's requested to restart, err is "signal 9",
+		// and we do nothing.
+		go func() {
+			output, err := cmd.CombinedOutput()
+			if err == nil {
+				ErrorConfigCommandCrashed(string(output))
+			}
+			msg := err.Error()
+			if len(msg) > 11 && err.Error()[:11] != "exit status" {
+				ErrorConfigCommandCouldntStart(err.Error())
+			}
+		}()
+
+		restartNow := make(chan bool)
+		go func() {
+			mon.tree.Root.WaitUntilRestartRequested()
+			restartNow <- true
+		}()
+
+		<- restartNow
+		mon.tree.Root.Kill()
 	}
 }
 
