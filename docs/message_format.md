@@ -2,8 +2,7 @@
 
 There are a number of different types of messages passed between Master and Slave processes.
 
-In the interest of simplifying Slave libraries, messages are sent as single packets over a UNIX datagram socket,
-with a single-letter prefix, followed by a colon, indicating the message type.
+In the interest of simplifying Slave libraries, messages are sent as single packets over a UNIX datagram socket, with a single-letter prefix, followed by a colon, indicating the message type.
 
 the parenthesesized values after each title are the message code, and the handling module.
 

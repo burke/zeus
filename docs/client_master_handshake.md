@@ -16,8 +16,7 @@
 
 The Master always has a UNIX domain server listening at a known socket path.
 
-The Client connects to this server and sends a string indicating the command to run
-and any arguments to run with (ie. the ARGV). See message_format.md for more info.
+The Client connects to this server and sends a string indicating the command to run and any arguments to run with (ie. the ARGV). See message_format.md for more info.
 
 #### 2. Terminal IO (Client -> Master)
 
@@ -43,15 +42,15 @@ The Client is now connected to the Command process.
 
 #### 7. Exit status (Command -> Master)
 
-When the command terminates, it must send its exit code to the master. This is normally
-easiest to implement as a wrapper process that does the setsid, then forks the command
-and `waitpid`s on it.
+When the command terminates, it must send its exit code to the master. This is normally easiest to implement as a wrapper process that does the setsid, then forks the command and `waitpid`s on it.
 
-The form of this message is `{{code}}\n`, eg: `1\n`.
+The form of this message is `{{code}}`, eg: `1`.
 
 #### 8. Exit status (Master -> Client)
 
 Finally, the Master forwards the exit status to the Client. The command cycle is now complete.
 
-The form of this message is `{{code}}\n`, eg: `1\n`.
+The form of this message is `{{code}}`, eg: `1`.
+
+See [`message_format.md`](message_format.md) for more information on messages.
 
