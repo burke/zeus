@@ -30,27 +30,27 @@ The Master process revolves around the `ProcessTree` -- the core data structure 
 
 This component reads the configuration file on initialization, and constructs the initial `ProcessTree` for the rest of the application to use.
 
-Source: [`config.go`](../zeusmaster/config.go)
+Source: [`config.go`](../go/zeusmaster/config.go)
 Source: [`zeus.json`](../examples/zeus.json)
 
 ### 2. ClientHandler
 
 The `ClientHandler` listens on a socket for incoming requests from Client processes, and negotiates connections to running Slave processes. It is responsible for interactions with the client for its entire life-cycle.
 
-Source: [`clienthandler.go`](../zeusmaster/clienthandler.go)
+Source: [`clienthandler.go`](../go/zeusmaster/clienthandler.go)
 
 ### 3. FileMonitor
 
 The `FileMonitor`'s job is to restart slaves when one of their dependencies has changed. Slaves are expected to report back with a list of files they have loaded. The `FileMonitor` listens for these messages and registers them with an external process that watches the filesystem for changes. When the external process reports a change, the `FileMonitor` restarts any slaves that have loaded that file.
 
-Source: [`filemonitor.go`](../zeusmaster/filemonitor.go)
+Source: [`filemonitor.go`](../go/zeusmaster/filemonitor.go)
 
 ### 4. SlaveMonitor
 
 This component is responsible for communication with the target-language shim to manage booting and forking of application phase slaves. It constantly attempts to keep all slaves booted, restarting them when they are killed or die.
 
-Source: [`slavemonitor.go`](../zeusmaster/slavemonitor.go)
-Source: [`slavenode.go`](../zeusmaster/slavenode.go)
+Source: [`slavemonitor.go`](../go/zeusmaster/slavemonitor.go)
+Source: [`slavenode.go`](../go/zeusmaster/slavenode.go)
 
 See also: [`master_slave_handshake.md`](master_slave_handshake.md)
 
@@ -64,7 +64,7 @@ A handler is set up for SIGWINCH, again to forward it to the remote process, and
 
 When the remote process exits, it reports its exit status, which the client process then exits with.
 
-Source: [`zeusclient.go`](../zeusclient/zeusclient.go)
+Source: [`zeusclient.go`](../go/zeusclient/zeusclient.go)
 
 See also: [`client_master_handshake.md`](client_master_handshake.md)
 
