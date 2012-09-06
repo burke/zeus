@@ -1,0 +1,48 @@
+# Zeus
+
+Zeus preloads your Rails app so that your normal development tasks such as `console`, `server`, `generate`, and specs/tests take **less than one second**.
+
+This screencast gives a quick overview of how to use zeus with Rails.
+
+[![Watch the screencast!](http://s3.amazonaws.com/burkelibbey/vimeo-zeus.png)](http://vimeo.com/burkelibbey/zeus)
+
+More technically speaking, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is on the horizon.
+
+## Requirements (for use with ruby)
+
+* OS X 10.7+ (Linux support coming soon!)
+* Ruby 1.9+
+* Rails 3.0+ (Support for other versions is not difficult and is planned.)
+* Backported GC from Ruby 2.0.
+
+You can install the GC-patched ruby from [this gist](https://gist.github.com/1688857) or from RVM.  This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
+
+## Installation
+
+Install the gem.
+
+    gem install zeus
+
+Q: "I should put it in my `Gemfile`, right?"
+
+A: You can, but running `bundle exec zeus` instead of `zeus` can add precious seconds to a command that otherwise would be quite a bit faster. Zeus was built to be run from outside of bundler.
+
+## Usage
+
+Start the server:
+
+    zeus start
+
+Run some commands:
+
+    zeus console
+    zeus server
+    zeus testrb test/unit/widget_test.rb
+    zeus rspec spec/widget_spec.rb
+    zeus generate model omg
+    zeus rake -T
+    zeus runner omg.rb
+
+## Hacking
+
+See [`docs/README.md`](docs/README.md)

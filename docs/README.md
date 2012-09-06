@@ -24,7 +24,7 @@ See: [`terminology.md`](terminology.md)
 
 ![arch.png](//raw.github.com/burke/zeus/master/docs/arch.png)
 
-The Master process revolves around the `ProcessTree` -- the core data structure that maintains most of the state of the application. Each module performs most of its communication with other modules through interactions with the Tree.
+The Master process revolves around the [`ProcessTree`](../go/zeusmaster/processtree.go) -- the core data structure that maintains most of the state of the application. Each module performs most of its communication with other modules through interactions with the Tree.
 
 ### 1. Config
 
