@@ -45,4 +45,4 @@ Run some commands:
 
 ## Hacking
 
-See [`docs/overview.md`](/burke/zeus/docs/overview.md)
+See [`docs/overview.md`](/burke/zeus/tree/master/docs/overview.md)
