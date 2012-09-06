@@ -13,4 +13,4 @@ exe = case platform
       end
 
 zeusgemdir = File.expand_path("../../", __FILE__)
-exec "#{zeusgemdir}/build/#{exe}", ARGV.join(" ")
+exec "#{zeusgemdir}/build/#{exe}", *ARGV
