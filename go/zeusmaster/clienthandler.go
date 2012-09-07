@@ -87,9 +87,6 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	// We now need to fork a new command process.
 	// For now, we naively assume it's running...
 
-	// boot a command process and establish a socket connection to it.
-	slaveNode.WaitUntilBooted()
-
 	if slaveNode.Error != "" {
 		// we can skip steps 3-5 as they deal with the command process we're not spawning.
 		// Write a fake pid (step 6)
@@ -100,6 +97,9 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 		usock.WriteMessage("1")
 		return
 	}
+
+	// boot a command process and establish a socket connection to it.
+	slaveNode.WaitUntilBooted()
 
 	msg = CreateSpawnCommandMessage(command)
 	slaveNode.mu.Lock()

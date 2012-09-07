@@ -44,17 +44,6 @@ module Zeus
       end
     end
 
-    def handle_dead_children(sock)
-      # TODO: It would be nice if it were impossible for this
-      # to interfere with the identifer -> IO thing.
-      loop do
-        pid = Process.wait(-1, Process::WNOHANG)
-        break if pid.nil?
-        # sock.send("D:#{pid}")
-      end
-    rescue Errno::ECHILD
-    end
-
     def go(identifier=:boot)
       identifier = identifier.to_sym
       $0 = "zeus slave: #{identifier}"
@@ -63,7 +52,8 @@ module Zeus
       master = UNIXSocket.for_fd(fd)
 
       # I need to give the master a way to talk to me exclusively
-      local, remote = UNIXSocket.pair(:DGRAM)
+      local, remote = UNIXSocket.pair(:STREAM)
+
       master.send_io(remote)
 
       # Now I need to tell the master about my PID and ID

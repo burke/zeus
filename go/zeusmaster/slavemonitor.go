@@ -122,10 +122,10 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	if err = slaveUsock.Conn.SetReadBuffer(262144); err != nil {
+	if err = slaveUsock.Conn.SetReadBuffer(1024); err != nil {
 		fmt.Println(err)
 	}
-	if err = slaveUsock.Conn.SetWriteBuffer(262144); err != nil {
+	if err = slaveUsock.Conn.SetWriteBuffer(1024); err != nil {
 		fmt.Println(err)
 	}
 
