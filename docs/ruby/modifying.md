@@ -40,5 +40,6 @@ Zeus.plan = MyPlan
     // ...
   }
 }
+```
 
 Alternatively, you could subclass `Zeus::Plan` to create a completely fresh plan with no predefined behaviour.
