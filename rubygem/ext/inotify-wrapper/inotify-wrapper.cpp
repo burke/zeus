@@ -9,6 +9,8 @@
 #include <sys/types.h>
 #include <sys/inotify.h>
 
+#include <errno.h>
+
 #define EVENT_SIZE (sizeof (struct inotify_event))
 #define EVENT_BUF_LEN (1024 * (EVENT_SIZE + 16))
 
@@ -18,17 +20,39 @@ static int _inotify_fd;
 static map<int, string> _WatchedFiles;
 static map<string, bool> _FileIsWatched;
 
+// static int inotifyFlags = IN_ATTRIB | IN_MODIFY | IN_MOVE_SELF | IN_DELETE_SELF;
 static int inotifyFlags = IN_ATTRIB | IN_MODIFY | IN_MOVE_SELF | IN_DELETE_SELF;
 
-void maybeAddFileToWatchList(char *file)
+void maybeAddFileToWatchList(string file)
 {
-  string sFile = string(file);
+  if (_FileIsWatched[file]) return;
 
-  if (_FileIsWatched[sFile]) return;
+  int wd = inotify_add_watch(_inotify_fd, file.c_str(), inotifyFlags);
+  int attempts = 0;
+  // Files are momentarily inaccessible when they are rewritten. I couldn't
+  // find a good way to deal with this, so we poll 'deleted' files for 0.25s or so
+  // to see if they reappear.
+  while (wd == -1 && errno == ENOENT) {
+    usleep(10000);
+    wd = inotify_add_watch(_inotify_fd, file.c_str(), inotifyFlags);
+    if (attempts++ == 25) break; // try for at most about a quarter of a second
+  }
+  if (wd != -1) {
+    _WatchedFiles[wd] = file;
+    _FileIsWatched[file] = true;
+  }
+}
 
-   _FileIsWatched[sFile] = true;
-  int wd = inotify_add_watch(_inotify_fd, file, inotifyFlags);
-  _WatchedFiles[wd] = sFile;
+// This essentially removes a file from the watchlist then
+// immediately re-adds it. This is because when a file is rewritten,
+// as so many editors love to do, the watchdescriptor no longer refers to
+// the file, so re must re-watch the path.
+void replaceFileInWatchList(int wd, string file)
+{
+  _FileIsWatched.erase(file);
+  _WatchedFiles.erase(wd);
+  inotify_rm_watch(_inotify_fd, wd);
+  maybeAddFileToWatchList(file);
 }
 
 void handleStdin()
@@ -37,7 +61,7 @@ void handleStdin()
   if (fgets(line, sizeof(line), stdin) == NULL) return;
   line[strlen(line)-1] = 0;
 
-  maybeAddFileToWatchList(line);
+  maybeAddFileToWatchList(string(line));
 }
 
 void handleInotify()
@@ -52,8 +76,12 @@ void handleInotify()
 
   while (i < length) {
     struct inotify_event *event = (struct inotify_event *) &buffer[i];
-    printf("%s\n", _WatchedFiles[event->wd].c_str());
-    fflush(stdout);
+    string file = _WatchedFiles[event->wd];
+    if (file != "") {
+      printf("%s\n", file.c_str());
+      fflush(stdout);
+      replaceFileInWatchList(event->wd, file);
+    }
 
     i += EVENT_SIZE + event->len;
   }
