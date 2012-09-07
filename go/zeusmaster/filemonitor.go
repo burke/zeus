@@ -5,6 +5,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"runtime"
 	"strings"
 
 	slog "github.com/burke/zeus/go/shinylog"
@@ -42,9 +43,19 @@ func StartFileMonitor(tree *ProcessTree, quit chan bool) {
 	}
 }
 
+func executablePath() string {
+	switch runtime.GOOS {
+	case "darwin":
+		return path.Join(path.Dir(os.Args[0]), "fsevents-wrapper")
+	case "linux":
+		gemRoot := path.Dir(path.Dir(os.Args[0]))
+		return path.Join(gemRoot, "ext/inotify-wrapper/inotify-wrapper")
+	}
+	panic("Unsupported OS")
+}
+
 func startWrapper() {
-	executable := path.Join(path.Dir(os.Args[0]), "fsevents-wrapper")
-	cmd := exec.Command(executable)
+	cmd := exec.Command(executablePath())
 	var err error
 	if watcherIn, err = cmd.StdinPipe(); err != nil {
 		panic(err)
