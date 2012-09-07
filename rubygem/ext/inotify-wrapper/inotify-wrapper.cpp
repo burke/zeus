@@ -15,18 +15,20 @@
 using namespace std;
 
 static int _inotify_fd;
-static map<int, char*> _WatchedFiles;
-static map<char*, bool> _FileIsWatched;
+static map<int, string> _WatchedFiles;
+static map<string, bool> _FileIsWatched;
 
 static int inotifyFlags = IN_ATTRIB | IN_MODIFY | IN_MOVE_SELF | IN_DELETE_SELF;
 
 void maybeAddFileToWatchList(char *file)
 {
-  if (_FileIsWatched[file]) return;
+  string sFile = string(file);
 
-  _FileIsWatched[file] = true;
+  if (_FileIsWatched[sFile]) return;
+
+   _FileIsWatched[sFile] = true;
   int wd = inotify_add_watch(_inotify_fd, file, inotifyFlags);
-  _WatchedFiles[wd] = file;
+  _WatchedFiles[wd] = sFile;
 }
 
 void handleStdin()
@@ -50,7 +52,7 @@ void handleInotify()
 
   while (i < length) {
     struct inotify_event *event = (struct inotify_event *) &buffer[i];
-    printf("%s\n", _WatchedFiles[event->wd]);
+    printf("%s\n", _WatchedFiles[event->wd].c_str());
     fflush(stdout);
 
     i += EVENT_SIZE + event->len;
