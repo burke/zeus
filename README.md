@@ -34,6 +34,10 @@ Start the server:
 
     zeus start
 
+See a list of the available commands:
+
+    zeus commands
+
 Run some commands:
 
     zeus console
