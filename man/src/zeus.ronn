@@ -1,4 +1,4 @@
-zeus(1) -- preload development tasks for slow codebases
+zeus(1) -- boot rails in under a second
 =======================================================
 
 ## SYNOPSIS
@@ -9,11 +9,23 @@ zeus(1) -- preload development tasks for slow codebases
 
 Zeus makes working with large codebases much less painful.
 
+To use Zeus with Ruby on Rails 3.0+, Just run `zeus init` in your 
+project directory, then run `zeus start`, then run `zeus commands` in
+a different shell to see a list of available commands.
+
+See `https://github.com/burke/zeus/blob/master/docs/ruby/modifying.md` for information on modifying the boot process that Zeus uses by default.
+
+## SLIGHTLY MORE TECHNICAL DESCRIPTION
+
+Zeus is a language-agnostic application checkpointer for non-multithreaded applications.
+
 It is primarily targeted at ruby and other dynamic languages,
 where application boot time can be tens of seconds, but it can be
 made to work for nearly any language. However, zeus does not work
 well with multithreaded applications. It relies heavily on `fork(2)`,
 which is largely incompatible with multithreaded systems.
+
+Currently only ruby is targeted, but support for other languages is planned.
 
 Zeus lets you define common tasks, and preloads all of them in the
 background. When you ask to run them, zeus transparently connects
@@ -22,10 +34,12 @@ your terminal to the already-running process in milliseconds.
 This lets you, for example, run unit tests in dozens of milliseconds,
 rather than dozens of seconds.
 
-Zeus also optionally monitors all files loaded by your application,
-and restarts as much of it as is necessary when a dependency changes.
+Zeus also monitors all files loaded by your application, and restarts
+parts of it when dependencies change, to keep everything up-to-date.
 
-To use zeus with a Ruby on Rails application, install the gem '`zeus-rails`'.
+## WAY MORE TECHNICAL DESCRIPTION
+
+See `https://github.com/burke/zeus/blob/master/docs/overview.md`
 
 ## OPTIONS
 
