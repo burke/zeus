@@ -29,7 +29,7 @@ class MyPlan < Zeus::Rails
     something_else
   end
 end
-Zeus.plan = MyPlan
+Zeus.plan = MyPlan.new
 ```
 
 ```javascript
