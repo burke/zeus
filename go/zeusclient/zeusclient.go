@@ -31,6 +31,10 @@ func doRun(color bool) int {
 		DisableErrorColor()
 	}
 
+	if os.Getenv("RAILS_ENV") != "" {
+		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
+	}
+
 	master, slave, err := pty.Open()
 	if err != nil {
 		panic(err)
