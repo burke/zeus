@@ -55,7 +55,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	// we have established first contact to the client.
 
 	// we first read the command and arguments specified from the connection. (step 1)
-	msg, _, err := usock.ReadMessage()
+	msg, err := usock.ReadMessage()
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -129,7 +129,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	commandUsock.WriteFD(clientFd)
 
 	// Receive the pid from the command process (step 5)
-	msg, _, err = commandUsock.ReadMessage()
+	msg, err = commandUsock.ReadMessage()
 	if err != nil {
 		println(err)
 	}
@@ -140,7 +140,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	usock.WriteMessage(strPid)
 
 	// Receive the exit status from the command (step 7)
-	msg, _, err = commandUsock.ReadMessage()
+	msg, err = commandUsock.ReadMessage()
 	if err != nil {
 		println(err)
 	}

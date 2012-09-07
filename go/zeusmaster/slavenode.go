@@ -48,7 +48,7 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveUsock *unixsocket.Us
 	node.Pid = pid
 
 	// The slave will execute its action and respond with a status...
-	msg, _, err := slaveUsock.ReadMessage()
+	msg, err := slaveUsock.ReadMessage()
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -166,7 +166,7 @@ func (node *SlaveNode) handleMessages() {
 	socket := node.Socket
 	usock := unixsocket.NewUsock(socket)
 	for {
-		if msg, fd, err := usock.ReadMessage(); err != nil {
+		if msg, fd, err := usock.ReadMessageOrFD(); err != nil {
 			node.crashed()
 			return
 		} else if fd > 0 {

@@ -9,7 +9,7 @@ import (
 func ParsePidMessage(msg string) (int, string, error) {
 	parts := strings.SplitN(msg, ":", 3)
 	if parts[0] != "P" {
-		return -1, "", errors.New("Wrong message type!")
+		return -1, "", errors.New("Wrong message type! Expected PidMessage, got: " + msg)
 	}
 
 	identifier := parts[2]
@@ -24,7 +24,7 @@ func ParsePidMessage(msg string) (int, string, error) {
 func ParseFeatureMessage(msg string) (string, error) {
 	parts := strings.SplitN(msg, ":", 2)
 	if parts[0] != "F" {
-		return "", errors.New("Wrong message type!")
+		return "", errors.New("Wrong message type! Expected FeatureMessage, got: " + msg)
 	}
 	return strings.TrimSpace(parts[1]), nil
 }
@@ -32,7 +32,7 @@ func ParseFeatureMessage(msg string) (string, error) {
 func ParseActionResponseMessage(msg string) (string, error) {
 	parts := strings.SplitN(msg, ":", 2)
 	if parts[0] != "R" {
-		return "", errors.New("Wrong message type!")
+		return "", errors.New("Wrong message type! Expected ActionResponseMessage, got: " + msg)
 	}
 	return parts[1], nil
 }
@@ -48,7 +48,7 @@ func CreateSpawnCommandMessage(identifier string) string {
 func ParseClientCommandRequestMessage(msg string) (string, string, error) {
 	parts := strings.SplitN(msg, ":", 3)
 	if parts[0] != "Q" {
-		return "", "", errors.New("Wrong message type!")
+		return "", "", errors.New("Wrong message type! Expected ClientCommandRequestMessage, got: " + msg)
 	}
 
 	command := parts[1]

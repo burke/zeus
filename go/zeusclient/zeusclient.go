@@ -66,7 +66,7 @@ func doRun(color bool) int {
 	usock.WriteFD(int(slave.Fd()))
 	slave.Close()
 
-	msg, _, err = usock.ReadMessage()
+	msg, err = usock.ReadMessage()
 	if err != nil {
 		panic(err)
 	}
@@ -144,7 +144,7 @@ func doRun(color bool) int {
 	<-eof
 
 	if exitStatus == -1 {
-		msg, _, err = usock.ReadMessage()
+		msg, err = usock.ReadMessage()
 		if err != nil {
 			panic(err)
 		}

@@ -130,7 +130,7 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	}
 
 	// We now expect the slave to use this fd they send us to send a Pid&Identifier Message
-	msg, _, err := slaveUsock.ReadMessage()
+	msg, err := slaveUsock.ReadMessage()
 	if err != nil {
 		fmt.Println(err)
 	}
