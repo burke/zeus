@@ -21,7 +21,7 @@ You can install the GC-patched ruby from [this gist](https://gist.github.com/168
 
 Install the gem.
 
-    gem install zeus --pre
+    gem install zeus
     zeus init
 
 Q: "I should put it in my `Gemfile`, right?"
