@@ -61,7 +61,7 @@ func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
 		slave.Parent.WaitUntilBooted()
 
 		msg := CreateSpawnSlaveMessage(slave.Name)
-		slave.Parent.Socket.Write([]byte(msg))
+		unixsocket.NewUsock(slave.Parent.Socket).WriteMessage(msg)
 
 		restartNow := make(chan bool)
 		go func() {
@@ -138,7 +138,7 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 
 	slaveNode := mon.tree.FindSlaveByName(identifier)
 	if slaveNode == nil {
-		panic("Unknown identifier")
+		panic("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
 	}
 
 	go slaveNode.Run(identifier, pid, slaveUsock)

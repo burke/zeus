@@ -57,6 +57,7 @@ module Zeus
       master.send_io(remote)
 
       # Now I need to tell the master about my PID and ID
+      File.open("a.log","a") { |f| f.puts identifier}
       local.write "P:#{Process.pid}:#{identifier}\0"
 
       # Now we run the action and report its success/fail status to the master.
@@ -69,12 +70,13 @@ module Zeus
 
       # We are now 'connected'. From this point, we may receive requests to fork.
       loop do
-        new_identifier = local.recv(1024)
-        new_identifier.chomp!("\0")
-        if new_identifier =~ /^S:/
-          fork { plan.after_fork ; go(new_identifier.sub(/^S:/,'')) }
-        else
-          fork { plan.after_fork ; command(new_identifier.sub(/^C:/,''), local) }
+        messages = local.recv(1024)
+        messages.split("\0").each do |new_identifier|
+          if new_identifier =~ /^S:/
+            fork { plan.after_fork ; go(new_identifier.sub(/^S:/,'')) }
+          else
+            fork { plan.after_fork ; command(new_identifier.sub(/^C:/,''), local) }
+          end
         end
       end
     end
