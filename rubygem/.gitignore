@@ -18,3 +18,4 @@ tmp
 lib/zeus/version.rb
 MANIFEST
 ext/fsevents-wrapper/fsevents-wrapper
+examples/zeus.json

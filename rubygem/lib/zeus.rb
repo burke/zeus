@@ -52,7 +52,7 @@ module Zeus
       master = UNIXSocket.for_fd(fd)
 
       # I need to give the master a way to talk to me exclusively
-      local, remote = UNIXSocket.pair(:STREAM)
+      local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
 
       master.send_io(remote)
 
