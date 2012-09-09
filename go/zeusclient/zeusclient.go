@@ -35,19 +35,30 @@ func doRun(color bool) int {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
 	}
 
-	master, slave, err := pty.Open()
+	isTerminal := ttyutils.IsTerminal(os.Stdout.Fd())
+
+	var master, slave *os.File
+	var err error
+	if isTerminal {
+		master, slave, err = pty.Open()
+	} else {
+		master, slave, err = unixsocket.Socketpair(syscall.SOCK_STREAM)
+	}
 	if err != nil {
 		panic(err)
 	}
+
 	defer master.Close()
-	if ttyutils.IsTerminal(os.Stdout.Fd()) {
+	if isTerminal {
 		oldState, err := ttyutils.MakeTerminalRaw(os.Stdout.Fd())
 		if err != nil {
 			panic(err)
 		}
 		defer ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
+
 	}
 
+	// should this happen if we're running over a pipe? I think maybe not?
 	ttyutils.MirrorWinsize(os.Stdout, master)
 
 	addr, err := net.ResolveUnixAddr("unixgram", zeusSockName)
@@ -84,18 +95,20 @@ func doRun(color bool) int {
 		panic(err)
 	}
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGWINCH, syscall.SIGCONT)
-	go func() {
-		for sig := range c {
-			if sig == syscall.SIGCONT {
-				syscall.Kill(commandPid, syscall.SIGCONT)
-			} else if sig == syscall.SIGWINCH {
-				ttyutils.MirrorWinsize(os.Stdout, master)
-				syscall.Kill(commandPid, syscall.SIGWINCH)
+	if isTerminal {
+		c := make(chan os.Signal, 1)
+		signal.Notify(c, syscall.SIGWINCH, syscall.SIGCONT)
+		go func() {
+			for sig := range c {
+				if sig == syscall.SIGCONT {
+					syscall.Kill(commandPid, syscall.SIGCONT)
+				} else if sig == syscall.SIGWINCH {
+					ttyutils.MirrorWinsize(os.Stdout, master)
+					syscall.Kill(commandPid, syscall.SIGWINCH)
+				}
 			}
-		}
-	}()
+		}()
+	}
 
 	var exitStatus int = -1
 	if len(parts) > 2 {
@@ -126,15 +139,17 @@ func doRun(color bool) int {
 				eof <- true
 				break
 			}
-			for i := 0; i < n; i++ {
-				switch buf[i] {
-				case sigInt:
-					syscall.Kill(commandPid, syscall.SIGINT)
-				case sigQuit:
-					syscall.Kill(commandPid, syscall.SIGQUIT)
-				case sigTstp:
-					syscall.Kill(commandPid, syscall.SIGTSTP)
-					syscall.Kill(os.Getpid(), syscall.SIGTSTP)
+			if isTerminal {
+				for i := 0; i < n; i++ {
+					switch buf[i] {
+					case sigInt:
+						syscall.Kill(commandPid, syscall.SIGINT)
+					case sigQuit:
+						syscall.Kill(commandPid, syscall.SIGQUIT)
+					case sigTstp:
+						syscall.Kill(commandPid, syscall.SIGTSTP)
+						syscall.Kill(os.Getpid(), syscall.SIGTSTP)
+					}
 				}
 			}
 			master.Write(buf[:n])
