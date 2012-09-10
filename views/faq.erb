@@ -1,0 +1,19 @@
+<h1>Frequently Asked Questions</h1>
+
+<h2>Why doesn't Zeus run on Windows?</h2>
+
+<p>Zeus requires the ability to fork. Windows does not have this ability, and it's impossible to work around this.</p>
+
+<h2>Why doesn't Zeus run on JRuby?</h2>
+
+<p>Zeus requires the ability to fork. The JVM does not have this ability, and it's impossible to work around this.</p>
+
+<h2>Why do I need to install a performance-patched ruby? This sounds scary.</h2>
+
+<p>MRI's Garbage Collector effectively forces the OS to copy the entire process memory image when ruby forks. Since Zeus forks quite a bit, this eats up several times the normal memory usage of your application. The performance patch includes an improved Garbage Collector from Ruby 2.0 that doesn't force this behaviour, so memory usage stays low.</p>
+
+<p>Besides, the performance patch actually speeds up ruby quite a bit. It's very worth using even if you don't use Zeus.</p>
+
+<h2>I tried starting Zeus and the boot process just says "ready" and then "died". Huh?</h2>
+
+<p>Zeus couldn't start your app. If you run any command (eg. `zeus console`), it'll print the backtrace, and you can go from there.</p>

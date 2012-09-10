@@ -12,22 +12,36 @@
 
         <!-- Place favicon.ico and apple-touch-icon.png in the root directory -->
 
-        <link rel="stylesheet" href="css/normalize.css">
-        <link rel="stylesheet" href="css/main.css">
-        <script src="js/vendor/modernizr-2.6.1.min.js"></script>
+        <link rel="stylesheet" href="/css/normalize.css">
+        <link rel="stylesheet" href="/css/main.css">
+        <script src="/js/vendor/modernizr-2.6.1.min.js"></script>
     </head>
     <body>
         <!--[if lt IE 7]>
             <p class="chromeframe">You are using an outdated browser. <a href="http://browsehappy.com/">Upgrade your browser today</a> or <a href="http://www.google.com/chromeframe/?redirect=true">install Google Chrome Frame</a> to better experience this site.</p>
         <![endif]-->
 
-        <!-- Add your site or application content here -->
-        <p>Hello world! This is HTML5 Boilerplate.</p>
+        <div id="sidebar">
+            <ul>
+                <li><a href="/here">Home</a></li>
+                <li><a href="/easy">Getting Started</a></li>
+                <li><a href="/useful">Why Zeus?</a></li>
+                <li><a href="/configurable">Configuring Zeus</a></li>
+                <li><a href="/documented">Documentation</a></li>
+                <li><a href="/frequently/questionable">FAQs</a></li>
+                <li><a href="http://twitter.com/zeusapp">Twitter</a></li>
+                <li><a href="https://github.com/burke/zeus/issues">Issues</a></li>
+                <li><a href="https://github.com/burke/zeus">Source</a></li>
+                <li><a href="https://github.com/burke/zeus/tree/master/README.md#contribute">Contributing</a></li>
+            </ul>
+        </div>
+
+        <%= yield %>
 
         <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.0/jquery.min.js"></script>
-        <script>window.jQuery || document.write('<script src="js/vendor/jquery-1.8.0.min.js"><\/script>')</script>
-        <script src="js/plugins.js"></script>
-        <script src="js/main.js"></script>
+        <script>window.jQuery || document.write('<script src="/js/vendor/jquery-1.8.0.min.js"><\/script>')</script>
+        <script src="/js/plugins.js"></script>
+        <script src="/js/main.js"></script>
 
         <!-- Google Analytics: change UA-XXXXX-X to be your site's ID. -->
         <script>

@@ -1,0 +1,47 @@
+<h1>Getting Started</h1>
+
+<h2>Requirements</h2>
+
+<p>Zeus has some pretty specific requirements.<p>
+
+<dl>
+  <dt>Operating System</dt>
+  <dd>Zeus will run on <em>OS X 10.7+</em> or <em>Linux 2.6.13+</em>. Windows support is not possible.</dd>
+
+  <dt>Ruby Interpreter<dt>
+  <dd><em>MRI 1.9.3+</em>, <em>Rubinius</em>, or <em>Ruby Enterprise Edition</em>. With MRI 1.9.3, using the <a href="https://gist.github.com/1688857">backported GC from 2.0</a> is <strong>strongly</strong> recommended. Performance without this patch is not good. Zeus relies on a Copy-On-Write-friendly Garbage Collector, which 1.9 does not have.</dd>
+<dl>
+
+<h2>Step 1: Install</h2>
+
+<p>Running the following command will check these dependencies and install Zeus if they are met:</p>
+
+<code>$ curl zeus.is/installing | sh</code>
+
+<p>If you want to skip the dependency checks, you can just `gem install zeus`.</p>
+
+<h2>Step 2: Set up a project</h2>
+
+<code>$ zeus init</code>
+
+<p>The `zeus init` command generates a default `zeus.json` file. `zeus.json` is the config file Zeus uses to describe how your application should be booted, and the different commands you should be able to run when it's booted. This default `zeus.json` installed by `zeus init` uses definitions appropriate for most Rails 3.0+ apps. If you need to modify this configuration, or want to learn more about it, see the page on <a href="/configurable">Configuring Zeus</a>.</p>
+
+<h2>Step 3: Start a server</h2>
+
+<code>$zeus server</code>
+
+<p>The `zeus server` command starts the Zeus master process for the project in the current directory. It loads `zeus.json` and boots the application according to the plan defined in it. See the page on <a href="/configurable">Configuring Zeus</a> for more information on this boot process.</p>
+
+<h2>Step 4: Run commands</h2>
+
+<code>$ zeus commands</code>
+
+<p>Each command defined in `zeus.json` is listed when you run `zeus commands`. This will show you a list of all available commands and their aliases. Each command will pass whatever arguments you give it along to the command, and some will have aliases. For example, `zeus commands` might print:
+
+<code>zeus generate (alias: g)</code>
+
+<p>The `zeus generate` command behaves exactly like `rails generate`, except it uses the preloaded zeus environment, so it takes much less time. You could run either `zeus generate migration foo` or `zeus g migration foo`.</p>
+
+<h2>Step 5: Learn More</h2>
+
+<p> The <a href="/configurable">Configuring Zeus</a> page has a full explanation of how the Zeus boot process works, and how to modify it to fit your own application.</a>

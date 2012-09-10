@@ -1,0 +1,32 @@
+<!-- Add your site or application content here -->
+<h1>Zeus</h1>
+<h2>Boot Rails in under a second</h2>
+
+<iframe src="http://player.vimeo.com/video/46795747" width="500" height="281" frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen></iframe>
+
+<p>Zeus preloads your Rails app so that your normal development tasks such as console, server, generate, and specs or tests take less than one second. It watches every file required by ruby, and when one of them changes, it restarts whatever part of your application depends on that file – so your tests are always ready to go, and they're always running the latest code.</p>
+
+<h2>Quick Start</h2>
+
+<h3>Step 1: Install</h3>
+<code>$ curl zeus.is/installing | sh</code>
+
+<p>This will check for required dependencies and install the ruby gem. If you already know your system meets the requirements, you can just `gem install zeus`.</p>
+
+<h3>Step 2: Set up a project</h3>
+<p>Next, run `zeus init` in a Rails project. This generates a `zeus.json` which defines the boot process of your application. For most Rails 3.0+ apps, you won't need to change this.</p>
+<code>$ zeus init</code>
+
+<h3>Step 3: Start a server</h3>
+<code>$ zeus start</code>
+<p>This will start a Zeus server that preloads your application, enabling you to run commands instantly.
+
+<h3>Step 4: Run commands</h3>
+<code>$ zeus commands</code>
+<p>`zeus commands` will list all the commands defined by your `zeus.json`. By default, these are things like `console`, `generate`, `rake`, and `rspec`. By default, these work just like usual, except they're prefixed with `zeus`:</p>
+<code>$ zeus rake routes
+  $ zeus console
+  $ zeus rspec spec/unit/widget_spec.rb</code>
+
+<h3>Step 5: Learn more</h3>
+<p>Check out the <a href="/easy">Getting Started</a> page for more information!</p>
