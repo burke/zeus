@@ -7,6 +7,7 @@ import (
 	"os/exec"
 	"strconv"
 	"strings"
+	"syscall"
 
 	"github.com/burke/zeus/go/unixsocket"
 )
@@ -15,14 +16,24 @@ type SlaveMonitor struct {
 	tree *ProcessTree
 }
 
-func StartSlaveMonitor(tree *ProcessTree, local *unixsocket.Usock, remote *os.File, quit chan bool) {
+func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
 	monitor := &SlaveMonitor{tree}
+
+	localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
+	if err != nil {
+		panic(err)
+	}
+
+	localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
+	if err != nil {
+		panic(err)
+	}
 
 	// We just want this unix socket to be a channel so we can select on it...
 	registeringFds := make(chan int, 3)
 	go func() {
 		for {
-			fd, err := local.ReadFD()
+			fd, err := localMasterSocket.ReadFD()
 			if err != nil {
 				fmt.Println(err)
 			}
@@ -32,7 +43,7 @@ func StartSlaveMonitor(tree *ProcessTree, local *unixsocket.Usock, remote *os.Fi
 
 	for _, slave := range monitor.tree.SlavesByName {
 		if slave.Parent == nil {
-			go monitor.startInitialProcess(remote)
+			go monitor.startInitialProcess(remoteMasterFile)
 		} else {
 			go monitor.bootSlave(slave)
 		}

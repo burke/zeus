@@ -3,10 +3,8 @@ package zeusmaster
 import (
 	"os"
 	"os/signal"
-	"syscall"
 
 	slog "github.com/burke/zeus/go/shinylog"
-	"github.com/burke/zeus/go/unixsocket"
 )
 
 var exitNow chan int
@@ -17,6 +15,8 @@ func ExitNow(code int) {
 }
 
 func Run(color bool) {
+	exitNow = make(chan int)
+
 	if !color {
 		slog.DisableColor()
 	}
@@ -24,25 +24,11 @@ func Run(color bool) {
 
 	var tree *ProcessTree = BuildProcessTree()
 
-	exitNow = make(chan int)
+	quitters := []chan bool{make(chan bool), make(chan bool), make(chan bool)}
 
-	localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
-	if err != nil {
-		panic(err)
-	}
-
-	localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
-	if err != nil {
-		panic(err)
-	}
-
-	quit1 := make(chan bool)
-	quit2 := make(chan bool)
-	quit3 := make(chan bool)
-
-	go StartSlaveMonitor(tree, localMasterSocket, remoteMasterFile, quit1)
-	go StartClientHandler(tree, quit2)
-	go StartFileMonitor(tree, quit3)
+	go StartSlaveMonitor(tree, quitters[0])
+	go StartClientHandler(tree, quitters[1])
+	go StartFileMonitor(tree, quitters[2])
 
 	quit := make(chan bool, 1)
 
@@ -50,39 +36,30 @@ func Run(color bool) {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		// FIXME: Unprecedented levels of jank, right here.
-		terminateComponents(quit1, quit2, quit3, quit)
+		terminateComponents(quitters, quit)
 	}()
 
 	go func() {
 		exitStatus = <-exitNow
-		terminateComponents(quit1, quit2, quit3, quit)
+		terminateComponents(quitters, quit)
 	}()
 
-	<-quit
-	<-quit
-	<-quit
+	for _, _ = range quitters {
+		<-quit
+	}
 
 	os.Exit(exitStatus)
 }
 
-func terminateComponents(quit1, quit2, quit3, quit chan bool) {
+func terminateComponents(quitters []chan bool, quit chan bool) {
 	slog.Suppress()
-	go func() {
-		quit1 <- true
-		<-quit1
-		quit <- true
-	}()
-	go func() {
-		quit2 <- true
-		<-quit2
-		quit <- true
-	}()
-	go func() {
-		quit3 <- true
-		<-quit3
-		quit <- true
-	}()
+	for _, quitter := range quitters {
+		go func() {
+			quitter <- true
+			<-quitter
+			quit <- true
+		}()
+	}
 }
 
 func startingZeus() {
