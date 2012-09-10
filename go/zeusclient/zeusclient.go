@@ -28,7 +28,6 @@ func Run(color bool) {
 func doRun(color bool) int {
 	if !color {
 		slog.DisableColor()
-		DisableErrorColor()
 	}
 
 	if os.Getenv("RAILS_ENV") != "" {

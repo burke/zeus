@@ -62,7 +62,7 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveUsock *unixsocket.Us
 		node.RegisterError(msg)
 	}
 	node.SignalBooted()
-	slog.SlaveBooted(node.Name)
+	slaveBooted(node.Name)
 
 	go node.handleMessages()
 }
@@ -137,7 +137,7 @@ func (node *SlaveNode) crashed() {
 	node.tryKillProcess()
 	// whether or not it was actually dead, our socket was.
 	// so just report it as dead already.
-	slog.SlaveDied(node.Name)
+	slaveDied(node.Name)
 }
 
 // unceremoniously kill the process. We just need to tidy
@@ -152,7 +152,7 @@ func (node *SlaveNode) Kill() {
 	defer node.mu.Unlock()
 
 	if processWasKilled := node.tryKillProcess(); processWasKilled {
-		slog.SlaveKilled(node.Name)
+		slaveKilled(node.Name)
 		node.Wipe()
 		// TODO: See if this works if not done via goroutine
 		go node.SignalUnbooted()
@@ -187,4 +187,16 @@ func (node *SlaveNode) handleFeatureMessage(msg string) {
 		node.Features[file] = true
 		AddFile(file)
 	}
+}
+
+func slaveBooted(name string) bool {
+	return slog.Blue("ready   : " + name)
+}
+
+func slaveKilled(name string) bool {
+	return slog.Yellow("killed  : " + name)
+}
+
+func slaveDied(name string) bool {
+	return slog.Yellow("died    : " + name)
 }

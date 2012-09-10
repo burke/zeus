@@ -19,9 +19,8 @@ func ExitNow(code int) {
 func Run(color bool) {
 	if !color {
 		slog.DisableColor()
-		DisableErrorColor()
 	}
-	slog.StartingZeus()
+	startingZeus()
 
 	var tree *ProcessTree = BuildProcessTree()
 
@@ -68,7 +67,6 @@ func Run(color bool) {
 }
 
 func terminateComponents(quit1, quit2, quit3, quit chan bool) {
-	SuppressErrors()
 	slog.Suppress()
 	go func() {
 		quit1 <- true
@@ -85,4 +83,8 @@ func terminateComponents(quit1, quit2, quit3, quit chan bool) {
 		<-quit3
 		quit <- true
 	}()
+}
+
+func startingZeus() {
+	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
 }
