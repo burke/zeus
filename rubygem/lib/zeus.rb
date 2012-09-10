@@ -47,6 +47,8 @@ module Zeus
       end
     end
 
+    private
+
     def command(identifier, sock)
       $0 = "zeus runner: #{identifier}"
       Process.setsid
