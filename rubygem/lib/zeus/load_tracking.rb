@@ -9,21 +9,26 @@ module Zeus
         return new_features
       end
 
-      def all_features
-        untracked = defined?($untracked_features) ? $untracked_features : []
-        $LOADED_FEATURES + untracked
-      end
-
       def add_feature(file)
         path = if File.exist?(File.expand_path(file))
           File.expand_path(file)
         else
           find_in_load_path(file)
         end
-        Zeus.add_extra_feature(path) if path
+        add_extra_feature(path) if path
       end
 
       private
+
+      def all_features
+        untracked = defined?($untracked_features) ? $untracked_features : []
+        $LOADED_FEATURES + untracked
+      end
+
+      def add_extra_feature(path)
+        $untracked_features ||= []
+        $untracked_features << path
+      end
 
       def find_in_load_path(file)
         $LOAD_PATH.map { |path| "#{path}/#{file}" }.detect{ |file| File.exist? file }

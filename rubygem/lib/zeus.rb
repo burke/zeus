@@ -9,44 +9,9 @@ module Zeus
   end
 
   class << self
-
-    def add_extra_feature(path)
-      $untracked_features ||= []
-      $untracked_features << path
-    end
-
     attr_accessor :plan
 
-    def report_error_to_master(local, error)
-      str = "R:"
-      str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
-      error.backtrace[1..-1].each do |line|
-        str << "\tfrom #{line}\n"
-      end
-      str << "\0"
-      local.write str
-    end
-
-    def run_action(socket, identifier)
-      plan.send(identifier)
-      socket.write "R:OK\0"
-    rescue Exception => e
-      report_error_to_master(socket, e)
-    end
-
-    def notify_features(sock, features)
-      features.each do |t|
-        begin
-          sock.write "F:#{t}\0"
-        rescue Errno::ENOBUFS
-          sleep 0.2
-          retry
-        end
-      end
-    end
-
     def go(identifier=:boot)
-      identifier = identifier.to_sym
       $0 = "zeus slave: #{identifier}"
       # okay, so I ahve this FD that I can use to send data to the master.
       fd = ENV['ZEUS_MASTER_FD'].to_i
@@ -74,9 +39,9 @@ module Zeus
           new_identifier =~ /^(.):(.*)/
           code, ident =~ $1, $2
           if code == "S"
-            fork { plan.after_fork ; go(ident) }
+            fork { plan.after_fork ; go(ident.to_sym) }
           else
-            fork { plan.after_fork ; command(ident, local) }
+            fork { plan.after_fork ; command(ident.to_sym, local) }
           end
         end
       end
@@ -113,6 +78,34 @@ module Zeus
 
       local.write "#{code}\0"
       local.close
+    end
+
+    def notify_features(sock, features)
+      features.each do |t|
+        begin
+          sock.write "F:#{t}\0"
+        rescue Errno::ENOBUFS
+          sleep 0.2
+          retry
+        end
+      end
+    end
+
+    def report_error_to_master(local, error)
+      str = "R:"
+      str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
+      error.backtrace[1..-1].each do |line|
+        str << "\tfrom #{line}\n"
+      end
+      str << "\0"
+      local.write str
+    end
+
+    def run_action(socket, identifier)
+      plan.send(identifier)
+      socket.write "R:OK\0"
+    rescue Exception => e
+      report_error_to_master(socket, e)
     end
 
   end
