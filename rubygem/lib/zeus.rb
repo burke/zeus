@@ -5,6 +5,7 @@ require 'zeus/load_tracking'
 
 module Zeus
   class Plan
+    def after_fork ; end
   end
 
   class << self
@@ -53,15 +54,13 @@ module Zeus
 
       # I need to give the master a way to talk to me exclusively
       local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
-
       master.send_io(remote)
 
       # Now I need to tell the master about my PID and ID
-      File.open("a.log","a") { |f| f.puts identifier}
       local.write "P:#{Process.pid}:#{identifier}\0"
 
       # Now we run the action and report its success/fail status to the master.
-      features = features_loaded_by {
+      features = Zeus::LoadTracking.features_loaded_by {
         run_action(local, identifier)
       }
 
@@ -72,25 +71,15 @@ module Zeus
       loop do
         messages = local.recv(1024)
         messages.split("\0").each do |new_identifier|
-          if new_identifier =~ /^S:/
-            fork { plan.after_fork ; go(new_identifier.sub(/^S:/,'')) }
+          new_identifier =~ /^(.):(.*)/
+          code, ident =~ $1, $2
+          if code == "S"
+            fork { plan.after_fork ; go(ident) }
           else
-            fork { plan.after_fork ; command(new_identifier.sub(/^C:/,''), local) }
+            fork { plan.after_fork ; command(ident, local) }
           end
         end
       end
-    end
-
-    def all_features
-      untracked = defined?($untracked_features) ? $untracked_features : []
-      $LOADED_FEATURES + untracked
-    end
-
-    def features_loaded_by(&block)
-      old_features = all_features()
-      yield
-      new_features = all_features() - old_features
-      return new_features
     end
 
     def command(identifier, sock)
