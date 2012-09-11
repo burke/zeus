@@ -12,7 +12,7 @@
 
 <p>MRI's Garbage Collector effectively forces the OS to copy the entire process memory image when ruby forks. Since Zeus forks quite a bit, this eats up several times the normal memory usage of your application. The performance patch includes an improved Garbage Collector from Ruby 2.0 that doesn't force this behaviour, so memory usage stays low.</p>
 
-<p>Besides, the performance patch actually speeds up ruby quite a bit. It's very worth using even if you don't use Zeus.</p>
+<p>Besides, the performance patch actually speeds up ruby quite a bit. If you care about speed enough to use Zeus, you probably care enough to use these patches.</p>
 
 <h2>I tried starting Zeus and the boot process just says "ready" and then "died". Huh?</h2>
 
