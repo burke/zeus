@@ -8,10 +8,6 @@ get '/here/?' do
   erb :here
 end
 
-get '/useful/?' do
-  erb :useful
-end
-
 get '/easy/?' do
   erb :easy
 end

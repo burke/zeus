@@ -24,7 +24,7 @@
 
 <p>By convention, the root stage is always named &#8220;boot&#8221;. This is not strictly required, though the &#8220;command&#8221; in `zeus.json` would otherwise have to be changed to explicitly pass the root stage (e.g.: `&#8220;ruby -r./my_plan -eZeus.go(:base)&#8221;`)</p>
 
-<p>The leaf nodes in `zeus.json`&#8217;s plan look like: `{&quot;console&quot;: [&#8220;c&#8221;]}`. This defines a &#8220;command&#8221;. Commands are by definition the leaf nodes of the Plan, and they can be run by client processes. The key is the command name, and the value is an array of aliases (e.g., `zeus c` from the command line has the same effect as `zeus console`). The array can be empty, but must be present.</p>
+<p>The leaf nodes in `zeus.json`&#8217;s plan look like: `{&quot;console&quot;: [&#8220;c&#8221;]}`. This defines a &#8220;command&#8221;. Commands are by definition the leaf nodes of the Plan, and they can be run by client processes. The key is the command name, and the value is an array of aliases (e.g., `zeus c` from the command line has the same effect as `zeus console`). The array can be empty, but must be present. Just like other stages, commands correspond to an identically-named method in the Plan.</p>
 
 <h2>Configuring</h2>
 
