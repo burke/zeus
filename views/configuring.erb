@@ -1,0 +1,54 @@
+<h1>Configuring Zeus</h1>
+
+<p>To be able to configure Zeus, a basic understanding of how Zeus actually works is required.</p>
+
+<h2>How Zeus Works</h2>
+
+<p>At the surface level, all Zeus does is preload your application. However, it actually preloads a few versions of your application simultaneously.</p>
+
+<p>In normal use without Zeus, if you launch a `rails console` and then a `rails server`, each command does some amount of work &#8212; let&#8217;s say it takes 10 seconds. The first, say, 9 of these are identical. During these 9 seconds, Ruby is busy with loading Rails, all your gems, and some of your application code. Only in the last second is this process actually turned into a console or a server.</p>
+
+<p>Zeus capitalizes on this by doing that initial 9 seconds of loading <strong>once</strong>, then creating a kind of server that listens for client connections from the zeus command line process. When a connection is received, specifying that a console is required, ruby is instructed to `fork` a new process, and turn it into a `console`. The original process that had done the 9 seconds of loading is preserved, and the new console process finishes loading to the tune of about a second, and is wired up to the client terminal.</p>
+
+<p>With Rails applications, loading the development environment brings the application within one second of loading any of `rails generate`, `rails server`, `rails console`, or (nearly) `rake`, among a few other possibilities. However, it&#8217;s also very valuable to be able to run tests quickly. Tests, though, shouldn&#8217;t be run from the development environment. We instead need to do the same 9 second / 1 second process for the test environment.</p>
+
+<p>The naïve solution to this would be to start two rails processes: one booting the development environment; one booting the test environment. What we can do instead to save time is to notice that whether we load development or test, there is still some work done by both (loading rails, and the default, non-environment-specific gems) &#8212; let&#8217;s say this is 6 seconds of work shared by any environment.</p>
+
+<p>What Zeus actually does is to boot the application in stages, with the common features being loaded first (6 seconds&#8217; worth, in this example), at which point the process stops and waits for instructions. Zeus instructs the process to fork two additional processes: one for development; one for test. The development process continues to initialize a development environment, and then waits for `console`, `server`, etc. commands. The test process loads the test environment, then waits for `testrb` or `rspec` commands.</p>
+
+<h2>Configuration File Formats</h2>
+
+<p>The load hierarchy described above is defined in `zeus.json`, and the actions corresponding to each stage are defined in `zeus/rails`, or, more accurately, whatever object is assigned to `Zeus.plan`. If you look at the implementation of `Zeus::Rails`, you will notice it assigns an instance of itself to `Zeus.plan`. Each time Zeus executes a stage in the boot process of an application, it sends `Zeus.plan` the method name corresponding to the key in `zeus.json`. As a result, `Zeus.plan` can by any sort of object, but it should usually be an instance of a subclass of `Zeus::Plan`.</p>
+
+<p>`zeus.json` also defines the command that should be used to spawn the initial ruby process. Zeus uses this to kick things off. It needs to require the plan, and run Zeus.go to start the boot process. This happens in the &#8220;command&#8221; key of the JSON file.</p>
+
+<p>By convention, the root stage is always named &#8220;boot&#8221;. This is not strictly required, though the &#8220;command&#8221; in `zeus.json` would otherwise have to be changed to explicitly pass the root stage (e.g.: `&#8220;ruby -r./my_plan -eZeus.go(:base)&#8221;`)</p>
+
+<p>The leaf nodes in `zeus.json`&#8217;s plan look like: `{&quot;console&quot;: [&#8220;c&#8221;]}`. This defines a &#8220;command&#8221;. Commands are by definition the leaf nodes of the Plan, and they can be run by client processes. The key is the command name, and the value is an array of aliases (e.g., `zeus c` from the command line has the same effect as `zeus console`). The array can be empty, but must be present.</p>
+
+<h2>Configuring</h2>
+
+<p>By default, the &#8220;boot&#8221; stage requires &#8216;rails/all&#8217;. Let&#8217;s say you wanted to override it to not require ActiveRecord. You could do this by creating a new ruby source file in your project:</p>
+
+<pre><code>
+# /path/to/my/project/my_plan.rb
+require &#8216;zeus/rails&#8217;
+class MyPlan &lt; Zeus::Rails
+  def boot
+    require BOOT_PATH
+    require &#8220;action_controller/railtie&#8221;
+    require &#8220;action_mailer/railtie&#8221;
+    require &#8220;active_resource/railtie&#8221;
+    require &#8220;rails/test_unit/railtie&#8221;
+    require &#8220;active_support/version&#8221;
+  end
+end
+Zeus.plan = MyPlan.new
+</code></pre>
+
+<p>You will also need to modify `zeus.json` to require this file. Change the value for &#8220;command&#8221; to &#8220;ruby -r./my_plan -eZeus.go&#8221;.</p>
+
+<p>This works because MyPlan descends from Zeus::Rails, and therefore shadows the &#8216;boot&#8217; method. As long as `Zeus.plan` responds to every method specified by `zeus.json` (and #after_fork), you can modify both as suits your application.</p>
+
+<p>In fact, it&#8217;s quite possible (and not hard!) to make Zeus work for applications based on frameworks other than Rails, or even completely custom applications.</p>
+<p/p>
