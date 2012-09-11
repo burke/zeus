@@ -73,3 +73,8 @@ The Slave processes boot the actual application, and run commands. See [`master_
 
 * [`zeus.rb`](../rubygem/lib/zeus.rb)
 * [`zeus/rails.rb`](../rubygem/lib/zeus/rails.rb)
+
+## Contributing to Zeus
+
+See the handy contribution guide at [`docs/contributing.md`](/burke/zeus/tree/master/docs/contributing.md).
+

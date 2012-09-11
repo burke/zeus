@@ -30,7 +30,7 @@ func Run(color bool) {
 	go StartClientHandler(tree, quitters[1])
 	go StartFileMonitor(tree, quitters[2])
 
-	quit := make(chan bool, 1)
+	quit := make(chan bool, 3)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
