@@ -37,7 +37,7 @@ module Zeus
         messages = local.recv(1024)
         messages.split("\0").each do |new_identifier|
           new_identifier =~ /^(.):(.*)/
-          code, ident =~ $1, $2
+          code, ident = $1, $2
           if code == "S"
             fork { plan.after_fork ; go(ident.to_sym) }
           else
