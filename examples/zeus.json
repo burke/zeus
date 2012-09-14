@@ -12,6 +12,7 @@
           "generate": ["g"]
         },
         "test_environment": {
+          "cucumber_environment": {"cucumber": []},
           "testtask": [],
           "test_helper": {"testrb": []},
           "spec_helper": {"rspec": []}

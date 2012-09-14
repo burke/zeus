@@ -114,6 +114,16 @@ module Zeus
       exit RSpec::Core::Runner.run(ARGV)
     end
 
+    def cucumber_environment
+      require 'cucumber/rspec/disable_option_parser'
+      require 'cucumber/cli/main'
+      cucumber_runtime = Cucumber::Runtime.new
+    end
+
+    def cucumber
+      cucumber_main = Cucumber::Cli::Main.new(ARGV.dup)
+      exit cucumber_main.execute!(cucumber_runtime)
+    end
 
     private
 
