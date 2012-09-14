@@ -14,7 +14,17 @@ module Zeus
 
     def boot
       require BOOT_PATH
-      require 'rails/all'
+      # config/application.rb normally requires 'rails/all'.
+      # Some 'alternative' ORMs such as Mongoid give instructions to switch this require
+      # out for a list of railties, not including ActiveRecord.
+      # We grep config/application.rb for all requires of rails/all or railties, and require them.
+      rails_components = File.read(APP_PATH + ".rb").
+        scan(/^\s*require\s*['"](.*railtie.*|rails\/all)['"]/).flatten
+
+      rails_components == ["rails/all"] if rails_components == []
+      rails_components.each do |component|
+        require component
+      end
     end
 
     def default_bundle
