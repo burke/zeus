@@ -23,6 +23,7 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	if err != nil {
 		ErrorCantCreateListener()
 	}
+	defer println("CLOSING")
 	defer listener.Close()
 
 	connections := make(chan *unixsocket.Usock)

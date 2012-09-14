@@ -24,42 +24,52 @@ func Run(color bool) {
 
 	var tree *ProcessTree = BuildProcessTree()
 
-	quitters := []chan bool{make(chan bool), make(chan bool), make(chan bool)}
+	quit1 := make(chan bool)
+	quit2 := make(chan bool)
+	quit3 := make(chan bool)
 
-	go StartSlaveMonitor(tree, quitters[0])
-	go StartClientHandler(tree, quitters[1])
-	go StartFileMonitor(tree, quitters[2])
+	go StartSlaveMonitor(tree, quit1)
+	go StartClientHandler(tree, quit2)
+	go StartFileMonitor(tree, quit3)
 
-	quit := make(chan bool, 3)
+	quit := make(chan bool)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		terminateComponents(quitters, quit)
+		terminateComponents(quit1, quit2, quit3, quit)
 	}()
 
 	go func() {
 		exitStatus = <-exitNow
-		terminateComponents(quitters, quit)
+		terminateComponents(quit1, quit2, quit3, quit)
 	}()
 
-	for _, _ = range quitters {
-		<-quit
-	}
+	<-quit
+	<-quit
+	<-quit
 
 	os.Exit(exitStatus)
 }
 
-func terminateComponents(quitters []chan bool, quit chan bool) {
+func terminateComponents(quit1, quit2, quit3, quit chan bool) {
 	slog.Suppress()
-	for _, quitter := range quitters {
-		go func() {
-			quitter <- true
-			<-quitter
-			quit <- true
-		}()
-	}
+	go func() {
+		quit1 <- true
+		<-quit1
+		quit <- true
+	}()
+	go func() {
+		quit2 <- true
+		<-quit2
+		quit <- true
+	}()
+	go func() {
+		quit3 <- true
+		<-quit3
+		quit <- true
+	}()
 }
 
 func startingZeus() {
