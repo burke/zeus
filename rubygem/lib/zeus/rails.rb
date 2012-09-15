@@ -19,6 +19,7 @@ module Zeus
     def after_fork
       reconnect_activerecord
       restart_girl_friday
+      reconnect_redis
     end
 
     def boot
@@ -137,6 +138,13 @@ module Zeus
     def reconnect_activerecord
       ActiveRecord::Base.clear_all_connections! rescue nil
       ActiveRecord::Base.establish_connection   rescue nil
+    end
+
+    def reconnect_redis
+      return unless defined?(Redis::Client)
+      ObjectSpace.each_object(Redis::Client) do |client|
+        client.connect
+      end
     end
 
   end
