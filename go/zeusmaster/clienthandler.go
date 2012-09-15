@@ -23,7 +23,6 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	if err != nil {
 		ErrorCantCreateListener()
 	}
-	defer println("CLOSING")
 	defer listener.Close()
 
 	connections := make(chan *unixsocket.Usock)
@@ -132,7 +131,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	// Receive the pid from the command process (step 5)
 	msg, err = commandUsock.ReadMessage()
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 	}
 	intPid, _, _ := ParsePidMessage(msg)
 
@@ -143,7 +142,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	// Receive the exit status from the command (step 7)
 	msg, err = commandUsock.ReadMessage()
 	if err != nil {
-		println(err)
+		fmt.Println(err)
 	}
 
 	// Forward the exit status to the Client (step 8)
