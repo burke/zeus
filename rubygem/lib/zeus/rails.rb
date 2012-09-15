@@ -4,6 +4,7 @@ BOOT_PATH = File.expand_path('config/boot',  ROOT_PATH)
 APP_PATH  = File.expand_path('config/application',  ROOT_PATH)
 
 require 'zeus'
+require 'zeus/m'
 
 module Zeus
   class Rails < Plan
@@ -82,6 +83,7 @@ module Zeus
       ::Rails.application.require_environment!
       $rails_rake_task = nil
       $LOAD_PATH.unshift(ROOT_PATH) unless $LOAD_PATH.include?(ROOT_PATH)
+      $LOAD_PATH.unshift(ROOT_PATH + "/lib") unless $LOAD_PATH.include?(ROOT_PATH + "/lib")
 
       if Dir.exist?(ROOT_PATH + "/test")
         test = File.join(ROOT_PATH, 'test')
@@ -95,25 +97,15 @@ module Zeus
     end
 
     def test_helper
-      require 'test_helper'
+      if File.exist?(ROOT_PATH + "/test/minitest_helper.rb")
+        require 'minitest_helper'
+      else
+        require 'test_helper'
+      end
     end
 
     def testrb
-      argv = ARGV
-
-      # try to find pattern by line using testrbl
-      if defined?(Testrbl) && argv.size == 1 and argv.first =~ /^\S+:\d+$/
-        file, line = argv.first.split(':')
-        argv = [file, '-n', "/#{Testrbl.send(:pattern_from_file, File.readlines(file), line)}/"]
-        puts "using -n '#{argv[2]}'" # let users copy/paste or adjust the pattern
-      end
-
-      runner = Test::Unit::AutoRunner.new(true)
-      if runner.process_args(argv)
-        exit runner.run
-      else
-        abort runner.options.banner + " tests..."
-      end
+      Zeus::M.run(ARGV)
     end
 
     def spec_helper
