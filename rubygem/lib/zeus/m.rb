@@ -141,7 +141,6 @@ module Zeus
           @argv.each do |arg|
             add_file(arg)
           end
-          puts @files.size
         end
       end
 
