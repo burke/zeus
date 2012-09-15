@@ -1,4 +1,5 @@
-# This is basically just a vendorization of @qrush's `m`.
+# This is very largely based on @qrush's M, but there are many modifications.
+
 # we need to load all dependencies up front, because bundler will
 # remove us from the load path soon.
 require "rubygems"
@@ -131,21 +132,26 @@ module Zeus
           parse_options! @argv
 
           # Parse out ARGV, it should be coming in in a format like `test/test_file.rb:9`
-          @file, line = @argv.first.split(':')
-          @line ||= line.to_i
+          _, line = @argv.first.split(':')
+          @line ||= line.nil? ? nil : line.to_i
 
-          # If this file is a directory, not a file, run the tests inside of this directory
-          if Dir.exist?(@file)
-            # Make a new rake test task with a hopefully unique name, and run every test looking file in it
-            require "rake/testtask"
-            Rake::TestTask.new(:m_custom) do |t|
-              t.libs << 'test'
-              t.pattern = "#{@file}/*test*.rb"
-            end
-            # Invoke the rake task and exit, hopefully it'll work!
-            Rake::Task['m_custom'].invoke
-            exit
+          @files = []
+          @argv.each do |arg|
+            add_file(arg)
           end
+          puts @files.size
+        end
+      end
+
+      def add_file(arg)
+        file = arg.split(':').first
+        if Dir.exist?(file)
+          files = Dir.glob("#{file}/**/*test*.rb")
+          @files.concat(files)
+        elsif File.exist?(file)
+          @files << file
+        else
+          abort "Couldn't find test file '#{file}'!"
         end
       end
 
@@ -176,36 +182,44 @@ module Zeus
 
       def execute
         # Locate tests to run that may be inside of this line. There could be more than one!
-        tests_to_run = tests.within(@line)
+        all_tests = tests
+        if @line
+          tests_to_run = all_tests.within(@line)
+        end
 
-        # If we found any tests,
-        if tests_to_run.size > 0
-          # assemble the regexp to run these tests,
-          test_names = tests_to_run.map(&:name).join('|')
-
-          # set up the args needed for the runner
-          test_arguments = ["-n", "/(#{test_names})/"]
-
-          # directly run the tests from here and exit with the status of the tests passing or failing
-          if defined?(MiniTest)
-            exit MiniTest::Unit.runner.run test_arguments
-          elsif defined?(Test)
-            exit Test::Unit::AutoRunner.run(false, nil, test_arguments)
-          else
-            not_supported
-          end
-        else
+        # If we didn't find any tests,
+        if tests_to_run == []
           # Otherwise we found no tests on this line, so you need to pick one.
           message = "No tests found on line #{@line}. Valid tests to run:\n\n"
 
           # For every test ordered by line number,
           # spit out the test name and line number where it starts,
           tests.by_line_number do |test|
-            message << "#{sprintf("%0#{tests.column_size}s", test.name)}: zeus test #{@file}:#{test.start_line}\n"
+            message << "#{sprintf("%0#{tests.column_size}s", test.name)}: zeus test #{@files[0]}:#{test.start_line}\n"
           end
 
           # fail like a good unix process should.
           abort message
+        end
+
+        if @line
+          # assemble the regexp to run these tests,
+          test_names = tests_to_run.map(&:name).join('|')
+
+          # set up the args needed for the runner
+          test_arguments = ["-n", "/(#{test_names})/"]
+        else
+          test_arguments = []
+        end
+
+        # directly run the tests from here and exit with the status of the tests passing or failing
+        case framework
+        when :minitest
+          exit MiniTest::Unit.runner.run test_arguments
+        when :testunit1, :testunit2
+          exit Test::Unit::AutoRunner.run(false, nil, test_arguments)
+        else
+          not_supported
         end
       end
 
@@ -244,8 +258,8 @@ module Zeus
         end
 
         begin
-          # Fire up this Ruby file. Let's hope it actually has tests.
-          load @file
+          # Fire up the Ruby files. Let's hope they actually have tests.
+          @files.each { |f| load f }
         rescue LoadError => e
           # Fail with a happier error message instead of spitting out a backtrace from this gem
           abort "Failed loading test file:\n#{e.message}"
@@ -278,7 +292,8 @@ module Zeus
           # shove a new test method into this collection.
           suites.inject(TestCollection.new) do |collection, (suite_class, test_methods)|
             test_methods.each do |test_method|
-              collection << TestMethod.create(suite_class, test_method)
+              find_locations = (@files.size == 1 && @line)
+              collection << TestMethod.create(suite_class, test_method, find_locations)
             end
             collection
           end

@@ -9,21 +9,23 @@ module Zeus
     # and where it ends.
     class TestMethod < Struct.new(:name, :start_line, :end_line)
       # Set up a new test method for this test suite class
-      def self.create(suite_class, test_method)
+      def self.create(suite_class, test_method, find_locations = true)
         # Hopefully it's been defined as an instance method, so we'll need to
         # look up the ruby Method instance for it
         method = suite_class.instance_method(test_method)
 
-        # Ruby can find the starting line for us, so pull that out of the array
-        start_line = method.source_location.last
+        if find_locations
+          # Ruby can find the starting line for us, so pull that out of the array
+          start_line = method.source_location.last
 
-        # Ruby can't find the end line however, and I'm too lazy to write
-        # a parser. Instead, `method_source` adds `Method#source` so we can
-        # deduce this ourselves.
-        #
-        # The end line should be the number of line breaks in the method source,
-        # added to the starting line and subtracted by one.
-        end_line = method.source.split("\n").size + start_line - 1
+          # Ruby can't find the end line however, and I'm too lazy to write
+          # a parser. Instead, `method_source` adds `Method#source` so we can
+          # deduce this ourselves.
+          #
+          # The end line should be the number of line breaks in the method source,
+          # added to the starting line and subtracted by one.
+          end_line = method.source.split("\n").size + start_line - 1
+        end
 
         # Shove the given attributes into a new databag
         new(test_method, start_line, end_line)

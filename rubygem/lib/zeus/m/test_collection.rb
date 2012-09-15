@@ -22,8 +22,8 @@ module Zeus
         # Into a new collection, filter only the tests that...
         self.class.new(select do |test|
           # are within the given boundary for this method
-          # or include everything if the line given is zero (no line)
-          line.zero? || (test.start_line..test.end_line).include?(line)
+          # or include everything if the line given is nil (no line)
+          line.nil? || (test.start_line..test.end_line).include?(line)
         end)
       end
 
