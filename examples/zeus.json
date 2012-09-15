@@ -13,9 +13,7 @@
         },
         "test_environment": {
           "cucumber_environment": {"cucumber": []},
-          "test": [],
-          "test_helper": {"testrb": []},
-          "spec_helper": {"rspec": []}
+          "test_helper": {"test": ["rspec", "testrb"]}
         }
       }
     }

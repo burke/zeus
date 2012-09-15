@@ -8,6 +8,14 @@ require 'zeus/m'
 
 module Zeus
   class Rails < Plan
+    def deprecated
+      puts "Zeus 0.11.0 changed zeus.json. You'll have to rm zeus.json && zeus init."
+    end
+    alias_method :spec_helper, :deprecated
+    alias_method :testrb,      :deprecated
+    alias_method :rspec,       :deprecated
+
+
     def after_fork
       reconnect_activerecord
       restart_girl_friday
@@ -82,22 +90,14 @@ module Zeus
       $rails_rake_task = 'yup' # lie to skip eager loading
       ::Rails.application.require_environment!
       $rails_rake_task = nil
-      $LOAD_PATH.unshift(ROOT_PATH) unless $LOAD_PATH.include?(ROOT_PATH)
-      $LOAD_PATH.unshift(ROOT_PATH + "/lib") unless $LOAD_PATH.include?(ROOT_PATH + "/lib")
 
-      if Dir.exist?(ROOT_PATH + "/test")
-        test = File.join(ROOT_PATH, 'test')
-        $LOAD_PATH.unshift(test) unless $LOAD_PATH.include?(test)
-      end
-
-      if Dir.exist?(ROOT_PATH + "/spec")
-        spec = File.join(ROOT_PATH, 'spec')
-        $LOAD_PATH.unshift(spec) unless $LOAD_PATH.include?(spec)
-      end
+      $LOAD_PATH.unshift ".", "./lib", "./test", "./spec"
     end
 
     def test_helper
-      if File.exist?(ROOT_PATH + "/test/minitest_helper.rb")
+      if File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
+        require 'spec_helper'
+      elsif File.exist?(ROOT_PATH + "/test/minitest_helper.rb")
         require 'minitest_helper'
       else
         require 'test_helper'
@@ -105,16 +105,11 @@ module Zeus
     end
 
     def test
-      Zeus::M.run(ARGV)
-    end
-    alias_method :testrb, :test # for compatibility with 0.10.x
-
-    def spec_helper
-      require 'spec_helper'
-    end
-
-    def rspec
-      exit RSpec::Core::Runner.run(ARGV)
+      if defined?(RSpec)
+        exit RSpec::Core::Runner.run(ARGV)
+      else
+        Zeus::M.run(ARGV)
+      end
     end
 
     def cucumber_environment
