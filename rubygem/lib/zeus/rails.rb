@@ -104,9 +104,10 @@ module Zeus
       end
     end
 
-    def testrb
+    def test
       Zeus::M.run(ARGV)
     end
+    alias_method :testrb, :test # for compatibility with 0.10.x
 
     def spec_helper
       require 'spec_helper'

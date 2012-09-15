@@ -2,9 +2,21 @@
 # we need to load all dependencies up front, because bundler will
 # remove us from the load path soon.
 require "rubygems"
-require "method_source"
 require "zeus/m/test_collection"
 require "zeus/m/test_method"
+
+# the Gemfile may specify a version of method_source, but we also want to require it here.
+# To avoid possible "you've activated X; gemfile specifies Y" errors, we actually scan
+# Gemfile.lock for a specific version, and require exactly that version if present.
+gemfile_lock = ROOT_PATH + "/Gemfile.lock"
+if File.exists?(gemfile_lock)
+  version = File.read(ROOT_PATH + "/Gemfile.lock").
+    scan(/\bmethod_source\s*\(([\d\.]+)\)/).flatten[0]
+
+  gem "method_source", version if version
+end
+
+require 'method_source'
 
 module Zeus
   #`m`  stands for metal, which is a better test/unit test runner that can run
@@ -189,7 +201,7 @@ module Zeus
           # For every test ordered by line number,
           # spit out the test name and line number where it starts,
           tests.by_line_number do |test|
-            message << "#{sprintf("%0#{tests.column_size}s", test.name)}: m #{@file}:#{test.start_line}\n"
+            message << "#{sprintf("%0#{tests.column_size}s", test.name)}: zeus test #{@file}:#{test.start_line}\n"
           end
 
           # fail like a good unix process should.
@@ -197,10 +209,39 @@ module Zeus
         end
       end
 
+      def framework
+        @framework ||= begin
+          if defined?(MiniTest)
+            :minitest
+          elsif defined?(Test)
+            if Test::Unit::TestCase.respond_to?(:test_suites)
+              :testunit2
+            else
+              :testunit1
+            end
+          end
+        end
+      end
+
       # Finds all test suites in this test file, with test methods included.
       def suites
         # Since we're not using `ruby -Itest -Ilib` to run the tests, we need to add this directory to the `LOAD_PATH`
         $:.unshift "./test", "./lib"
+
+        if framework == :testunit1
+          Test::Unit::TestCase.class_eval {
+            @@test_suites = {}
+            def self.inherited(klass)
+              @@test_suites[klass] = true
+            end
+            def self.test_suites
+              @@test_suites.keys
+            end
+            def self.test_methods
+              public_instance_methods(true).grep(/^test/).map(&:to_s)
+            end
+          }
+        end
 
         begin
           # Fire up this Ruby file. Let's hope it actually has tests.
@@ -211,9 +252,10 @@ module Zeus
         end
 
         # Figure out what test framework we're using
-        if defined?(MiniTest)
+        case framework
+        when :minitest
           suites = MiniTest::Unit::TestCase.test_suites
-        elsif defined?(Test)
+        when :testunit1, :testunit2
           suites = Test::Unit::TestCase.test_suites
         else
           not_supported
