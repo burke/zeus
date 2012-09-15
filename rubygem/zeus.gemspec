@@ -26,4 +26,6 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = version
   gem.license       = "MIT"
+
+  gem.add_dependency "method_source", ">= 0.6.7"
 end

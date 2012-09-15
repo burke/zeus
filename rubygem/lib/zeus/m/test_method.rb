@@ -23,7 +23,6 @@ module Zeus
         #
         # The end line should be the number of line breaks in the method source,
         # added to the starting line and subtracted by one.
-        require "method_source"
         end_line = method.source.split("\n").size + start_line - 1
 
         # Shove the given attributes into a new databag

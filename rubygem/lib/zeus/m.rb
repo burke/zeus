@@ -1,4 +1,11 @@
 # This is basically just a vendorization of @qrush's `m`.
+# we need to load all dependencies up front, because bundler will
+# remove us from the load path soon.
+require "rubygems"
+require "method_source"
+require "zeus/m/test_collection"
+require "zeus/m/test_method"
+
 module Zeus
   #`m`  stands for metal, which is a better test/unit test runner that can run
   #tests by line number.
@@ -224,8 +231,6 @@ module Zeus
       # Memoize it since it's unnecessary to do this more than one for a given file.
       def tests
         @tests ||= begin
-          require "zeus/m/test_collection"
-          require "zeus/m/test_method"
           # With each suite and array of tests,
           # and with each test method present in this test file,
           # shove a new test method into this collection.
