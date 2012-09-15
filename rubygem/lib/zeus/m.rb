@@ -127,7 +127,9 @@ module Zeus
         # With no arguments,
         if @argv.empty?
           # Just shell out to `rake test`.
-          exec "rake test"
+          require 'rake'
+          Rake::Task['test'].invoke
+          exit
         else
           parse_options! @argv
 

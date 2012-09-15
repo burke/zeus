@@ -76,9 +76,10 @@ module Zeus
       }
 
       Process.wait(pid)
-      code = $?.exitstatus
+      code = $?.exitstatus || 0
 
       local.write "#{code}\0"
+
       local.close
     end
 

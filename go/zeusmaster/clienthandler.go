@@ -57,12 +57,12 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	// we first read the command and arguments specified from the connection. (step 1)
 	msg, err := usock.ReadMessage()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("clienthandler.go:handleClientConnection:read command and arguments:", err)
 		return
 	}
 	command, arguments, err := ParseClientCommandRequestMessage(msg)
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("clienthandler.go:handleClientConnection:parse command and arguments:", err)
 		return
 	}
 
@@ -103,7 +103,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 
 	msg = CreateSpawnCommandMessage(command)
 	slaveNode.mu.Lock()
-	slaveNode.Socket.Write([]byte(msg))
+	unixsocket.NewUsock(slaveNode.Socket).WriteMessage(msg)
 	slaveNode.mu.Unlock()
 
 	// TODO: deadline? how to respond if this is never sent?
@@ -115,17 +115,16 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	commandFile := unixsocket.FdToFile(commandFd, fileName)
 	defer commandFile.Close()
 
-	// Send the arguments to the command process (step 3)
-	commandFile.Write([]byte(arguments)) // TODO: What if they're too long?
-
-	commandSocket, err := unixsocket.MakeUnixSocket(commandFile)
+	commandUsock, err := unixsocket.NewUsockFromFile(commandFile)
 	if err != nil {
 		fmt.Println("MakeUnixSocket", err)
 	}
-	defer commandSocket.Close()
+	defer commandUsock.Close()
+
+	// Send the arguments to the command process (step 3)
+	commandUsock.WriteMessage(arguments)
 
 	// Send the client terminal connection to the command process (step 4)
-	commandUsock := unixsocket.NewUsock(commandSocket)
 	commandUsock.WriteFD(clientFd)
 
 	// Receive the pid from the command process (step 5)
@@ -142,7 +141,8 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	// Receive the exit status from the command (step 7)
 	msg, err = commandUsock.ReadMessage()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Println("clienthandler.go:handleClientConnection:receive exit status:", err)
+		return
 	}
 
 	// Forward the exit status to the Client (step 8)
