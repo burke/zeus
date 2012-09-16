@@ -30,13 +30,15 @@ module Zeus
         def define
           desc "Run tests" + (@name==:test ? "" : " for #{@name}")
           task @name do
-            Rake::FileUtilsExt.verbose(@verbose) do
-              # ruby "#{ruby_opts_string} #{run_code} #{file_list_string} #{option_list}"
-              prev = ENV['RAILS_ENV']
-              ENV['RAILS_ENV'] = nil
-              sh "zeus test #{file_list_string}"
-              ENV['RAILS_ENV'] = prev
-            end
+            # ruby "#{ruby_opts_string} #{run_code} #{file_list_string} #{option_list}"
+            rails_env = ENV['RAILS_ENV']
+            rubyopt = ENV['RUBYOPT']
+            ENV['RAILS_ENV'] = nil
+            ENV['RUBYOPT'] = nil # bundler sets this to require bundler :|
+            puts "zeus test #{file_list_string}"
+            system "zeus test #{file_list_string}"
+            ENV['RAILS_ENV'] = rails_env
+            ENV['RUBYOPT'] = rubyopt
           end
           self
         end
@@ -91,7 +93,6 @@ module Zeus
 
     def prerake
       require 'rake'
-      load 'Rakefile'
     end
 
     def rake
