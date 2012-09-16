@@ -149,10 +149,10 @@ module Zeus
         if Dir.exist?(file)
           files = Dir.glob("#{file}/**/*test*.rb")
           @files.concat(files)
-        elsif File.exist?(file)
-          @files << file
         else
-          abort "Couldn't find test file '#{file}'!"
+          files = Dir.glob(file)
+          files == [] and abort "Couldn't find test file '#{file}'!"
+          @files.concat(files)
         end
       end
 

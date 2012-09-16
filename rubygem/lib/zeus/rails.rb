@@ -22,7 +22,48 @@ module Zeus
       reconnect_redis
     end
 
+    def _monkeypatch_rake
+      require 'rake/testtask'
+      Rake::TestTask.class_eval {
+
+        # Create the tasks defined by this task lib.
+        def define
+          desc "Run tests" + (@name==:test ? "" : " for #{@name}")
+          task @name do
+            Rake::FileUtilsExt.verbose(@verbose) do
+              # ruby "#{ruby_opts_string} #{run_code} #{file_list_string} #{option_list}"
+              prev = ENV['RAILS_ENV']
+              ENV['RAILS_ENV'] = nil
+              sh "zeus test #{file_list_string}"
+              ENV['RAILS_ENV'] = prev
+            end
+          end
+          self
+        end
+
+        alias_method :_original_define, :define
+
+        def self.inherited(klass)
+          return unless klass.name == "TestTaskWithoutDescription"
+          klass.class_eval {
+            def self.method_added(sym)
+              class_eval do
+                if !@rails_hack_reversed
+                  @rails_hack_reversed = true
+                  alias_method :define, :_original_define
+                  def desc(*)
+                  end
+                end
+              end
+            end
+          }
+        end
+      }
+    end
+
     def boot
+      _monkeypatch_rake
+
       require BOOT_PATH
       # config/application.rb normally requires 'rails/all'.
       # Some 'alternative' ORMs such as Mongoid give instructions to switch this require
