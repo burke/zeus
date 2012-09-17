@@ -24,3 +24,4 @@ rubygem/build/*
 go/zeusversion/zeusversion.go
 .DS_Store
 ext/fsevents/build/*
+.idea/
