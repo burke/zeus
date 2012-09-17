@@ -117,6 +117,22 @@ module Zeus
       ::Rails::Console.start(::Rails.application)
     end
 
+    def dbconsole
+      require 'rails/commands/dbconsole'
+
+      meth = ::Rails::DBConsole.method(:start)
+
+      # `Rails::DBConsole.start` has been changed to load faster in
+      # https://github.com/rails/rails/commit/346bb018499cde6699fcce6c68dd7e9be45c75e1
+      #
+      # This will work with both versions.
+      if meth.arity.zero?
+        ::Rails::DBConsole.start
+      else
+        ::Rails::DBConsole.start(::Rails.application)
+      end
+    end
+
     def server
       require 'rails/commands/server'
       server = ::Rails::Server.new
