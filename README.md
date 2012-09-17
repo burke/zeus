@@ -35,7 +35,7 @@ Start the server:
 
 See a list of the available commands:
 
-    zeus commands
+    zeus help
 
 Run some commands:
 
