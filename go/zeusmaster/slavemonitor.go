@@ -21,12 +21,12 @@ func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
 
 	localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
-		panic(err)
+		Error("Couldn't create socketpair")
 	}
 
 	localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
 	if err != nil {
-		panic(err)
+		Error("Couldn't Open UNIXSocket")
 	}
 
 	// We just want this unix socket to be a channel so we can select on it...
@@ -149,7 +149,7 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 
 	slaveNode := mon.tree.FindSlaveByName(identifier)
 	if slaveNode == nil {
-		panic("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
+		Error("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
 	}
 
 	go slaveNode.Run(identifier, pid, slaveUsock)

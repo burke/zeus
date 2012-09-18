@@ -17,7 +17,7 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	path, _ := filepath.Abs(zeusSockName)
 	addr, err := net.ResolveUnixAddr("unix", path)
 	if err != nil {
-		panic("Can't open socket.")
+		Error("Can't open socket.")
 	}
 	listener, err := net.ListenUnix("unix", addr)
 	if err != nil {

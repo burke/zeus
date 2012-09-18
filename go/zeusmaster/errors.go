@@ -6,6 +6,12 @@ import (
 	"os"
 )
 
+func Error(msg string) {
+	if slog.Red(msg) {
+		ExitNow(1)
+	}
+}
+
 func ErrorConfigCommandCouldntStart(output string) {
 	slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
 	if slog.Red("The json file is valid, but the {yellow}command{red} could not be started:") {

@@ -51,20 +51,21 @@ func executablePath() string {
 		gemRoot := path.Dir(path.Dir(os.Args[0]))
 		return path.Join(gemRoot, "ext/inotify-wrapper/inotify-wrapper")
 	}
-	panic("Unsupported OS")
+	Error("Unsupported OS")
+	return ""
 }
 
 func startWrapper() {
 	cmd := exec.Command(executablePath())
 	var err error
 	if watcherIn, err = cmd.StdinPipe(); err != nil {
-		panic(err)
+		Error(err.Error())
 	}
 	if watcherOut, err = cmd.StdoutPipe(); err != nil {
-		panic(err)
+		Error(err.Error())
 	}
 	if watcherErr, err = cmd.StderrPipe(); err != nil {
-		panic(err)
+		Error(err.Error())
 	}
 
 	cmd.Start()
