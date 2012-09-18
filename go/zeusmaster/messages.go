@@ -45,14 +45,22 @@ func CreateSpawnCommandMessage(identifier string) string {
 	return "C:" + identifier
 }
 
-func ParseClientCommandRequestMessage(msg string) (string, string, error) {
-	parts := strings.SplitN(msg, ":", 3)
+func ParseClientCommandRequestMessage(msg string) (string, int, string, error) {
+	parts := strings.SplitN(msg, ":", 4)
 	if parts[0] != "Q" {
-		return "", "", errors.New("Wrong message type! Expected ClientCommandRequestMessage, got: " + msg)
+		return "", -1, "", errors.New("Wrong message type! Expected ClientCommandRequestMessage, got: " + msg)
 	}
 
 	command := parts[1]
-	arguments := parts[2]
+	arguments := parts[3]
+	pid, err := strconv.Atoi(parts[2])
+	if err != nil {
+		return "", -1, "", errors.New("Expected pid, but none received: " + msg)
+	}
 
-	return command, arguments, nil
+	return command, pid, arguments, nil
+}
+
+func CreatePidAndArgumentsMessage(pid int, arguments string) string {
+	return strconv.Itoa(pid) + ":" + arguments
 }

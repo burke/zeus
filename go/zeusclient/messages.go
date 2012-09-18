@@ -2,9 +2,10 @@ package zeusclient
 
 import (
 	"encoding/json"
+	"strconv"
 )
 
-func CreateCommandAndArgumentsMessage(command string, args []string) string {
+func CreateCommandAndArgumentsMessage(command string, pid int, args []string) string {
 	encoded, _ := json.Marshal(args)
-	return "Q:" + command + ":" + string(encoded)
+	return "Q:" + command + ":" + strconv.Itoa(pid) + ":" + string(encoded)
 }

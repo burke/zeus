@@ -71,7 +71,7 @@ func doRun(color bool) int {
 	}
 	usock := unixsocket.NewUsock(conn)
 
-	msg := CreateCommandAndArgumentsMessage(os.Args[1], os.Args[2:])
+	msg := CreateCommandAndArgumentsMessage(os.Args[1], os.Getpid(), os.Args[2:])
 	usock.WriteMessage(msg)
 	usock.WriteFD(int(slave.Fd()))
 	slave.Close()

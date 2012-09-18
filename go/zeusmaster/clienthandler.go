@@ -60,7 +60,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 		fmt.Println("clienthandler.go:handleClientConnection:read command and arguments:", err)
 		return
 	}
-	command, arguments, err := ParseClientCommandRequestMessage(msg)
+	command, clientPid, arguments, err := ParseClientCommandRequestMessage(msg)
 	if err != nil {
 		fmt.Println("clienthandler.go:handleClientConnection:parse command and arguments:", err)
 		return
@@ -122,7 +122,8 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	defer commandUsock.Close()
 
 	// Send the arguments to the command process (step 3)
-	commandUsock.WriteMessage(arguments)
+	msg = CreatePidAndArgumentsMessage(clientPid, arguments)
+	commandUsock.WriteMessage(msg)
 
 	// Send the client terminal connection to the command process (step 4)
 	commandUsock.WriteFD(clientFd)

@@ -1,10 +1,10 @@
 # Client/Master/Command handshake
 
      Client    Master    Command
-    1  ---------->                | Command, Arguments
+    1  ---------->                | Command, Arguments, Pid
     2  ---------->                | Terminal IO
     3            ----------->     | Terminal IO
-    4            ----------->     | Arguments
+    4            ----------->     | Arguments, Pid
     5            <-----------     | pid
     6  <---------                 | pid
            (time passes)

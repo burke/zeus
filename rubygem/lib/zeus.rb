@@ -1,3 +1,4 @@
+# encoding: utf-8
 require 'socket'
 require 'json'
 
@@ -58,10 +59,20 @@ module Zeus
       remote.close
       sock.close
 
-      arguments = local.recv(1024)
-      arguments.chomp!("\0")
+      begin
+        pid_and_arguments = local.recv(1024)
+        pid_and_arguments.chomp!("\0")
+        # pid_and_arguments.force_encoding("ASCII-8BIT")
+        File.open("b.log","a"){|f|f.puts "PA#{pid_and_arguments}" }
+        pid_and_arguments =~ /(.*?):(.*)/
+        client_pid, arguments = $1.to_i, $2
+        arguments.chomp!("\0")
+      rescue => e
+        File.open("b.log","a"){|f|f.puts e.message ; f.puts e.backtrace}
+      end
 
       pid = fork {
+        $0 = "zeus command: #{identifier}"
         plan.after_fork
         client_terminal = local.recv_io
         local.write "P:#{Process.pid}:\0"
@@ -75,12 +86,29 @@ module Zeus
         plan.send(identifier)
       }
 
+      kill_command_if_client_quits!(pid, client_pid)
+
       Process.wait(pid)
       code = $?.exitstatus || 0
 
       local.write "#{code}\0"
 
       local.close
+    end
+
+    def kill_command_if_client_quits!(command_pid, client_pid)
+      Thread.new {
+        loop {
+          begin
+            File.open("b.log","a"){|f|f.puts "Checking #{client_pid}"}
+            x=Process.kill(0, client_pid)
+            File.open("b.log","a"){|f|f.puts "Checked #{client_pid} and got #{x}"}
+          rescue Errno::ESRCH
+            Process.kill(9, command_pid)
+          end
+          sleep 1
+        }
+      }
     end
 
     def notify_features(sock, features)
