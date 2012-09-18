@@ -3,6 +3,7 @@ package unixsocket
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net"
 	"os"
 	"strings"
@@ -21,8 +22,6 @@ type Usock struct {
 	readMessages   []string
 	partialMessage string
 }
-
-const dummyByte = "x"
 
 func NewUsock(conn *net.UnixConn) *Usock {
 	return &Usock{Conn: conn}
@@ -77,14 +76,16 @@ func (usock *Usock) Close() {
 }
 
 func (usock *Usock) WriteMessage(msg string) (int, error) {
-	n, _, err := usock.Conn.WriteMsgUnix([]byte(msg+"\000"), nil, nil)
-	return n, err
+	completeMessage := strings.NewReader(msg + "\000")
+
+	n, err := io.Copy(usock.Conn, completeMessage)
+	return int(n - 1), err
 }
 
 func (usock *Usock) WriteFD(fd int) error {
 	rights := syscall.UnixRights(fd)
 
-	dummyByte := []byte("x")
+	dummyByte := []byte("\000")
 	n, oobn, err := usock.Conn.WriteMsgUnix(dummyByte, rights, nil)
 	if err != nil {
 		str := fmt.Sprintf("Usock#WriteFD:WriteMsgUnix: %v %v\n", err, syscall.EINVAL)
@@ -95,24 +96,6 @@ func (usock *Usock) WriteFD(fd int) error {
 		return errors.New(str)
 	}
 	return nil
-}
-
-func (usock *Usock) returnFDIfRead() int {
-	if len(usock.readFDs) > 0 {
-		fd := usock.readFDs[0]
-		usock.readFDs = usock.readFDs[1:]
-		return fd
-	}
-	return -1
-}
-
-func (usock *Usock) returnMessageIfRead() string {
-	if len(usock.readMessages) > 0 {
-		msg := usock.readMessages[0]
-		usock.readMessages = usock.readMessages[1:]
-		return msg
-	}
-	return ""
 }
 
 func (usock *Usock) ReadFD() (int, error) {
@@ -178,6 +161,24 @@ func (usock *Usock) ReadMessageOrFD() (string, int, error) {
 	return "", -1, errors.New("Expected message or FD from socket; none received.")
 }
 
+func (usock *Usock) returnFDIfRead() int {
+	if len(usock.readFDs) > 0 {
+		fd := usock.readFDs[0]
+		usock.readFDs = usock.readFDs[1:]
+		return fd
+	}
+	return -1
+}
+
+func (usock *Usock) returnMessageIfRead() string {
+	if len(usock.readMessages) > 0 {
+		msg := usock.readMessages[0]
+		usock.readMessages = usock.readMessages[1:]
+		return msg
+	}
+	return ""
+}
+
 func (usock *Usock) readFromSocket() (err error) {
 	buf := make([]byte, 1024)
 	oob := make([]byte, 32)
@@ -198,14 +199,15 @@ func (usock *Usock) readFromSocket() (err error) {
 		// `messages` for a single full message ("a message\000") then will be ["a message", ""]
 		messages := strings.Split(string(buf[:n]), "\000")
 		for index, message := range messages {
+			if message == "" {
+				continue
+			}
 			if usock.partialMessage != "" {
 				message = usock.partialMessage + message
 				usock.partialMessage = ""
 			}
 			if index == len(messages)-1 {
-				if message != dummyByte {
-					usock.partialMessage = message
-				}
+				usock.partialMessage = message
 			} else {
 				usock.readMessages = append(usock.readMessages, message)
 			}
