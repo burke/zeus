@@ -1,9 +1,10 @@
 package zeusmaster
 
 import (
-	"fmt"
+	"errors"
 	"math/rand"
 	"net"
+	"os"
 	"path/filepath"
 	"strconv"
 	"time"
@@ -51,43 +52,16 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 // see docs/client_master_handshake.md
 func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	defer usock.Close()
-
 	// we have established first contact to the client.
 
-	// we first read the command and arguments specified from the connection. (step 1)
-	msg, err := usock.ReadMessage()
-	if err != nil {
-		fmt.Println("clienthandler.go:handleClientConnection:read command and arguments:", err)
-		return
-	}
-	command, clientPid, arguments, err := ParseClientCommandRequestMessage(msg)
-	if err != nil {
-		fmt.Println("clienthandler.go:handleClientConnection:parse command and arguments:", err)
-		return
-	}
-
-	commandNode := tree.FindCommand(command)
-	if commandNode == nil {
-		fmt.Println("ERROR: Node not found!: ", command)
-		return
-	}
+	command, clientPid, arguments, err := receiveCommandArgumentsAndPid(usock, nil)
+	commandNode, slaveNode, err := findCommandAndSlaveNodes(tree, command, err)
 	command = commandNode.Name // resolve aliases
-	slaveNode := commandNode.Parent
 
-	// Now we read the terminal IO socket to use for raw IO (step 2)
-	clientFd, err := usock.ReadFD()
-	if err != nil {
-		fmt.Println("Expected FD, none received!")
-		return
-	}
-	fileName := strconv.Itoa(rand.Int())
-	clientFile := unixsocket.FdToFile(clientFd, fileName)
+	clientFile, err := receiveTTY(usock, err)
 	defer clientFile.Close()
 
-	// We now need to fork a new command process.
-	// For now, we naively assume it's running...
-
-	if slaveNode.Error != "" {
+	if err == nil && slaveNode.Error != "" {
 		// we can skip steps 3-5 as they deal with the command process we're not spawning.
 		// Write a fake pid (step 6)
 		usock.WriteMessage("0")
@@ -98,57 +72,153 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 		return
 	}
 
-	// boot a command process and establish a socket connection to it.
+	commandUsock, err := bootNewCommand(slaveNode, command, err)
+	defer commandUsock.Close()
+
+	err = sendClientPidAndArgumentsToCommand(commandUsock, clientPid, arguments, err)
+
+	err = sendTTYToCommand(commandUsock, clientFile, err)
+
+	cmdPid, err := receivePidFromCommand(commandUsock, err)
+
+	err = sendCommandPidToClient(usock, cmdPid, err)
+
+	exitStatus, err := receiveExitStatus(commandUsock, err)
+
+	err = sendExitStatus(usock, exitStatus, err)
+
+	if err != nil {
+		println("Error in client handshake: " + err.Error())
+	}
+	// Done! Hooray!
+}
+
+func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, int, string, error) {
+	if err != nil {
+		return "", -1, "", err
+	}
+
+	msg, err := usock.ReadMessage()
+	if err != nil {
+		return "", -1, "", err
+	}
+	command, clientPid, arguments, err := ParseClientCommandRequestMessage(msg)
+	if err != nil {
+		return "", -1, "", err
+	}
+
+	return command, clientPid, arguments, err
+}
+
+func findCommandAndSlaveNodes(tree *ProcessTree, command string, err error) (*CommandNode, *SlaveNode, error) {
+	if err != nil {
+		return nil, nil, err
+	}
+
+	commandNode := tree.FindCommand(command)
+	if commandNode == nil {
+		return nil, nil, errors.New("ERROR: Node not found!: " + command)
+	}
+	command = commandNode.Name
+	slaveNode := commandNode.Parent
+
+	return commandNode, slaveNode, nil
+}
+
+func receiveTTY(usock *unixsocket.Usock, err error) (*os.File, error) {
+	if err != nil {
+		return nil, err
+	}
+
+	clientFd, err := usock.ReadFD()
+	if err != nil {
+		return nil, errors.New("Expected FD, none received!")
+	}
+	fileName := strconv.Itoa(rand.Int())
+	clientFile := unixsocket.FdToFile(clientFd, fileName)
+
+	return clientFile, nil
+}
+
+func sendClientPidAndArgumentsToCommand(commandUsock *unixsocket.Usock, clientPid int, arguments string, err error) error {
+	if err != nil {
+		return err
+	}
+
+	msg := CreatePidAndArgumentsMessage(clientPid, arguments)
+	_, err = commandUsock.WriteMessage(msg)
+	return err
+}
+
+func receiveExitStatus(commandUsock *unixsocket.Usock, err error) (string, error) {
+	if err != nil {
+		return "", err
+	}
+
+	return commandUsock.ReadMessage()
+}
+
+func sendExitStatus(usock *unixsocket.Usock, exitStatus string, err error) error {
+	if err != nil {
+		return err
+	}
+
+	_, err = usock.WriteMessage(exitStatus)
+	return err
+}
+
+func receivePidFromCommand(commandUsock *unixsocket.Usock, err error) (int, error) {
+	if err != nil {
+		return -1, err
+	}
+
+	msg, err := commandUsock.ReadMessage()
+	if err != nil {
+		return -1, err
+	}
+	intPid, _, _ := ParsePidMessage(msg)
+
+	return intPid, err
+}
+
+func sendCommandPidToClient(usock *unixsocket.Usock, pid int, err error) error {
+	if err != nil {
+		return err
+	}
+
+	strPid := strconv.Itoa(pid)
+	_, err = usock.WriteMessage(strPid)
+
+	return err
+}
+
+func bootNewCommand(slaveNode *SlaveNode, command string, err error) (*unixsocket.Usock, error) {
+	if err != nil {
+		return nil, err
+	}
+
 	slaveNode.WaitUntilBooted()
 
-	msg = CreateSpawnCommandMessage(command)
+	msg := CreateSpawnCommandMessage(command)
 	slaveNode.mu.Lock()
 	unixsocket.NewUsock(slaveNode.Socket).WriteMessage(msg)
 	slaveNode.mu.Unlock()
 
-	// TODO: deadline? how to respond if this is never sent?
 	commandFd := <-slaveNode.ClientCommandPTYFileDescriptor
 	if err != nil {
-		fmt.Println("Couldn't start command process!", err)
+		return nil, err
 	}
-	fileName = strconv.Itoa(rand.Int())
+	fileName := strconv.Itoa(rand.Int())
 	commandFile := unixsocket.FdToFile(commandFd, fileName)
 	defer commandFile.Close()
 
-	commandUsock, err := unixsocket.NewUsockFromFile(commandFile)
+	return unixsocket.NewUsockFromFile(commandFile)
+}
+
+func sendTTYToCommand(commandUsock *unixsocket.Usock, clientFile *os.File, err error) error {
 	if err != nil {
-		fmt.Println("MakeUnixSocket", err)
-	}
-	defer commandUsock.Close()
-
-	// Send the arguments to the command process (step 3)
-	msg = CreatePidAndArgumentsMessage(clientPid, arguments)
-	commandUsock.WriteMessage(msg)
-
-	// Send the client terminal connection to the command process (step 4)
-	commandUsock.WriteFD(clientFd)
-
-	// Receive the pid from the command process (step 5)
-	msg, err = commandUsock.ReadMessage()
-	if err != nil {
-		fmt.Println(err)
-	}
-	intPid, _, _ := ParsePidMessage(msg)
-
-	// Send the pid to the client process (step 6)
-	strPid := strconv.Itoa(intPid)
-	usock.WriteMessage(strPid)
-
-	// Receive the exit status from the command (step 7)
-	msg, err = commandUsock.ReadMessage()
-	if err != nil {
-		fmt.Println("clienthandler.go:handleClientConnection:receive exit status:", err)
-		return
+		return err
 	}
 
-	// Forward the exit status to the Client (step 8)
-	usock.WriteMessage(msg)
-
-	// Done! Hooray!
-
+	return commandUsock.WriteFD(int(clientFile.Fd()))
 }
