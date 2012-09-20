@@ -78,17 +78,12 @@ module Zeus
       remote.close
       sock.close
 
-      begin
-        pid_and_arguments = local.recv(1024)
-        pid_and_arguments.chomp!("\0")
-        # pid_and_arguments.force_encoding("ASCII-8BIT")
-        File.open("b.log","a"){|f|f.puts "PA#{pid_and_arguments}" }
-        pid_and_arguments =~ /(.*?):(.*)/
-        client_pid, arguments = $1.to_i, $2
-        arguments.chomp!("\0")
-      rescue => e
-        File.open("b.log","a"){|f|f.puts e.message ; f.puts e.backtrace}
-      end
+      pid_and_arguments = local.recv(1024)
+      pid_and_arguments.chomp!("\0")
+      # pid_and_arguments.force_encoding("ASCII-8BIT")
+      pid_and_arguments =~ /(.*?):(.*)/
+      client_pid, arguments = $1.to_i, $2
+      arguments.chomp!("\0")
 
       pid = fork {
         $0 = "zeus command: #{identifier}"
@@ -119,9 +114,7 @@ module Zeus
       Thread.new {
         loop {
           begin
-            File.open("b.log","a"){|f|f.puts "Checking #{client_pid}"}
-            x=Process.kill(0, client_pid)
-            File.open("b.log","a"){|f|f.puts "Checked #{client_pid} and got #{x}"}
+            Process.kill(0, client_pid)
           rescue Errno::ESRCH
             Process.kill(9, command_pid)
           end
