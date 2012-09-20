@@ -9,6 +9,7 @@ import (
 	"strings"
 	"syscall"
 
+	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 )
 
@@ -35,7 +36,7 @@ func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
 		for {
 			fd, err := localMasterSocket.ReadFD()
 			if err != nil {
-				fmt.Println(err)
+				slog.Error(err)
 			}
 			registeringFds <- fd
 		}
@@ -131,19 +132,19 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	slaveFile := unixsocket.FdToFile(fd, fileName)
 	slaveUsock, err := unixsocket.NewUsockFromFile(slaveFile)
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(err)
 	}
 	if err = slaveUsock.Conn.SetReadBuffer(1024); err != nil {
-		fmt.Println(err)
+		slog.Error(err)
 	}
 	if err = slaveUsock.Conn.SetWriteBuffer(1024); err != nil {
-		fmt.Println(err)
+		slog.Error(err)
 	}
 
 	// We now expect the slave to use this fd they send us to send a Pid&Identifier Message
 	msg, err := slaveUsock.ReadMessage()
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(err)
 	}
 	pid, identifier, err := ParsePidMessage(msg)
 

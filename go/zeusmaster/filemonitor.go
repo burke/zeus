@@ -111,6 +111,6 @@ func handleChangedFileNotification(tree *ProcessTree, file string) {
 func startWatchingFile(file string) {
 	_, err := watcherIn.Write([]byte(file + "\n"))
 	if err != nil {
-		println("startWatchingFile:" + err.Error())
+		slog.Error(err)
 	}
 }

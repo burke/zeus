@@ -1,7 +1,6 @@
 package zeusmaster
 
 import (
-	"fmt"
 	"net"
 	"strings"
 	"sync"
@@ -50,11 +49,11 @@ func (node *SlaveNode) Run(identifier string, pid int, slaveUsock *unixsocket.Us
 	// The slave will execute its action and respond with a status...
 	msg, err := slaveUsock.ReadMessage()
 	if err != nil {
-		fmt.Println(err)
+		slog.Error(err)
 	}
 	msg, err = ParseActionResponseMessage(msg)
 	if err != nil {
-		fmt.Println(err)
+		slog.ErrorString("[" + identifier + "] " + err.Error())
 	}
 	if msg == "OK" {
 		node.Socket = slaveUsock.Conn
@@ -182,7 +181,7 @@ func (node *SlaveNode) handleMessages() {
 
 func (node *SlaveNode) handleFeatureMessage(msg string) {
 	if file, err := ParseFeatureMessage(msg); err != nil {
-		fmt.Println("slavenode.go:handleFeatureMessage:", err)
+		slog.Error(err)
 	} else {
 		node.Features[file] = true
 		AddFile(file)

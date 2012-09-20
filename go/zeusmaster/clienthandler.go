@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"time"
 
+	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 )
 
@@ -88,7 +89,7 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 	err = sendExitStatus(usock, exitStatus, err)
 
 	if err != nil {
-		println("Error in client handshake: " + err.Error())
+		slog.Error(err)
 	}
 	// Done! Hooray!
 }
