@@ -7,6 +7,7 @@ import (
 	"path"
 	"runtime"
 	"strings"
+	"sync"
 
 	slog "github.com/burke/zeus/go/shinylog"
 )
@@ -17,6 +18,8 @@ var filesChanged chan string
 var watcherIn io.WriteCloser
 var watcherOut io.ReadCloser
 var watcherErr io.ReadCloser
+
+var fileMutex sync.Mutex
 
 var allWatchedFiles map[string]bool
 
@@ -99,16 +102,20 @@ func AddFile(file string) {
 }
 
 func handleLoadedFileNotification(file string) {
+	fileMutex.Lock()
 	// a slave loaded a file. It's up to us here to make sure this file is watched.
 	if !allWatchedFiles[file] {
 		allWatchedFiles[file] = true
 		startWatchingFile(file)
 	}
+	fileMutex.Unlock()
 }
 
 func handleChangedFileNotification(tree *ProcessTree, file string) {
-	slog.Yellow("Dependency change at " + file)
+	slog.Magenta("[filechange] " + file)
+	fileMutex.Lock()
 	tree.RestartNodesWithFeature(file)
+	fileMutex.Unlock()
 }
 
 func startWatchingFile(file string) {

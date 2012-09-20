@@ -193,25 +193,20 @@ func sendCommandPidToClient(usock *unixsocket.Usock, pid int, err error) error {
 	return err
 }
 
+type CommandRequest struct {
+	Name    string
+	Retchan chan *os.File
+}
+
 func bootNewCommand(slaveNode *SlaveNode, command string, err error) (*unixsocket.Usock, error) {
 	if err != nil {
 		return nil, err
 	}
 
-	slaveNode.WaitUntilBooted()
-
-	msg := CreateSpawnCommandMessage(command)
-	slaveNode.mu.Lock()
-	unixsocket.NewUsock(slaveNode.Socket).WriteMessage(msg)
-	slaveNode.mu.Unlock()
-
-	commandFd := <-slaveNode.ClientCommandPTYFileDescriptor
-	if err != nil {
-		return nil, err
-	}
-	fileName := strconv.Itoa(rand.Int())
-	commandFile := unixsocket.FdToFile(commandFd, fileName)
-	defer commandFile.Close()
+	request := &CommandRequest{command, make(chan *os.File)}
+	slaveNode.RequestCommandBoot(request)
+	commandFile := <-request.Retchan // TODO: don't really want to wait indefinitely.
+	// defer commandFile.Close() // TODO: can't do this here anymore.
 
 	return unixsocket.NewUsockFromFile(commandFile)
 }

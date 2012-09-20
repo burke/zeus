@@ -11,8 +11,7 @@ module Zeus
   end
 
   class << self
-    attr_accessor :plan
-    attr_accessor :dummy_tty
+    attr_accessor :plan, :dummy_tty, :master_socket
 
     # this is totally asinine, but readline gets super confused when it's
     # required at a time when stdin or stdout is not connected to a TTY,
@@ -30,12 +29,18 @@ module Zeus
       STDOUT.reopen(dummy_tty)
     end
 
-    def go(identifier=:boot)
-      setup_dummy_tty!
-      $0 = "zeus slave: #{identifier}"
-      # okay, so I ahve this FD that I can use to send data to the master.
+    def setup_master_socket!
+      return master_socket if master_socket
+
       fd = ENV['ZEUS_MASTER_FD'].to_i
-      master = UNIXSocket.for_fd(fd)
+      self.master_socket = UNIXSocket.for_fd(fd)
+    end
+
+    def go(identifier=:boot)
+      $0 = "zeus slave: #{identifier}"
+
+      setup_dummy_tty!
+      master = setup_master_socket!
 
       # I need to give the master a way to talk to me exclusively
       local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
@@ -127,6 +132,7 @@ module Zeus
       features.each do |t|
         begin
           sock.write "F:#{t}\0"
+          sock.flush
         rescue Errno::ENOBUFS
           sleep 0.2
           retry

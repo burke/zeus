@@ -1,12 +1,9 @@
 package zeusmaster
 
 import (
-	"fmt"
 	"math/rand"
 	"os"
-	"os/exec"
 	"strconv"
-	"strings"
 	"syscall"
 
 	slog "github.com/burke/zeus/go/shinylog"
@@ -14,16 +11,17 @@ import (
 )
 
 type SlaveMonitor struct {
-	tree *ProcessTree
+	tree             *ProcessTree
+	remoteMasterFile *os.File
 }
 
 func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
-	monitor := &SlaveMonitor{tree}
-
 	localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
 	if err != nil {
 		Error("Couldn't create socketpair")
 	}
+
+	monitor := &SlaveMonitor{tree, remoteMasterFile}
 
 	localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
 	if err != nil {
@@ -43,11 +41,7 @@ func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
 	}()
 
 	for _, slave := range monitor.tree.SlavesByName {
-		if slave.Parent == nil {
-			go monitor.startInitialProcess(remoteMasterFile)
-		} else {
-			go monitor.bootSlave(slave)
-		}
+		go slave.Run(monitor)
 	}
 
 	for {
@@ -57,72 +51,14 @@ func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
 			quit <- true
 			return
 		case fd := <-registeringFds:
-			monitor.slaveDidBeginRegistration(fd)
+			go monitor.slaveDidBeginRegistration(fd)
 		}
 	}
 }
 
 func (mon *SlaveMonitor) cleanupChildren() {
 	for _, slave := range mon.tree.SlavesByName {
-		slave.Shutdown()
-	}
-}
-
-func (mon *SlaveMonitor) bootSlave(slave *SlaveNode) {
-	for {
-		slave.Parent.WaitUntilBooted()
-
-		msg := CreateSpawnSlaveMessage(slave.Name)
-		unixsocket.NewUsock(slave.Parent.Socket).WriteMessage(msg)
-
-		restartNow := make(chan bool)
-		go func() {
-			slave.Parent.WaitUntilUnbooted()
-			restartNow <- true
-		}()
-		go func() {
-			slave.WaitUntilRestartRequested()
-			restartNow <- true
-		}()
-
-		<-restartNow
-		slave.Kill()
-	}
-}
-
-func (mon *SlaveMonitor) startInitialProcess(sock *os.File) {
-	for {
-		command := mon.tree.ExecCommand
-		parts := strings.Split(command, " ")
-		executable := parts[0]
-		args := parts[1:]
-		cmd := exec.Command(executable, args...)
-		cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", sock.Fd()))
-		cmd.ExtraFiles = []*os.File{sock}
-
-		// We want to let this process run "forever", but it will eventually
-		// die... either on program termination or when its dependencies change
-		// and we kill it. when it's requested to restart, err is "signal 9",
-		// and we do nothing.
-		go func() {
-			output, err := cmd.CombinedOutput()
-			if err == nil {
-				ErrorConfigCommandCrashed(string(output))
-			}
-			msg := err.Error()
-			if len(msg) > 11 && err.Error()[:11] != "exit status" {
-				ErrorConfigCommandCouldntStart(err.Error())
-			}
-		}()
-
-		restartNow := make(chan bool)
-		go func() {
-			mon.tree.Root.WaitUntilRestartRequested()
-			restartNow <- true
-		}()
-
-		<-restartNow
-		mon.tree.Root.Kill()
+		slave.ForceKill()
 	}
 }
 
@@ -153,5 +89,5 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 		Error("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
 	}
 
-	go slaveNode.Run(identifier, pid, slaveUsock)
+	slaveNode.SlaveWasInitialized(pid, slaveUsock)
 }

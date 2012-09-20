@@ -38,6 +38,7 @@ func DisableColor()                       { defaultLogger.DisableColor() }
 func Colorized(msg string) (printed bool) { return defaultLogger.Colorized(msg) }
 func Error(err error) bool                { return defaultLogger.Error(err) }
 func FatalError(err error)                { defaultLogger.FatalError(err) }
+func FatalErrorString(msg string)         { defaultLogger.FatalErrorString(msg) }
 func ErrorString(msg string) bool         { return defaultLogger.ErrorString(msg) }
 func Red(msg string) bool                 { return defaultLogger.Red(msg) }
 func Green(msg string) bool               { return defaultLogger.Green(msg) }
@@ -57,6 +58,11 @@ func (l *ShinyLogger) DisableColor() {
 
 func (l *ShinyLogger) Colorized(msg string) (printed bool) {
 	return l.colorized(3, msg, false)
+}
+
+func (l *ShinyLogger) FatalErrorString(msg string) {
+	l.colorized(3, "{red}"+msg, true)
+	os.Exit(1)
 }
 
 func (l *ShinyLogger) FatalError(err error) {

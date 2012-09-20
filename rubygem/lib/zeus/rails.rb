@@ -92,7 +92,14 @@ module Zeus
     end
 
     def prerake
-      require 'rake'
+      File.open("WTF.log","a"){|f|f.puts "?????"}
+      begin
+        require 'rake'
+      rescue => e
+        File.open("WTF.log","a"){|f|f.puts e.message  ; f.puts e.backtrace }
+      else 
+        File.open("WTF.log","a"){|f|f.puts "it... worked?"}
+      end
     end
 
     def rake
