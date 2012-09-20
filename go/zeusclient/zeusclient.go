@@ -44,14 +44,14 @@ func doRun(color bool) int {
 		master, slave, err = unixsocket.Socketpair(syscall.SOCK_STREAM)
 	}
 	if err != nil {
-		panic(err)
+		slog.FatalError(err)
 	}
 
 	defer master.Close()
 	if isTerminal {
 		oldState, err := ttyutils.MakeTerminalRaw(os.Stdout.Fd())
 		if err != nil {
-			panic(err)
+			slog.FatalError(err)
 		}
 		defer ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
 
@@ -62,7 +62,7 @@ func doRun(color bool) int {
 
 	addr, err := net.ResolveUnixAddr("unixgram", zeusSockName)
 	if err != nil {
-		panic("Can't resolve server address")
+		slog.FatalError(err)
 	}
 
 	conn, err := net.DialUnix("unix", nil, addr)
@@ -78,7 +78,7 @@ func doRun(color bool) int {
 
 	msg, err = usock.ReadMessage()
 	if err != nil {
-		panic(err)
+		slog.FatalError(err)
 	}
 
 	parts := strings.Split(msg, "\000")
@@ -91,7 +91,7 @@ func doRun(color bool) int {
 	}()
 
 	if err != nil {
-		panic(err)
+		slog.FatalError(err)
 	}
 
 	if isTerminal {
@@ -113,7 +113,7 @@ func doRun(color bool) int {
 	if len(parts) > 2 {
 		exitStatus, err = strconv.Atoi(parts[0])
 		if err != nil {
-			panic(err)
+			slog.FatalError(err)
 		}
 	}
 
@@ -160,12 +160,12 @@ func doRun(color bool) int {
 	if exitStatus == -1 {
 		msg, err = usock.ReadMessage()
 		if err != nil {
-			panic(err)
+			slog.FatalError(err)
 		}
 		parts := strings.Split(msg, "\000")
 		exitStatus, err = strconv.Atoi(parts[0])
 		if err != nil {
-			panic(err)
+			slog.FatalError(err)
 		}
 	}
 
