@@ -8,6 +8,8 @@ Zeus is composed of three components:
 
 3. [Slaves/Commands](../rubygem). These are the target application. A small shim, written in the target language, manages the communication between the application and the Master process, and boots the application in phases. Though the Master and Client are completely language-agnostic, currently ruby is the only language for which a Slave shim exists.
 
+If you've read Tony Hoare's (or C.A.R. Hoare's) "Communicating Sequential Processes", [`csp.pdf`](csp.pdf) might be a bit helpful in addition to this document. I haven't studied the math enough for it to be fully correct, but it gets some of the point across.
+
 See: [`terminology.md`](terminology.md)
 
 ## Master Process
