@@ -28,11 +28,12 @@ func StartFileMonitor(tree *ProcessTree, quit chan bool) {
 	filesChanged = make(chan string, 256)
 	allWatchedFiles = make(map[string]bool)
 
-	startWrapper()
+	cmd := startWrapper()
 
 	for {
 		select {
 		case <-quit:
+			cmd.Process.Kill()
 			quit <- true
 			return
 		case path := <-filesToWatch:
@@ -55,7 +56,7 @@ func executablePath() string {
 	return ""
 }
 
-func startWrapper() {
+func startWrapper() *exec.Cmd {
 	cmd := exec.Command(executablePath())
 	var err error
 	if watcherIn, err = cmd.StdinPipe(); err != nil {
@@ -89,6 +90,8 @@ func startWrapper() {
 		err := cmd.Wait()
 		ErrorFileMonitorWrapperCrashed(err)
 	}()
+
+	return cmd
 }
 
 func AddFile(file string) {
