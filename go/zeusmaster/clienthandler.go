@@ -25,7 +25,6 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	if err != nil {
 		ErrorCantCreateListener()
 	}
-	defer listener.Close()
 
 	connections := make(chan *unixsocket.Usock)
 	go func() {
@@ -42,6 +41,7 @@ func StartClientHandler(tree *ProcessTree, quit chan bool) {
 	for {
 		select {
 		case <-quit:
+			listener.Close()
 			quit <- true
 			return
 		case conn := <-connections:

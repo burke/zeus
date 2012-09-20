@@ -53,8 +53,8 @@ func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
 	for {
 		select {
 		case <-quit:
-			quit <- true
 			monitor.cleanupChildren()
+			quit <- true
 			return
 		case fd := <-registeringFds:
 			monitor.slaveDidBeginRegistration(fd)
