@@ -1,6 +1,7 @@
 # encoding: utf-8
 require 'socket'
 require 'json'
+require 'pty'
 
 require 'zeus/load_tracking'
 
@@ -11,8 +12,26 @@ module Zeus
 
   class << self
     attr_accessor :plan
+    attr_accessor :dummy_tty
+
+    # this is totally asinine, but readline gets super confused when it's
+    # required at a time when stdin or stdout is not connected to a TTY,
+    # no matter what we do to tell it otherwise later. So we create a dummy
+    # TTY in case readline is required.
+    #
+    # Yup.
+    def setup_dummy_tty!
+      return if self.dummy_tty
+      master, self.dummy_tty = PTY.open
+      Thread.new {
+        loop { master.read(1024) }
+      }
+      STDIN.reopen(dummy_tty)
+      STDOUT.reopen(dummy_tty)
+    end
 
     def go(identifier=:boot)
+      setup_dummy_tty!
       $0 = "zeus slave: #{identifier}"
       # okay, so I ahve this FD that I can use to send data to the master.
       fd = ENV['ZEUS_MASTER_FD'].to_i
