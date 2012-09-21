@@ -27,10 +27,12 @@ func Run(color bool) {
 	quit1 := make(chan bool)
 	quit2 := make(chan bool)
 	quit3 := make(chan bool)
+	quit4 := make(chan bool)
 
 	go StartSlaveMonitor(tree, quit1)
 	go StartClientHandler(tree, quit2)
 	go StartFileMonitor(tree, quit3)
+	go StartStatusChart(tree, quit4)
 
 	quit := make(chan bool)
 
@@ -38,14 +40,15 @@ func Run(color bool) {
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		<-c
-		terminateComponents(quit1, quit2, quit3, quit)
+		terminateComponents(quit1, quit2, quit3, quit4, quit)
 	}()
 
 	go func() {
 		exitStatus = <-exitNow
-		terminateComponents(quit1, quit2, quit3, quit)
+		terminateComponents(quit1, quit2, quit3, quit4, quit)
 	}()
 
+	<-quit
 	<-quit
 	<-quit
 	<-quit
@@ -53,7 +56,7 @@ func Run(color bool) {
 	os.Exit(exitStatus)
 }
 
-func terminateComponents(quit1, quit2, quit3, quit chan bool) {
+func terminateComponents(quit1, quit2, quit3, quit4, quit chan bool) {
 	slog.Suppress()
 	go func() {
 		quit1 <- true
@@ -68,6 +71,11 @@ func terminateComponents(quit1, quit2, quit3, quit chan bool) {
 	go func() {
 		quit3 <- true
 		<-quit3
+		quit <- true
+	}()
+	go func() {
+		quit4 <- true
+		<-quit4
 		quit <- true
 	}()
 }

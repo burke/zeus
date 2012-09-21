@@ -112,7 +112,7 @@ func handleLoadedFileNotification(file string) {
 }
 
 func handleChangedFileNotification(tree *ProcessTree, file string) {
-	slog.Magenta("[filechange] " + file)
+	// slog.Magenta("[filechange] " + file)
 	fileMutex.Lock()
 	tree.RestartNodesWithFeature(file)
 	fileMutex.Unlock()

@@ -26,7 +26,7 @@ type SlaveNode struct {
 
 	needsRestart        chan bool            // size 1
 	commandBootRequests chan *CommandRequest // size 256
-	slaveBootRequests   chan *SlaveNode          // size 256
+	slaveBootRequests   chan *SlaveNode      // size 256
 
 	L           sync.Mutex
 	state       string
@@ -300,8 +300,7 @@ func (s *SlaveNode) bootQueuedCommandsAndSlaves() {
 
 // This should only be called while holding a lock on s.L.
 func (s *SlaveNode) changeState(newState string) {
-	StatusUpdate(s.Name, newState)
-	// slog.Yellow(newState + " : " + s.Name)
+	StatusChartUpdate()
 	s.stateChange.L.Lock()
 	s.state = newState
 	s.stateChange.Broadcast()
