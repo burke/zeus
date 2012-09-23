@@ -3,18 +3,18 @@ package zeusmaster
 import (
 	"fmt"
 	"github.com/burke/ttyutils"
+	"time"
 	slog "github.com/burke/zeus/go/shinylog"
 	"os"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
-	lineT = "\x1b[33m├── "
-	lineL = "\x1b[33m└── "
-	lineI = "\x1b[33m│   "
-	lineX = "\x1b[33m    "
+	lineT = "{yellow}├── "
+	lineL = "{yellow}└── "
+	lineI = "{yellow}│   "
+	lineX = "{yellow}    "
 )
 
 type StatusChart struct {
@@ -25,6 +25,10 @@ type StatusChart struct {
 	Commands       []*CommandNode
 	L              sync.Mutex
 	drawnInitial   bool
+
+	directLogger *slog.ShinyLogger
+
+	extraOutput string
 }
 
 var theChart *StatusChart
@@ -35,6 +39,10 @@ func StartStatusChart(tree *ProcessTree, quit chan bool) {
 	theChart.numberOfSlaves = len(tree.SlavesByName)
 	theChart.Commands = tree.Commands
 	theChart.update = make(chan bool, 10)
+	theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
+
+	scw := &StringChannelWriter{make(chan string, 10)}
+	slog.DefaultLogger = slog.NewShinyLogger(scw, scw)
 
 	termios, err := ttyutils.NoEcho(uintptr(os.Stdout.Fd()))
 	if err != nil {
@@ -42,7 +50,6 @@ func StartStatusChart(tree *ProcessTree, quit chan bool) {
 	}
 
 	ticker := time.Tick(1000 * time.Millisecond)
-
 	for {
 		select {
 		case <-quit:
@@ -50,6 +57,14 @@ func StartStatusChart(tree *ProcessTree, quit chan bool) {
 			quit <- true
 			return
 		case <-ticker:
+			theChart.draw()
+		case output := <-scw.Notif:
+			theChart.L.Lock()
+			if theChart.drawnInitial {
+				print(output)
+			}
+			theChart.extraOutput += output
+			theChart.L.Unlock()
 			theChart.draw()
 		case <-theChart.update:
 			theChart.draw()
@@ -62,21 +77,22 @@ func StatusChartUpdate() {
 }
 
 func printStateInfo(indentation, identifier, state string, verbose bool) {
+	log := theChart.directLogger
 	switch state {
 	case sUnbooted:
 		if verbose {
-			slog.Colorized(indentation + "{magenta}" + identifier)
+			log.Colorized(indentation + "{magenta}" + identifier + "\033[K")
 		}
 	case sBooting:
-		slog.Colorized(indentation + "{blue}" + identifier)
+		log.Colorized(indentation + "{blue}" + identifier + "\033[K")
 	case sCrashed:
-		slog.Colorized(indentation + "{red}" + identifier)
+		log.Colorized(indentation + "{red}" + identifier + "\033[K")
 	case sReady:
-		slog.Colorized(indentation + "{green}" + identifier)
+		log.Colorized(indentation + "{green}" + identifier + "\033[K")
 	case sWaiting:
 		fallthrough
 	default:
-		slog.Colorized(indentation + "{yellow}" + identifier)
+		log.Colorized(indentation + "{yellow}" + identifier + "\033[K")
 	}
 }
 
@@ -85,16 +101,22 @@ func (s *StatusChart) draw() {
 	defer s.L.Unlock()
 
 	if s.drawnInitial {
-		fmt.Printf("\033[%dA", s.numberOfSlaves+3+len(s.Commands))
+		lengthOfOutput := strings.Count(s.extraOutput, "\n")
+		numberOfOutputLines := s.numberOfSlaves + len(s.Commands) + lengthOfOutput + 3
+		fmt.Printf("\033[%dA", numberOfOutputLines)
 	} else {
 		s.drawnInitial = true
 	}
 
-	slog.Colorized("\x1b[4m{green}[ready] {red}[crashed] {blue}[running] {magenta}[connecting] {yellow}[waiting]")
+	log := theChart.directLogger
+
+	log.Colorized("\x1b[4m{green}[ready] {red}[crashed] {blue}[running] {magenta}[connecting] {yellow}[waiting]\033[K")
 	s.drawSubtree(s.RootSlave, "", "")
 
-	slog.Colorized("\n\x1b[4mAvailable Commands: {yellow}[waiting] {red}[crashed] {green}[ready]")
+	log.Colorized("\033[K\n\x1b[4mAvailable Commands: {yellow}[waiting] {red}[crashed] {green}[ready]\033[K")
 	s.drawCommands()
+	output := strings.Replace(s.extraOutput, "\n", "\033[K\n", -1)
+	fmt.Printf(output)
 }
 
 func (s *StatusChart) drawCommands() {
@@ -106,15 +128,17 @@ func (s *StatusChart) drawCommands() {
 		if len(alia) > 0 {
 			aliasPart = " (alias: " + alia + ")"
 		}
-		text := "zeus " + command.Name + aliasPart
+		text := "zeus " + command.Name + aliasPart + "\033[K"
+
+		log := theChart.directLogger
 
 		switch state {
 		case sReady:
-			slog.Green(text)
+			log.Green(text)
 		case sCrashed:
-			slog.Red(text)
+			log.Red(text)
 		default:
-			slog.Yellow(text)
+			log.Yellow(text)
 		}
 	}
 }
@@ -129,4 +153,12 @@ func (s *StatusChart) drawSubtree(node *SlaveNode, myIndentation, childIndentati
 			s.drawSubtree(slave, childIndentation+lineT, childIndentation+lineI)
 		}
 	}
+}
+
+type StringChannelWriter struct {
+	Notif chan string
+}
+func (s *StringChannelWriter) Write(o []byte) (int, error) {
+	s.Notif <- string(o)
+	return len(o), nil
 }
