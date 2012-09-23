@@ -18,7 +18,7 @@ type ShinyLogger struct {
 
 func NewShinyLogger(out, err interface {
 	io.Writer
-}) *ShinyLogger {
+},) *ShinyLogger {
 	happyLogger := log.New(out, "", 0)
 	sadLogger := log.New(err, "", log.Lshortfile)
 	var mu sync.Mutex
