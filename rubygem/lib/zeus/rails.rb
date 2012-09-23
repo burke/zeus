@@ -74,7 +74,7 @@ module Zeus
       rails_components = File.read(APP_PATH + ".rb").
         scan(/^\s*require\s*['"](.*railtie.*|rails\/all)['"]/).flatten
 
-      rails_components == ["rails/all"] if rails_components == []
+      rails_components = ["rails/all"] if rails_components == []
       rails_components.each do |component|
         require component
       end
