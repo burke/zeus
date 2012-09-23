@@ -3,11 +3,11 @@ package zeusmaster
 import (
 	"fmt"
 	"github.com/burke/ttyutils"
-	"time"
 	slog "github.com/burke/zeus/go/shinylog"
 	"os"
 	"strings"
 	"sync"
+	"time"
 )
 
 const (
@@ -101,7 +101,7 @@ func (s *StatusChart) draw() {
 	defer s.L.Unlock()
 
 	if s.drawnInitial {
-		lengthOfOutput := strings.Count(s.extraOutput, "\n")
+		lengthOfOutput := s.lengthOfOutput()
 		numberOfOutputLines := s.numberOfSlaves + len(s.Commands) + lengthOfOutput + 3
 		fmt.Printf("\033[%dA", numberOfOutputLines)
 	} else {
@@ -117,6 +117,27 @@ func (s *StatusChart) draw() {
 	s.drawCommands()
 	output := strings.Replace(s.extraOutput, "\n", "\033[K\n", -1)
 	fmt.Printf(output)
+}
+
+func (s *StatusChart) lengthOfOutput() int {
+	ts, err := ttyutils.Winsize(os.Stdout)
+	if err != nil {
+		slog.Error(err)
+	}
+	width := int(ts.Columns)
+
+	lines := strings.Split(s.extraOutput, "\n")
+
+	numLines := 0
+	for _, line := range lines {
+		n := (len(line) + width - 1) / width
+		if n == 0 {
+			n = 1
+		}
+		numLines += n
+	}
+
+	return numLines - 1
 }
 
 func (s *StatusChart) drawCommands() {
@@ -158,6 +179,7 @@ func (s *StatusChart) drawSubtree(node *SlaveNode, myIndentation, childIndentati
 type StringChannelWriter struct {
 	Notif chan string
 }
+
 func (s *StringChannelWriter) Write(o []byte) (int, error) {
 	s.Notif <- string(o)
 	return len(o), nil

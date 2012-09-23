@@ -1,11 +1,11 @@
 package shinylog
 
 import (
+	"io"
 	"log"
 	"os"
 	"strings"
 	"sync"
-	"io"
 )
 
 type ShinyLogger struct {
@@ -16,7 +16,9 @@ type ShinyLogger struct {
 	disableColor   bool
 }
 
-func NewShinyLogger(out, err interface{io.Writer}) *ShinyLogger {
+func NewShinyLogger(out, err interface {
+	io.Writer
+}) *ShinyLogger {
 	happyLogger := log.New(out, "", 0)
 	sadLogger := log.New(err, "", log.Lshortfile)
 	var mu sync.Mutex
