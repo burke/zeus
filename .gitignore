@@ -25,3 +25,4 @@ go/zeusversion/zeusversion.go
 .DS_Store
 ext/fsevents/build/*
 .idea/
+xcuserdata/*
