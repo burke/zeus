@@ -113,8 +113,13 @@ module Zeus
     end
 
     def console
-      require 'rails/commands/console'
-      ::Rails::Console.start(::Rails.application)
+      if IRB == Pry
+        require "pry"
+        Pry.start 
+      else
+        require 'rails/commands/console'
+        ::Rails::Console.start(::Rails.application)
+      end 
     end
 
     def dbconsole
