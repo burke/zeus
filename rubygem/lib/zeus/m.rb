@@ -182,36 +182,12 @@ module Zeus
       end
 
       def execute
-        # Locate tests to run that may be inside of this line. There could be more than one!
-        all_tests = tests
-        if @line
-          tests_to_run = all_tests.within(@line)
-        end
+        generate_tests_to_run
 
         # If we didn't find any tests,
-        if tests_to_run == []
-          # Otherwise we found no tests on this line, so you need to pick one.
-          message = "No tests found on line #{@line}. Valid tests to run:\n\n"
+        abort_with_no_test_found_msg if @tests_to_run == []
 
-          # For every test ordered by line number,
-          # spit out the test name and line number where it starts,
-          tests.by_line_number do |test|
-            message << "#{sprintf("%0#{tests.column_size}s", test.name)}: zeus test #{@files[0]}:#{test.start_line}\n"
-          end
-
-          # fail like a good unix process should.
-          abort message
-        end
-
-        if @line
-          # assemble the regexp to run these tests,
-          test_names = tests_to_run.map(&:name).join('|')
-
-          # set up the args needed for the runner
-          test_arguments = ["-n", "/(#{test_names})/"]
-        else
-          test_arguments = []
-        end
+        test_arguments = build_test_arguments
 
         # directly run the tests from here and exit with the status of the tests passing or failing
         case framework
@@ -221,6 +197,40 @@ module Zeus
           exit Test::Unit::AutoRunner.run(false, nil, test_arguments)
         else
           not_supported
+        end
+      end
+
+      def generate_tests_to_run
+        # Locate tests to run that may be inside of this line. There could be more than one!
+        all_tests = tests
+        if @line
+          @tests_to_run = all_tests.within(@line)
+        end
+      end
+
+      def abort_with_no_test_found_msg
+        # Otherwise we found no tests on this line, so you need to pick one.
+        message = "No tests found on line #{@line}. Valid tests to run:\n\n"
+
+        # For every test ordered by line number,
+        # spit out the test name and line number where it starts,
+        tests.by_line_number do |test|
+          message << "#{sprintf("%0#{tests.column_size}s", test.name)}: zeus test #{@files[0]}:#{test.start_line}\n"
+        end
+
+        # fail like a good unix process should.
+        abort message
+      end
+
+      def build_test_arguments
+        if @line
+          # assemble the regexp to run these tests,
+          test_names = @tests_to_run.map(&:name).join('|')
+
+          # set up the args needed for the runner
+          test_arguments = ["-n", "/(#{test_names})/"]
+        else
+          test_arguments = []
         end
       end
 
