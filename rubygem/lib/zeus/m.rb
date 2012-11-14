@@ -184,8 +184,10 @@ module Zeus
       def execute
         generate_tests_to_run
 
-        # If we didn't find any tests,
-        abort_with_no_test_found_msg if @tests_to_run == []
+        if !@line.nil? && @tests_to_run.empty?
+          # We didn't find any tests, but the user specified line number
+          abort_with_no_test_found_msg
+        end
 
         test_arguments = build_test_arguments
 

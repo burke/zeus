@@ -10,7 +10,7 @@ module Zeus
       extend Forwardable
       # This should act like an array, so forward some common methods over to the
       # internal collection
-      def_delegators :@collection, :size, :<<, :each
+      def_delegators :@collection, :size, :<<, :each, :empty?
 
       def initialize(collection = nil)
         @collection = collection || []
