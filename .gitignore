@@ -26,3 +26,6 @@ go/zeusversion/zeusversion.go
 ext/fsevents/build/*
 .idea/
 xcuserdata/*
+
+# NetBeans project folder
+nbproject

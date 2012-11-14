@@ -10,6 +10,7 @@
           "console": ["c"],
           "server": ["s"],
           "generate": ["g"],
+          "destroy": ["d"],
           "dbconsole": []
         },
         "test_environment": {

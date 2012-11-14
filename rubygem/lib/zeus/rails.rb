@@ -100,12 +100,13 @@ module Zeus
     end
 
     def generate
-      begin
-        require 'rails/generators'
-        ::Rails.application.load_generators
-      rescue LoadError # Rails 3.0 doesn't require this block to be run, but 3.2+ does
-      end
+      load_rails_generators
       require 'rails/commands/generate'
+    end
+
+    def destroy
+      load_rails_generators
+      require 'rails/commands/destroy'
     end
 
     def runner
@@ -204,6 +205,12 @@ module Zeus
       ObjectSpace.each_object(Redis::Client) do |client|
         client.connect
       end
+    end
+
+    def load_rails_generators
+      require 'rails/generators'
+      ::Rails.application.load_generators
+    rescue LoadError # Rails 3.0 doesn't require this block to be run, but 3.2+ does
     end
 
   end
