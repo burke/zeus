@@ -40,6 +40,13 @@ module Zeus
         # the block into the sorted collection
         sort_by(&:start_line).each(&block)
       end
+
+      def contains? test_name
+        @collection.each do |test|
+          return true if test_name.match(test.name)
+        end
+        false
+      end
     end
   end
 end

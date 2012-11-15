@@ -177,17 +177,20 @@ module Zeus
             @line = line
           end
 
+          opts.on '-n', '--name NAME', String, 'Name or pattern for test methods to run.' do |name|
+            if name[0] == "/" && name[-1] == "/"
+              @test_name = Regexp.new(name[1..-2])
+            else
+              @test_name = name
+            end
+          end
+
           opts.parse! argv
         end
       end
 
       def execute
         generate_tests_to_run
-
-        if !@line.nil? && @tests_to_run.empty?
-          # We didn't find any tests, but the user specified line number
-          abort_with_no_test_found_msg
-        end
 
         test_arguments = build_test_arguments
 
@@ -210,10 +213,35 @@ module Zeus
         end
       end
 
-      def abort_with_no_test_found_msg
-        # Otherwise we found no tests on this line, so you need to pick one.
-        message = "No tests found on line #{@line}. Valid tests to run:\n\n"
+      def build_test_arguments
+        if @line
+          abort_with_no_test_found_by_line_number if @tests_to_run.empty?
 
+          # assemble the regexp to run these tests,
+          test_names = @tests_to_run.map(&:name).join('|')
+
+          # set up the args needed for the runner
+          ["-n", "/(#{test_names})/"]
+        elsif user_specified_name?
+          abort_with_no_test_found_by_name unless tests.contains?(@test_name)
+
+          test_names = test_name_to_s
+          ["-n", test_names]
+        else
+          []
+        end
+      end
+
+      def abort_with_no_test_found_by_line_number
+        abort_with_valid_tests_msg "No tests found on line #{@line}. "
+      end
+
+      def abort_with_no_test_found_by_name
+        abort_with_valid_tests_msg "No test name matches '#{test_name_to_s}'. "
+      end
+
+      def abort_with_valid_tests_msg message=""
+        message << "Valid tests to run:\n\n"
         # For every test ordered by line number,
         # spit out the test name and line number where it starts,
         tests.by_line_number do |test|
@@ -224,16 +252,12 @@ module Zeus
         abort message
       end
 
-      def build_test_arguments
-        if @line
-          # assemble the regexp to run these tests,
-          test_names = @tests_to_run.map(&:name).join('|')
+      def test_name_to_s
+        @test_name.is_a?(Regexp)? "/#{@test_name.source}/" : @test_name
+      end
 
-          # set up the args needed for the runner
-          test_arguments = ["-n", "/(#{test_names})/"]
-        else
-          test_arguments = []
-        end
+      def user_specified_name?
+        !@test_name.nil?
       end
 
       def framework
