@@ -8,7 +8,6 @@ import (
 )
 
 var exitNow chan int
-var exitStatus int = 0
 
 func ExitNow(code int) {
 	exitNow <- code
@@ -21,44 +20,34 @@ func Run() {
 func doRun() int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
 
-	exitNow = make(chan int)
-
 	var tree *ProcessTree = BuildProcessTree()
 
 	done := make(chan bool)
-
-	quit1 := StartSlaveMonitor(tree, done)
-	defer func() { <-done }()
-
-	quit2 := StartClientHandler(tree, done)
-	defer func() { <-done }()
-
-	quit3 := StartFileMonitor(tree, done)
-	defer func() { <-done }()
-
-	quit4 := StartStatusChart(tree, done)
-	defer func() { <-done }()
+	// Start processes and register them for exit when the function returns.
+	defer exit(StartSlaveMonitor(tree, done), done)
+	defer exit(StartClientHandler(tree, done), done)
+	defer exit(StartFileMonitor(tree, done), done)
+	defer exit(StartStatusChart(tree, done), done)
+	defer slog.Suppress()
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	go func() {
-		<-c
-		slog.Suppress()
-		go func() { quit1 <- true }()
-		go func() { quit2 <- true }()
-		go func() { quit3 <- true }()
-		go func() { quit4 <- true }()
-	}()
+	select {
+	case <-c:
+		return 0
+	case exitStatus := <-exitNow:
+		return exitStatus
+	}
+}
 
-	go func() {
-		exitStatus = <-exitNow
-		slog.Suppress()
-		go func() { quit1 <- true }()
-		go func() { quit2 <- true }()
-		go func() { quit3 <- true }()
-		go func() { quit4 <- true }()
-	}()
+func exit(quit, done chan bool) {
+	// Signal the process to quit.
+	quit <- true
+	// Wait until the process signals it's done.
+	<-done
+}
 
-	return exitStatus
+func init() {
+	exitNow = make(chan int)
 }
