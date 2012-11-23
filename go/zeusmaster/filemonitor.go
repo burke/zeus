@@ -23,7 +23,7 @@ var fileMutex sync.Mutex
 
 var allWatchedFiles map[string]bool
 
-func StartFileMonitor(tree *ProcessTree) chan bool {
+func StartFileMonitor(tree *ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		// this is obscenely large, just because as long as we start
@@ -39,7 +39,7 @@ func StartFileMonitor(tree *ProcessTree) chan bool {
 			select {
 			case <-quit:
 				cmd.Process.Kill()
-				quit <- true
+				done <- true
 				return
 			case path := <-filesToWatch:
 				go handleLoadedFileNotification(path)

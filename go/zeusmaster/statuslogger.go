@@ -33,7 +33,7 @@ type StatusChart struct {
 
 var theChart *StatusChart
 
-func StartStatusChart(tree *ProcessTree) chan bool {
+func StartStatusChart(tree *ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		theChart = &StatusChart{}
@@ -56,7 +56,7 @@ func StartStatusChart(tree *ProcessTree) chan bool {
 			select {
 			case <-quit:
 				ttyutils.RestoreTerminalState(uintptr(os.Stdout.Fd()), termios)
-				quit <- true
+				done <- true
 				return
 			case <-ticker:
 				theChart.draw()

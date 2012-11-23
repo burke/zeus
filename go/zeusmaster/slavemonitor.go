@@ -15,7 +15,7 @@ type SlaveMonitor struct {
 	remoteMasterFile *os.File
 }
 
-func StartSlaveMonitor(tree *ProcessTree) chan bool {
+func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
@@ -50,7 +50,7 @@ func StartSlaveMonitor(tree *ProcessTree) chan bool {
 			select {
 			case <-quit:
 				monitor.cleanupChildren()
-				quit <- true
+				done <- true
 				return
 			case fd := <-registeringFds:
 				go monitor.slaveDidBeginRegistration(fd)

@@ -15,7 +15,7 @@ import (
 
 const zeusSockName string = ".zeus.sock"
 
-func StartClientHandler(tree *ProcessTree) chan bool {
+func StartClientHandler(tree *ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		path, _ := filepath.Abs(zeusSockName)
@@ -44,7 +44,7 @@ func StartClientHandler(tree *ProcessTree) chan bool {
 			select {
 			case <-quit:
 				listener.Close()
-				quit <- true
+				done <- true
 				return
 			case conn := <-connections:
 				go handleClientConnection(tree, conn)
