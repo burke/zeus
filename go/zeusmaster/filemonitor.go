@@ -23,28 +23,32 @@ var fileMutex sync.Mutex
 
 var allWatchedFiles map[string]bool
 
-func StartFileMonitor(tree *ProcessTree, quit chan bool) {
-	// this is obscenely large, just because as long as we start
-	// watching the files eventually, it's more of a priority to 
-	// get the slaves booted as quickly as possible.
-	filesToWatch = make(chan string, 8192)
-	filesChanged = make(chan string, 256)
-	allWatchedFiles = make(map[string]bool)
+func StartFileMonitor(tree *ProcessTree) chan bool {
+	quit := make(chan bool)
+	go func() {
+		// this is obscenely large, just because as long as we start
+		// watching the files eventually, it's more of a priority to 
+		// get the slaves booted as quickly as possible.
+		filesToWatch = make(chan string, 8192)
+		filesChanged = make(chan string, 256)
+		allWatchedFiles = make(map[string]bool)
 
-	cmd := startWrapper()
+		cmd := startWrapper()
 
-	for {
-		select {
-		case <-quit:
-			cmd.Process.Kill()
-			quit <- true
-			return
-		case path := <-filesToWatch:
-			go handleLoadedFileNotification(path)
-		case path := <-filesChanged:
-			go handleChangedFileNotification(tree, path)
+		for {
+			select {
+			case <-quit:
+				cmd.Process.Kill()
+				quit <- true
+				return
+			case path := <-filesToWatch:
+				go handleLoadedFileNotification(path)
+			case path := <-filesChanged:
+				go handleChangedFileNotification(tree, path)
+			}
 		}
-	}
+	}()
+	return quit
 }
 
 func executablePath() string {

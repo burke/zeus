@@ -15,24 +15,18 @@ func ExitNow(code int) {
 }
 
 func Run() {
-	exitNow = make(chan int)
+	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
 
-	startingZeus()
+	exitNow = make(chan int)
 
 	var tree *ProcessTree = BuildProcessTree()
 
-	quit1 := make(chan bool)
-	quit2 := make(chan bool)
-	quit3 := make(chan bool)
-	quit4 := make(chan bool)
-
-	go StartSlaveMonitor(tree, quit1)
-	go StartClientHandler(tree, quit2)
-	go StartFileMonitor(tree, quit3)
-	go StartStatusChart(tree, quit4)
+	quit1 := StartSlaveMonitor(tree)
+	quit2 := StartClientHandler(tree)
+	quit3 := StartFileMonitor(tree)
+	quit4 := StartStatusChart(tree)
 
 	quit := make(chan bool)
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
@@ -75,8 +69,4 @@ func terminateComponents(quit1, quit2, quit3, quit4, quit chan bool) {
 		<-quit4
 		quit <- true
 	}()
-}
-
-func startingZeus() {
-	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
 }

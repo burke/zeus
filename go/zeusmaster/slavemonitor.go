@@ -15,45 +15,49 @@ type SlaveMonitor struct {
 	remoteMasterFile *os.File
 }
 
-func StartSlaveMonitor(tree *ProcessTree, quit chan bool) {
-	localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
-	if err != nil {
-		Error("Couldn't create socketpair")
-	}
-
-	monitor := &SlaveMonitor{tree, remoteMasterFile}
-
-	localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
-	if err != nil {
-		Error("Couldn't Open UNIXSocket")
-	}
-
-	// We just want this unix socket to be a channel so we can select on it...
-	registeringFds := make(chan int, 3)
+func StartSlaveMonitor(tree *ProcessTree) chan bool {
+	quit := make(chan bool)
 	go func() {
-		for {
-			fd, err := localMasterSocket.ReadFD()
-			if err != nil {
-				slog.Error(err)
+		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
+		if err != nil {
+			Error("Couldn't create socketpair")
+		}
+
+		monitor := &SlaveMonitor{tree, remoteMasterFile}
+
+		localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
+		if err != nil {
+			Error("Couldn't Open UNIXSocket")
+		}
+
+		// We just want this unix socket to be a channel so we can select on it...
+		registeringFds := make(chan int, 3)
+		go func() {
+			for {
+				fd, err := localMasterSocket.ReadFD()
+				if err != nil {
+					slog.Error(err)
+				}
+				registeringFds <- fd
 			}
-			registeringFds <- fd
+		}()
+
+		for _, slave := range monitor.tree.SlavesByName {
+			go slave.Run(monitor)
+		}
+
+		for {
+			select {
+			case <-quit:
+				monitor.cleanupChildren()
+				quit <- true
+				return
+			case fd := <-registeringFds:
+				go monitor.slaveDidBeginRegistration(fd)
+			}
 		}
 	}()
-
-	for _, slave := range monitor.tree.SlavesByName {
-		go slave.Run(monitor)
-	}
-
-	for {
-		select {
-		case <-quit:
-			monitor.cleanupChildren()
-			quit <- true
-			return
-		case fd := <-registeringFds:
-			go monitor.slaveDidBeginRegistration(fd)
-		}
-	}
+	return quit
 }
 
 func (mon *SlaveMonitor) cleanupChildren() {
