@@ -165,7 +165,7 @@ module Zeus
     end
 
     def test
-      if defined?(RSpec)
+      if spec_file?(ARGV) && defined?(RSpec)
         exit RSpec::Core::Runner.run(ARGV)
       else
         Zeus::M.run(ARGV)
@@ -185,6 +185,15 @@ module Zeus
 
 
     private
+
+    SPEC_FILE_REGEXP = /.+_spec\.rb$/
+    def spec_file? argv
+      SPEC_FILE_REGEXP.match(first_ruby_file argv) != nil
+    end
+
+    def first_ruby_file argv
+      argv.find { |e| /.+\.rb$/ =~ e }
+    end
 
     def restart_girl_friday
       return unless defined?(GirlFriday::WorkQueue)
