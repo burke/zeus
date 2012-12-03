@@ -330,7 +330,7 @@ func babysitRootProcess(cmd *exec.Cmd) {
 		ErrorConfigCommandCrashed(string(output))
 	}
 	msg := err.Error()
-	if len(msg) > 11 && err.Error()[:11] != "exit status" {
+	if len(msg) > 11 && msg[:11] != "exit status" {
 		ErrorConfigCommandCouldntStart(err.Error())
 	}
 }
