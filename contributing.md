@@ -1,35 +1,34 @@
-# Contributing to Zeus
+# Hacking on Zeus
 
-Contributions to zeus are happily accepted, with one major caveat:
+## Step 1: Prerequisites
 
-If you're adding support for some rarely-used library to the default `Zeus::Rails` plan, I'd prefer you release a separate gem called `zeus-foobar` to inject this functionality, rather than introducing extra complexity in the main project. Feel free to create a section in this project's README for extra features added this way.
+You will need a working Go toolchain. You can get one from http://golang.org/doc/install.
 
-# Hacking on Zeus' core
+To be able to fully-build Zeus, you will also need to install a couple additional Go runtimes. See http://dave.cheney.net/2012/09/08/an-introduction-to-cross-compilation-with-go. Go currently builds for darwin/amd64, linux/amd64, and linux/386.
 
-# Hacking on the Slave integration layer
+## Step 2: Paths, etc.
 
-## Getting up and running
+You should check out this repository into $GOPATH/github.com/burke/zeus. Often $GOPATH will be set to ~/go, but this is configurable. If you've just installed Go, you'll have to set this up yourself in your shell config. The Go site [has documentation on this](http://golang.org/doc/code.html).
 
-Hacking on Zeus is perhaps not the most straightforward thing in the world. The development workflow could use a little bit of love.
+## Step 3: Dependencies
 
-### Installing Go
+cd into the zeus project directory and run `./dev-bootstrap.sh`. This will fetch and compile a couple libraries zeus uses for terminal interaction and such.
 
-First prereq is
+## Step 4: Building
 
-### Fetching dependencies
+### Context: How zeus is structured
 
-### Testing changes
+The core of zeus is a single go program that acts as the coordinating process (master, e.g. `zeus start`), or the client (called per-command, e.g. `zeus client`). This code is cross-compiled for a handful of different architectures and bundled with a ruby gem. The ruby gem contains all the shim code necessary to boot a rails app under the control of the master process.
 
-Again, no real process for this. Here's what I do:
+### Building
 
-When I've changed the ruby code:
+Just run `make`, basically. The `Makefile` should be an easy read. `make darwin` and related tasks will just build the go binaries to `./build`, while `make gem` will build the rubygem from the files currently in `./build`. `make all` does the whole shebang, but takes a few seconds to complete.
 
-`make gem && gem install pkg/zeus-*.gem`
+## Step 5: Contributing
 
-If I've only changed the Master/Client code (ie. anything written in Go):
+Fork, branch, pullrequest! I'm sometimes really bad about responding to these in a timely fashion. Feel free to harass me on email or twitter if I'm not getting back to you.
 
-`make darwin ; cp build/zeus-darwin-amd64 /path/to/gem_root/zeus-0.12.0/build`
+## Questions?
 
-I then test these changes manually by booting the application.
+If this doesn't work out for you, hit me up on twitter at @burkelibbey or email at burke@libbey.me
 
-Unit test coverage is currently abysmal. I don't have a lot of experience testing stuff tied this closely to socket/terminal APIs, and haven't abstracted it far enough away that it's trivial. I plan to tackle this eventually. Whoever helps with this wins my eternal gratitude.
