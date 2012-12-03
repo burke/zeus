@@ -10,7 +10,7 @@ module Zeus
       extend Forwardable
       # This should act like an array, so forward some common methods over to the
       # internal collection
-      def_delegators :@collection, :size, :<<, :each
+      def_delegators :@collection, :size, :<<, :each, :empty?
 
       def initialize(collection = nil)
         @collection = collection || []
@@ -39,6 +39,13 @@ module Zeus
         # On each member of the collection, sort by line number and yield
         # the block into the sorted collection
         sort_by(&:start_line).each(&block)
+      end
+
+      def contains? test_name
+        @collection.each do |test|
+          return true if test_name.match(test.name)
+        end
+        false
       end
     end
   end
