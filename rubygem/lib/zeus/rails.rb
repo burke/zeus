@@ -4,6 +4,16 @@ BOOT_PATH = File.expand_path('config/boot',  ROOT_PATH)
 APP_PATH  = File.expand_path('config/application',  ROOT_PATH)
 
 require 'zeus'
+
+def gem_is_bundled?(gem)
+  gemfile_lock_contents = File.read(ROOT_PATH + "/Gemfile.lock")
+  gemfile_lock_contents.scan(/\b#{gem} \(([^=~><]+?)\)/).flatten.first
+end
+
+if version = gem_is_bundled?('method_source')
+  gem 'method_source', version
+end
+
 require 'zeus/m'
 
 module Zeus
