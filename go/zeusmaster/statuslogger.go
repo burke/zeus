@@ -122,9 +122,14 @@ func (s *StatusChart) draw() {
 func (s *StatusChart) lengthOfOutput() int {
 	ts, err := ttyutils.Winsize(os.Stdout)
 	if err != nil {
-		slog.Error(err)
+		// This can happen when the output is redirected to a device
+		// that blows up on the ioctl Winsize uses. We don't care about fancy drawing in this case.
+		return 0
 	}
 	width := int(ts.Columns)
+	if width == 0 { // output has been redirected
+		return 0
+	}
 
 	lines := strings.Split(s.extraOutput, "\n")
 
