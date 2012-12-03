@@ -4,12 +4,9 @@ require 'json'
 require 'pty'
 
 require 'zeus/load_tracking'
+require 'zeus/plan'
 
 module Zeus
-  class Plan
-    def after_fork ; end
-  end
-
   class << self
     attr_accessor :plan, :dummy_tty, :master_socket
 
