@@ -53,7 +53,7 @@ To add/modify commands, see [`docs/ruby/modifying.md`](/burke/zeus/tree/master/d
 
 To get started hacking on Zeus itself, see [`docs/overview.md`](/burke/zeus/tree/master/docs/overview.md).
 
-See also the handy contribution guide at [`docs/contributing.md`](/burke/zeus/tree/master/contributing.md).
+See also the handy contribution guide at [`contributing.md`](/burke/zeus/tree/master/contributing.md).
 
 ## Alternative plans
 
