@@ -33,43 +33,47 @@ type StatusChart struct {
 
 var theChart *StatusChart
 
-func StartStatusChart(tree *ProcessTree, quit chan bool) {
-	theChart = &StatusChart{}
-	theChart.RootSlave = tree.Root
-	theChart.numberOfSlaves = len(tree.SlavesByName)
-	theChart.Commands = tree.Commands
-	theChart.update = make(chan bool, 10)
-	theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
+func StartStatusChart(tree *ProcessTree, done chan bool) chan bool {
+	quit := make(chan bool)
+	go func() {
+		theChart = &StatusChart{}
+		theChart.RootSlave = tree.Root
+		theChart.numberOfSlaves = len(tree.SlavesByName)
+		theChart.Commands = tree.Commands
+		theChart.update = make(chan bool, 10)
+		theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
 
-	scw := &StringChannelWriter{make(chan string, 10)}
-	slog.DefaultLogger = slog.NewShinyLogger(scw, scw)
+		scw := &StringChannelWriter{make(chan string, 10)}
+		slog.DefaultLogger = slog.NewShinyLogger(scw, scw)
 
-	termios, err := ttyutils.NoEcho(uintptr(os.Stdout.Fd()))
-	if err != nil {
-		slog.Error(err)
-	}
-
-	ticker := time.Tick(1000 * time.Millisecond)
-	for {
-		select {
-		case <-quit:
-			ttyutils.RestoreTerminalState(uintptr(os.Stdout.Fd()), termios)
-			quit <- true
-			return
-		case <-ticker:
-			theChart.draw()
-		case output := <-scw.Notif:
-			theChart.L.Lock()
-			if theChart.drawnInitial {
-				print(output)
-			}
-			theChart.extraOutput += output
-			theChart.L.Unlock()
-			theChart.draw()
-		case <-theChart.update:
-			theChart.draw()
+		termios, err := ttyutils.NoEcho(uintptr(os.Stdout.Fd()))
+		if err != nil {
+			slog.Error(err)
 		}
-	}
+
+		ticker := time.Tick(1000 * time.Millisecond)
+		for {
+			select {
+			case <-quit:
+				ttyutils.RestoreTerminalState(uintptr(os.Stdout.Fd()), termios)
+				done <- true
+				return
+			case <-ticker:
+				theChart.draw()
+			case output := <-scw.Notif:
+				theChart.L.Lock()
+				if theChart.drawnInitial {
+					print(output)
+				}
+				theChart.extraOutput += output
+				theChart.L.Unlock()
+				theChart.draw()
+			case <-theChart.update:
+				theChart.draw()
+			}
+		}
+	}()
+	return quit
 }
 
 func StatusChartUpdate() {

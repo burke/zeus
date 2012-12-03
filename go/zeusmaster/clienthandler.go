@@ -15,39 +15,43 @@ import (
 
 const zeusSockName string = ".zeus.sock"
 
-func StartClientHandler(tree *ProcessTree, quit chan bool) {
-	path, _ := filepath.Abs(zeusSockName)
-	addr, err := net.ResolveUnixAddr("unix", path)
-	if err != nil {
-		Error("Can't open socket.")
-	}
-	listener, err := net.ListenUnix("unix", addr)
-	if err != nil {
-		ErrorCantCreateListener()
-	}
-
-	connections := make(chan *unixsocket.Usock)
+func StartClientHandler(tree *ProcessTree, done chan bool) chan bool {
+	quit := make(chan bool)
 	go func() {
+		path, _ := filepath.Abs(zeusSockName)
+		addr, err := net.ResolveUnixAddr("unix", path)
+		if err != nil {
+			Error("Can't open socket.")
+		}
+		listener, err := net.ListenUnix("unix", addr)
+		if err != nil {
+			ErrorCantCreateListener()
+		}
+
+		connections := make(chan *unixsocket.Usock)
+		go func() {
+			for {
+				if conn, err := listener.AcceptUnix(); err != nil {
+					errorUnableToAcceptSocketConnection()
+					time.Sleep(500 * time.Millisecond)
+				} else {
+					connections <- unixsocket.NewUsock(conn)
+				}
+			}
+		}()
+
 		for {
-			if conn, err := listener.AcceptUnix(); err != nil {
-				errorUnableToAcceptSocketConnection()
-				time.Sleep(500 * time.Millisecond)
-			} else {
-				connections <- unixsocket.NewUsock(conn)
+			select {
+			case <-quit:
+				listener.Close()
+				done <- true
+				return
+			case conn := <-connections:
+				go handleClientConnection(tree, conn)
 			}
 		}
 	}()
-
-	for {
-		select {
-		case <-quit:
-			listener.Close()
-			quit <- true
-			return
-		case conn := <-connections:
-			go handleClientConnection(tree, conn)
-		}
-	}
+	return quit
 }
 
 // see docs/client_master_handshake.md
