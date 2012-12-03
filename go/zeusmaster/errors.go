@@ -32,7 +32,7 @@ func ErrorConfigCommandCrashed(output string) {
 // and our exitNow goroutine has not been spawned yet, so we will just explicitly exit
 // in the json-related errors..
 func ErrorConfigFileMissing() {
-	if slog.Red("Required config file {yellow}zeus.json{red} not found in the current directory.") {
+	if slog.Red("Required config file {yellow}zeus.json{red} not found in the current directory. Run {yellow}zeus init{red} to generate the file.") {
 		os.Exit(1)
 	}
 }
