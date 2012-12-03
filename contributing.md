@@ -4,11 +4,11 @@
 
 You will need a working Go toolchain. You can get one from http://golang.org/doc/install.
 
-To be able to fully-build Zeus, you will also need to install a couple additional Go runtimes. See http://dave.cheney.net/2012/09/08/an-introduction-to-cross-compilation-with-go. Go currently builds for darwin/amd64, linux/amd64, and linux/386.
+To be able to fully-build Zeus, you will also need to install a couple additional Go runtimes. See http://dave.cheney.net/2012/09/08/an-introduction-to-cross-compilation-with-go. Zeus currently builds for darwin/amd64, linux/amd64, and linux/386.
 
 ## Step 2: Paths, etc.
 
-You should check out this repository into $GOPATH/github.com/burke/zeus. Often $GOPATH will be set to ~/go, but this is configurable. If you've just installed Go, you'll have to set this up yourself in your shell config. The Go site [has documentation on this](http://golang.org/doc/code.html).
+You should check out this repository into `$GOPATH/github.com/burke/zeus`. Often `$GOPATH` will be set to `~/go`, but this is configurable. If you've just installed Go, you'll have to set this up yourself in your shell config. The Go site [has documentation on this](http://golang.org/doc/code.html).
 
 ## Step 3: Dependencies
 
