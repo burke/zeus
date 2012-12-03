@@ -38,7 +38,7 @@ END
   }
 end
 
-task :manifest do
+task manifest: :version do
   files = `find . -type file | sed 's|^\./||'`.lines.map(&:chomp)
   exceptions = [
     /.gitignore$/,
