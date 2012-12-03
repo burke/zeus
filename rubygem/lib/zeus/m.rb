@@ -99,7 +99,7 @@ module Zeus
   ### M, your metal test runner
   # Maybe this gem should have a longer name? Metal?
   module M
-    VERSION = "1.2.1" unless defined?(VERSION)
+    M::VERSION = "1.2.1" unless defined?(M::VERSION)
 
     # Accept arguments coming from bin/m and run tests.
     def self.run(argv)
