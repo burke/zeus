@@ -5,6 +5,7 @@ require 'pty'
 
 require 'zeus/load_tracking'
 require 'zeus/plan'
+require 'zeus/version'
 
 module Zeus
   class << self
