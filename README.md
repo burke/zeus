@@ -53,4 +53,8 @@ To add/modify commands, see [`docs/ruby/modifying.md`](/burke/zeus/tree/master/d
 
 To get started hacking on Zeus itself, see [`docs/overview.md`](/burke/zeus/tree/master/docs/overview.md).
 
-See also the handy contribution guide at [`docs/contributing.md`](/burke/zeus/tree/master/docs/contributing.md).
+See also the handy contribution guide at [`docs/contributing.md`](/burke/zeus/tree/master/contributing.md).
+
+## Alternative plans
+
+The default plan bundled with zeus only supports Rails 3.x. There is a project (currently WIP) to provide Rails 2.3 support at https://github.com/tyler-smith/zeus-rails23.
