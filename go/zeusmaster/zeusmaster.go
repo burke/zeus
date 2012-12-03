@@ -14,12 +14,9 @@ func ExitNow(code int) {
 	exitNow <- code
 }
 
-func Run(color bool) {
+func Run() {
 	exitNow = make(chan int)
 
-	if !color {
-		slog.DisableColor()
-	}
 	startingZeus()
 
 	var tree *ProcessTree = BuildProcessTree()
