@@ -22,6 +22,7 @@ func main() {
 	var args []string
 	if os.Args[1] == "--no-color" {
 		color = false
+		slog.DisableColor()
 		args = os.Args[2:]
 	} else {
 		args = os.Args[1:]
@@ -34,7 +35,7 @@ func main() {
 	} else if args[0] == "version" || args[0] == "--version" {
 		println("Zeus version " + zeusversion.VERSION)
 	} else if args[0] == "start" {
-		zeusmaster.Run(color)
+		zeusmaster.Run()
 	} else if args[0] == "init" {
 		zeusInit()
 	} else if args[0] == "commands" {
@@ -43,7 +44,7 @@ func main() {
 		tree := zeusmaster.BuildProcessTree()
 		for _, name := range tree.AllCommandsAndAliases() {
 			if args[0] == name {
-				zeusclient.Run(color)
+				zeusclient.Run()
 				return
 			}
 		}

@@ -21,15 +21,11 @@ const (
 	sigTstp      = 26
 )
 
-func Run(color bool) {
-	os.Exit(doRun(color))
+func Run() {
+	os.Exit(doRun())
 }
 
-func doRun(color bool) int {
-	if !color {
-		slog.DisableColor()
-	}
-
+func doRun() int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
 	}
