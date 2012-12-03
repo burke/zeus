@@ -39,6 +39,7 @@ func doRun() int {
 	case exitStatus := <-exitNow:
 		return exitStatus
 	}
+	return -1 // satisfy the compiler
 }
 
 func exit(quit, done chan bool) {
