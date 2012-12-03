@@ -39,7 +39,7 @@ END
 end
 
 task :manifest do
-  files = `find . -type file | sed 's|^\./||'`.lines.map(&:chomp)
+  files = `find . -type f | sed 's|^\./||'`.lines.map(&:chomp)
   exceptions = [
     /.gitignore$/,
     /^MANIFEST$/,
