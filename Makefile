@@ -10,7 +10,7 @@ fmt:
 manpages:
 	cd man; /usr/bin/env rake
 
-gem: fsevents
+gem: fsevents manpages
 	mkdir -p rubygem/ext/fsevents-wrapper
 	cp -r examples rubygem
 	cp build/fsevents-wrapper rubygem/ext/fsevents-wrapper
