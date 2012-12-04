@@ -51,3 +51,14 @@ module Kernel
     end
   end
 end
+
+require 'yaml'
+module YAML
+  class << self
+    alias_method :__load_file_without_zeus, :load_file
+    def load_file(file, *a)
+      Zeus::LoadTracking.add_feature(file)
+      __load_file_without_zeus(file, *a)
+    end
+  end
+end
