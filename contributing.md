@@ -2,7 +2,9 @@
 
 ## Step 1: Prerequisites
 
-You will need a working Go toolchain. You can get one from http://golang.org/doc/install.
+You'll need ruby 1.9+ installed, and the `ronn` gem is required to build manpages (`gem install ronn`).
+
+You will also need a working Go toolchain. You can get one from http://golang.org/doc/install.
 
 To be able to fully-build Zeus, you will also need to install a couple additional Go runtimes. See http://dave.cheney.net/2012/09/08/an-introduction-to-cross-compilation-with-go. Zeus currently builds for darwin/amd64, linux/amd64, and linux/386.
 
