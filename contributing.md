@@ -8,7 +8,7 @@ To be able to fully-build Zeus, you will also need to install a couple additiona
 
 ## Step 2: Paths, etc.
 
-You should check out this repository into `$GOPATH/github.com/burke/zeus`. Often `$GOPATH` will be set to `~/go`, but this is configurable. If you've just installed Go, you'll have to set this up yourself in your shell config. The Go site [has documentation on this](http://golang.org/doc/code.html).
+You should check out this repository into `$GOPATH/src/github.com/burke/zeus`. Often `$GOPATH` will be set to `~/go`, but this is configurable. If you've just installed Go, you'll have to set this up yourself in your shell config. The Go site [has documentation on this](http://golang.org/doc/code.html).
 
 ## Step 3: Dependencies
 
