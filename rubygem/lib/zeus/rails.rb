@@ -46,9 +46,10 @@ module Zeus
             ENV['RAILS_ENV'] = nil
             ENV['RUBYOPT'] = nil # bundler sets this to require bundler :|
             puts "zeus test #{file_list_string}"
-            system "zeus test #{file_list_string}"
+            ret = system "zeus test #{file_list_string}"
             ENV['RAILS_ENV'] = rails_env
             ENV['RUBYOPT'] = rubyopt
+            ret
           end
           self
         end
