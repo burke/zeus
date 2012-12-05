@@ -24,6 +24,8 @@ type SlaveNode struct {
 	Features              map[string]bool
 	featureHandlerRunning bool
 
+	hasSuccessfullyBooted bool
+
 	needsRestart        chan bool            // size 1
 	commandBootRequests chan *CommandRequest // size 256
 	slaveBootRequests   chan *SlaveNode      // size 256
@@ -161,7 +163,7 @@ func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {sBoot
 		file := monitor.remoteMasterFile
 		cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", file.Fd()))
 		cmd.ExtraFiles = []*os.File{file}
-		go babysitRootProcess(cmd)
+		go s.babysitRootProcess(cmd)
 		s.L.Unlock()
 	} else {
 		s.Parent.RequestSlaveBoot(s)
@@ -217,6 +219,7 @@ func (s *SlaveNode) doBootingState() string { // -> {sCrashed, sReady}
 func (s *SlaveNode) doCrashedOrReadyState() string { // -> sWaiting
 	s.L.Lock()
 	if s.state == sReady && !s.featureHandlerRunning {
+		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
 		go s.handleMessages()
 	}
@@ -320,7 +323,7 @@ func (s *SlaveNode) wipe() {
 	s.Error = ""
 }
 
-func babysitRootProcess(cmd *exec.Cmd) {
+func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 	// We want to let this process run "forever", but it will eventually
 	// die... either on program termination or when its dependencies change
 	// and we kill it. when it's requested to restart, err is "signal 9",
@@ -330,9 +333,9 @@ func babysitRootProcess(cmd *exec.Cmd) {
 		ErrorConfigCommandCrashed(string(output))
 	}
 	msg := err.Error()
-	//if len(msg) > 11 && msg[:11] != "exit status" {
+  if s.hasSuccessfullyBooted == false {
 		ErrorConfigCommandCouldntStart(msg, string(output))
-	//}
+  }
 }
 
 // We want to make this the single interface point with the socket.

@@ -158,17 +158,18 @@ func (s *StatusChart) drawCommands() {
 		if len(alia) > 0 {
 			aliasPart = " (alias: " + alia + ")"
 		}
-		text := "zeus " + command.Name + aliasPart + "\033[K"
+		text := "zeus " + command.Name + aliasPart
+    reset := "\033[K"
 
 		log := theChart.directLogger
 
 		switch state {
 		case sReady:
-			log.Green(text)
+			log.Green(text + reset)
 		case sCrashed:
-			log.Red(text)
+			log.Red(text + " {yellow}[run to see backtrace]" + reset)
 		default:
-			log.Yellow(text)
+			log.Yellow(text + reset)
 		}
 	}
 }
