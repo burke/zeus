@@ -25,6 +25,9 @@ func Run() {
 	os.Exit(doRun())
 }
 
+// man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
+var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
+
 func doRun() int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
@@ -44,13 +47,13 @@ func doRun() int {
 	}
 
 	defer master.Close()
+	var oldState *ttyutils.Termios
 	if isTerminal {
-		oldState, err := ttyutils.MakeTerminalRaw(os.Stdout.Fd())
+		oldState, err = ttyutils.MakeTerminalRaw(os.Stdout.Fd())
 		if err != nil {
 			slog.FatalError(err)
 		}
 		defer ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
-
 	}
 
 	// should this happen if we're running over a pipe? I think maybe not?
@@ -92,7 +95,8 @@ func doRun() int {
 
 	if isTerminal {
 		c := make(chan os.Signal, 1)
-		signal.Notify(c, syscall.SIGWINCH, syscall.SIGCONT)
+		handledSignals := append(append(terminatingSignals, syscall.SIGWINCH), syscall.SIGCONT)
+		signal.Notify(c, handledSignals...)
 		go func() {
 			for sig := range c {
 				if sig == syscall.SIGCONT {
@@ -100,6 +104,10 @@ func doRun() int {
 				} else if sig == syscall.SIGWINCH {
 					ttyutils.MirrorWinsize(os.Stdout, master)
 					syscall.Kill(commandPid, syscall.SIGWINCH)
+				} else { // member of terminatingSignals
+					ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
+					syscall.Kill(commandPid, sig.(syscall.Signal))
+					os.Exit(1)
 				}
 			}
 		}()

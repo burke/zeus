@@ -125,7 +125,7 @@ module Zeus
     end
 
     def console
-      if IRB == Pry
+      if defined?(Pry) && IRB == Pry
         require "pry"
         Pry.start 
       else
