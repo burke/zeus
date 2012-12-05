@@ -330,9 +330,9 @@ func babysitRootProcess(cmd *exec.Cmd) {
 		ErrorConfigCommandCrashed(string(output))
 	}
 	msg := err.Error()
-	if len(msg) > 11 && msg[:11] != "exit status" {
-		ErrorConfigCommandCouldntStart(err.Error())
-	}
+	//if len(msg) > 11 && msg[:11] != "exit status" {
+		ErrorConfigCommandCouldntStart(msg, string(output))
+	//}
 }
 
 // We want to make this the single interface point with the socket.

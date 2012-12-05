@@ -133,7 +133,8 @@ func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool) (printe
 		if isError {
 			l.sadLogger.Output(callDepth, msg+reset)
 		} else {
-			l.happyLogger.Output(callDepth, msg+reset)
+			println(msg + reset)
+			//l.happyLogger.Output(callDepth, msg+reset)
 		}
 	}
 	return !l.suppressOutput

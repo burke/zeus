@@ -2,30 +2,30 @@ package zeusmaster
 
 import (
 	"fmt"
-	slog "github.com/burke/zeus/go/shinylog"
 	"os"
+
+	slog "github.com/burke/zeus/go/shinylog"
 )
 
 func Error(msg string) {
-	if slog.Red(msg) {
-		ExitNow(1)
-	}
+  ExitNow(1, func() {
+    slog.Red(msg)
+  })
 }
 
-func ErrorConfigCommandCouldntStart(output string) {
-	slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
-	if slog.Red("The json file is valid, but the {yellow}command{red} could not be started:") {
-		fmt.Println(output)
-		ExitNow(1)
-	}
+func ErrorConfigCommandCouldntStart(msg, output string) {
+  ExitNow(1, func() {
+    slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
+    slog.Red("The json file is valid, but the {yellow}command{red} could not be started:\n\x1b[0m" + output)
+  })
 }
 
 func ErrorConfigCommandCrashed(output string) {
-	slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
-	if slog.Red("The json file is valid, but the {yellow}command{red} terminated with this output:") {
-		fmt.Println(output)
-		ExitNow(1)
-	}
+  ExitNow(1, func() {
+    slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
+    slog.Red("The json file is valid, but the {yellow}command{red} terminated with this output:")
+    fmt.Println(output)
+  })
 }
 
 // The config file is loaded before any goroutines are launched that require cleanup,
@@ -50,9 +50,9 @@ func ErrorConfigFileInvalidFormat() {
 }
 
 func ErrorCantCreateListener() {
-	if slog.Red("It looks like Zeus is already running. If not, remove {yellow}.zeus.sock{red} and try again.") {
-		ExitNow(1)
-	}
+  ExitNow(1, func() {
+    slog.Red("It looks like Zeus is already running. If not, remove {yellow}.zeus.sock{red} and try again.")
+  })
 }
 
 func errorUnableToAcceptSocketConnection() {
@@ -64,7 +64,7 @@ func errorFailedReadFromWatcher(err error) {
 }
 
 func ErrorFileMonitorWrapperCrashed(err error) {
-	if slog.Red("The FileSystem watcher process crashed: " + err.Error()) {
-		ExitNow(1)
-	}
+  ExitNow(1, func() {
+    slog.Red("The FileSystem watcher process crashed: " + err.Error())
+	})
 }

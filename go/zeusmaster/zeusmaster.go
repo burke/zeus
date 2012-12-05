@@ -9,11 +9,15 @@ import (
 
 var exitNow chan int
 
-func ExitNow(code int) {
+var finalOutput []func()
+
+func ExitNow(code int, finalOuputCallback func()) {
+  finalOutput = append(finalOutput, finalOuputCallback)
 	exitNow <- code
 }
 
 func Run() {
+  finalOutput = make([]func(), 0)
 	os.Exit(doRun())
 }
 
@@ -27,8 +31,9 @@ func doRun() int {
 	defer exit(StartSlaveMonitor(tree, done), done)
 	defer exit(StartClientHandler(tree, done), done)
 	defer exit(StartFileMonitor(tree, done), done)
-	defer exit(StartStatusChart(tree, done), done)
 	defer slog.Suppress()
+  defer printFinalOutput()
+	defer exit(StartStatusChart(tree, done), done)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
@@ -51,4 +56,10 @@ func exit(quit, done chan bool) {
 
 func init() {
 	exitNow = make(chan int)
+}
+
+func printFinalOutput() {
+  for _, cb := range(finalOutput) {
+    cb()
+  }
 }
