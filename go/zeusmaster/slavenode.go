@@ -333,9 +333,9 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 		ErrorConfigCommandCrashed(string(output))
 	}
 	msg := err.Error()
-  if s.hasSuccessfullyBooted == false {
+	if s.hasSuccessfullyBooted == false {
 		ErrorConfigCommandCouldntStart(msg, string(output))
-  }
+	}
 }
 
 // We want to make this the single interface point with the socket.

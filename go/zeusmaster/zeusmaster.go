@@ -12,12 +12,12 @@ var exitNow chan int
 var finalOutput []func()
 
 func ExitNow(code int, finalOuputCallback func()) {
-  finalOutput = append(finalOutput, finalOuputCallback)
+	finalOutput = append(finalOutput, finalOuputCallback)
 	exitNow <- code
 }
 
 func Run() {
-  finalOutput = make([]func(), 0)
+	finalOutput = make([]func(), 0)
 	os.Exit(doRun())
 }
 
@@ -32,7 +32,7 @@ func doRun() int {
 	defer exit(StartClientHandler(tree, done), done)
 	defer exit(StartFileMonitor(tree, done), done)
 	defer slog.Suppress()
-  defer printFinalOutput()
+	defer printFinalOutput()
 	defer exit(StartStatusChart(tree, done), done)
 
 	c := make(chan os.Signal, 1)
@@ -59,7 +59,7 @@ func init() {
 }
 
 func printFinalOutput() {
-  for _, cb := range(finalOutput) {
-    cb()
-  }
+	for _, cb := range finalOutput {
+		cb()
+	}
 }

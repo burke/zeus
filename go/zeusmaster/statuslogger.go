@@ -159,7 +159,7 @@ func (s *StatusChart) drawCommands() {
 			aliasPart = " (alias: " + alia + ")"
 		}
 		text := "zeus " + command.Name + aliasPart
-    reset := "\033[K"
+		reset := "\033[K"
 
 		log := theChart.directLogger
 
