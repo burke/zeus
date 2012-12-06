@@ -1,8 +1,8 @@
 # Modifying the boot process
 
-Running `zeus init` creates a default [`zeus.json`](/burke/zeus/tree/master/examples/zeus.json) that defines the boot order for your application. Chances are not all of it is relevant -- for example, it includes commands for both test/unit and rspec. These can be removed from the JSON file and they will not be booted.
+Running `zeus init` creates a default [`zeus.json`](/burke/zeus/tree/master/examples/custom_plan/zeus.json) and [`custom_plan.rb`](/burke/zeus/tree/master/examples/custom_plan/custom_plan.rb) that define the boot order for your application. 
 
-Each node under "plan" in the JSON file has an action associated with it. You can see the "command" value at the top of the hash requires `"zeus/rails"`. If you look at [that file](/burke/zeus/tree/master/rubygem/lib/zeus/rails.rb), you will see a module with a method name corresponding to each node -- something along the lines of:
+Each node under "plan" in the JSON file has an action associated with it. You can see the "command" value at the top of the hash requires `"./custom_plan.rb"`. Inspecting that file, you can see that it creates an empty subclass of `Zeus::Rails`. If you look at [that file](/burke/zeus/tree/master/rubygem/lib/zeus/rails.rb), you will see a class with a method name corresponding to each node -- something along the lines of:
 
 ```ruby
 class Zeus::Rails < Zeus::Plan
@@ -14,32 +14,21 @@ class Zeus::Rails < Zeus::Plan
   end
   # ...
 end
-Zeus.plan = Zeus::Rails.new
 ```
 
-Note that an instance of this class is assigned to `Zeus.plan`. Zeus calls methods on `Zeus.plan` to boot the application. If you follow any path to a leaf node in the tree -- for example, boot, default_bundle, development_environment, prerake -- those methods are essentially called in sequence to construct an environment for a command (rake, in this case) to run in. Zeus forks the ruby process between each step, and can restart from any of these forks.
+Note that an instance of the subclass class is assigned to `Zeus.plan` at the end of `custom_plan.rb`. Zeus calls methods on `Zeus.plan` to boot the application. If you follow any path to a leaf node in the tree -- for example, boot, default_bundle, development_environment, prerake -- those methods are essentially called in sequence to construct an environment for a command (rake, in this case) to run in. Zeus forks the ruby process between each step, and can restart from any of these forks.
 
-If you wanted to create your own plan, you could subclass `Zeus::Rails`:
+You can modify the plan by adding/removing/moving nodes in the json file and adding the corresponding methods in `custom_plan.rb`.
 
 ```ruby
-# /path/to/my_app/lib/my_zeus_plan.rb
+# custom_plan.rb
 require 'zeus/rails'
-class MyPlan < Zeus::Rails
+class CustomPlan < Zeus::Rails
   def boot
     something_else
   end
 end
-Zeus.plan = MyPlan.new
+Zeus.plan = CustomPlan.new
 ```
 
-```javascript
-// /path/to/my_app/zeus.json
-{
-  "command": "ruby -r./lib/my_zeus_plan.rb -eZeus.go",
-  "plan": {
-    // ...
-  }
-}
-```
-
-Alternatively, you could subclass `Zeus::Plan` to create a completely fresh plan with no predefined behaviour.
+Note that there's nothing special about the naming or location of `CustomPlan`. Feel free to rename and/or move as you please, just remember to update the `command` line in `zeus.json` -- and `zeus.json` must stay at your project root, or Zeus will just use the default configuration.

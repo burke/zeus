@@ -21,11 +21,10 @@ You can install the GC-patched ruby from [this gist for rbenv](https://gist.gith
 Install the gem.
 
     gem install zeus
-    zeus init
 
 Q: "I should put it in my `Gemfile`, right?"
 
-A: You can, but running `bundle exec zeus` instead of `zeus` can add precious seconds to a command that otherwise would be quite a bit faster. Zeus was built to be run from outside of bundler.
+A: You can, but running `bundle exec zeus` instead of `zeus` adds precious seconds to commands that otherwise would be quite a bit faster. Zeus was built to be run from outside of bundler.
 
 ## Usage
 
@@ -33,16 +32,14 @@ Start the server:
 
     zeus start
 
-See a list of the available commands:
+The server will print a list of available commands.
 
-    zeus commands
-
-Run some commands:
+Run some commands in another shell:
 
     zeus console
     zeus server
-    zeus testrb test/unit/widget_test.rb
-    zeus rspec spec/widget_spec.rb
+    zeus test test/unit/widget_test.rb
+    zeus test spec/widget_spec.rb
     zeus generate model omg
     zeus rake -T
     zeus runner omg.rb

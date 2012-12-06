@@ -9,11 +9,13 @@ zeus(1) -- boot rails in under a second
 
 Zeus makes working with large codebases much less painful.
 
-To use Zeus with Ruby on Rails 3.0+, Just run `zeus init` in your 
-project directory, then run `zeus start`, then run `zeus commands` in
-a different shell to see a list of available commands.
+To use Zeus with Ruby on Rails 3.0+, Just run `zeus start` in your 
+project directory. It will output a list of available commands, including
+tasks to spawn consoles, servers, tests, and rake tasks.
 
-See `https://github.com/burke/zeus/blob/master/docs/ruby/modifying.md` for information on modifying the boot process that Zeus uses by default.
+See `https://github.com/burke/zeus/blob/master/docs/ruby/modifying.md`
+for information on modifying the boot process that Zeus uses by default
+and adding custom tasks.
 
 ## SLIGHTLY MORE TECHNICAL DESCRIPTION
 
