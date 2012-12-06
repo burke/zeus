@@ -90,6 +90,8 @@ module Zeus
 
       pid = fork {
         $0 = "zeus command: #{identifier}"
+        at_exit { Process.kill(:TERM, client_pid) }
+
         plan.after_fork
         client_terminal = local.recv_io
         local.write "P:#{Process.pid}:\0"
