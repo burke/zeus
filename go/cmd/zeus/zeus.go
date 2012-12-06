@@ -76,31 +76,39 @@ func reset() string {
 	return ""
 }
 
-func zeusInit() {
-	binaryPath := os.Args[0]
-	gemDir := path.Dir(path.Dir(binaryPath))
-	jsonPath := path.Join(gemDir, "examples/zeus.json")
+func copyFile(from, to string) (err error) {
+	var src, dst *os.File
 	wd, _ := os.Getwd()
-	targetPath := path.Join(wd, "zeus.json")
-	src, err := os.Open(jsonPath)
-	if err != nil {
-		println(red() + "Could not open template file" + reset())
-		return
+	target := path.Join(wd, to)
+
+	if src, err = os.Open(from); err != nil {
+		slog.Colorized("      {red}fail{reset}  " + to)
+		return err
 	}
 	defer src.Close()
 
-	dst, err := os.OpenFile(targetPath, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666)
-	if err != nil {
-		println(red() + "Could not create zeus.json" + reset())
-		return
+	if dst, err = os.OpenFile(target, os.O_RDWR|os.O_CREATE|os.O_EXCL, 0666); err != nil {
+		slog.Colorized("    {red}exists{reset}  " + to)
+		return err
 	}
 	defer dst.Close()
 
-	_, err = io.Copy(dst, src)
-	if err != nil {
-		println(red() + "Could not write to zeus.json" + reset())
+	if _, err = io.Copy(dst, src); err != nil {
+		slog.Colorized("      {red}fail{reset}  " + to)
+		return err
 	}
-	println("Wrote zeus.json")
+
+	slog.Colorized("    {brightgreen}create{reset}  " + to)
+	return nil
+}
+
+func zeusInit() {
+	binaryPath := os.Args[0]
+	gemDir := path.Dir(path.Dir(binaryPath))
+	jsonPath := path.Join(gemDir, "examples/custom_plan/zeus.json")
+	planPath := path.Join(gemDir, "examples/custom_plan/custom_plan.rb")
+	copyFile(jsonPath, "zeus.json")
+	copyFile(planPath, "custom_plan.rb")
 }
 
 func zeusCommands() {

@@ -22,8 +22,7 @@ func ErrorConfigCommandCouldntStart(msg, output string) {
 
 func ErrorConfigCommandCrashed(output string) {
 	ExitNow(1, func() {
-		slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
-		slog.Red("The json file is valid, but the {yellow}command{red} terminated with this output:")
+		slog.Red("Couldn't boot application. {yellow}command{red} terminated with this output:")
 		fmt.Println(output)
 	})
 }
@@ -31,12 +30,6 @@ func ErrorConfigCommandCrashed(output string) {
 // The config file is loaded before any goroutines are launched that require cleanup,
 // and our exitNow goroutine has not been spawned yet, so we will just explicitly exit
 // in the json-related errors..
-func ErrorConfigFileMissing() {
-	if slog.Red("Required config file {yellow}zeus.json{red} not found in the current directory. Run {yellow}zeus init{red} to generate the file.") {
-		os.Exit(1)
-	}
-}
-
 func ErrorConfigFileInvalidJson() {
 	if slog.Red("The config file {yellow}zeus.json{red} contains invalid JSON and could not be parsed.") {
 		os.Exit(1)

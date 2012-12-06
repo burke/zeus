@@ -26,12 +26,13 @@ func NewShinyLogger(out, err interface {
 }
 
 const (
-	red     = "\x1b[31m"
-	green   = "\x1b[32m"
-	yellow  = "\x1b[33m"
-	blue    = "\x1b[34m"
-	magenta = "\x1b[35m"
-	reset   = "\x1b[0m"
+	red         = "\x1b[31m"
+	green       = "\x1b[32m"
+	brightgreen = "\x1b[1;32m"
+	yellow      = "\x1b[33m"
+	blue        = "\x1b[34m"
+	magenta     = "\x1b[35m"
+	reset       = "\x1b[0m"
 )
 
 var DefaultLogger *ShinyLogger = NewShinyLogger(os.Stdout, os.Stderr)
@@ -45,6 +46,7 @@ func FatalErrorString(msg string)         { DefaultLogger.FatalErrorString(msg) 
 func ErrorString(msg string) bool         { return DefaultLogger.ErrorString(msg) }
 func Red(msg string) bool                 { return DefaultLogger.Red(msg) }
 func Green(msg string) bool               { return DefaultLogger.Green(msg) }
+func Brightgreen(msg string) bool         { return DefaultLogger.Brightgreen(msg) }
 func Yellow(msg string) bool              { return DefaultLogger.Yellow(msg) }
 func Blue(msg string) bool                { return DefaultLogger.Blue(msg) }
 func Magenta(msg string) bool             { return DefaultLogger.Magenta(msg) }
@@ -89,6 +91,10 @@ func (l *ShinyLogger) Green(msg string) bool {
 	return l.colorized(3, "{green}"+msg, false)
 }
 
+func (l *ShinyLogger) Brightgreen(msg string) bool {
+	return l.colorized(3, "{brightgreen}"+msg, false)
+}
+
 func (l *ShinyLogger) Yellow(msg string) bool {
 	return l.colorized(3, "{yellow}"+msg, false)
 }
@@ -105,6 +111,7 @@ func (l *ShinyLogger) formatColors(msg string) string {
 	if l.disableColor {
 		msg = strings.Replace(msg, "{red}", "", -1)
 		msg = strings.Replace(msg, "{green}", "", -1)
+		msg = strings.Replace(msg, "{brightgreen}", "", -1)
 		msg = strings.Replace(msg, "{yellow}", "", -1)
 		msg = strings.Replace(msg, "{blue}", "", -1)
 		msg = strings.Replace(msg, "{magenta}", "", -1)
@@ -112,6 +119,7 @@ func (l *ShinyLogger) formatColors(msg string) string {
 	} else {
 		msg = strings.Replace(msg, "{red}", red, -1)
 		msg = strings.Replace(msg, "{green}", green, -1)
+		msg = strings.Replace(msg, "{brightgreen}", brightgreen, -1)
 		msg = strings.Replace(msg, "{yellow}", yellow, -1)
 		msg = strings.Replace(msg, "{blue}", blue, -1)
 		msg = strings.Replace(msg, "{magenta}", magenta, -1)

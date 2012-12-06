@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"os"
+	"path"
 )
 
 const configFile string = "zeus.json"
@@ -59,17 +60,32 @@ func iteratePlan(tree *ProcessTree, plan map[string]interface{}, parent *SlaveNo
 	}
 }
 
-func parseConfig() (c config) {
-	var conf config
+func defaultConfigPath() string {
+	binaryPath := os.Args[0]
+	gemDir := path.Dir(path.Dir(binaryPath))
+	jsonpath := path.Join(gemDir, "examples/zeus.json")
+	return jsonpath
+}
 
+func readConfigFileOrDefault(configFile string) ([]byte, error) {
 	contents, err := readFile(configFile)
 	if err != nil {
 		switch err.(type) {
 		case *os.PathError:
-			ErrorConfigFileMissing()
+			return readFile(defaultConfigPath())
 		default:
-			ErrorConfigFileInvalidJson()
+			return contents, err
 		}
+	}
+	return contents, err
+}
+
+func parseConfig() (c config) {
+	var conf config
+
+	contents, err := readConfigFileOrDefault(configFile)
+	if err != nil {
+		ErrorConfigFileInvalidJson()
 	}
 
 	json.Unmarshal(contents, &conf)
