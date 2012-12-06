@@ -106,7 +106,7 @@ func doRun() int {
 					syscall.Kill(commandPid, syscall.SIGWINCH)
 				} else { // member of terminatingSignals
 					ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
-					print("\r\n")
+					print("\r")
 					syscall.Kill(commandPid, sig.(syscall.Signal))
 					os.Exit(1)
 				}
