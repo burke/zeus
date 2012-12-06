@@ -62,9 +62,9 @@ module Zeus
           new_identifier =~ /^(.):(.*)/
           code, ident = $1, $2
           if code == "S"
-            fork { plan.after_fork ; go(ident.to_sym) }
+            fork { go(ident.to_sym) }
           else
-            fork { plan.after_fork ; command(ident.to_sym, local) }
+            fork { command(ident.to_sym, local) }
           end
         end
       end
@@ -152,6 +152,7 @@ module Zeus
     end
 
     def run_action(socket, identifier)
+      plan.after_fork unless identifier == :boot
       plan.send(identifier)
       socket.write "R:OK\0"
     rescue Exception => e
