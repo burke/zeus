@@ -221,8 +221,15 @@ module Zeus
     end
 
     def reconnect_activerecord
-      ActiveRecord::Base.clear_all_connections! rescue nil
-      ActiveRecord::Base.establish_connection   rescue nil
+      return unless defined?(ActiveRecord::Base)
+      begin
+        ActiveRecord::Base.clear_all_connections!
+        ActiveRecord::Base.establish_connection
+        if ActiveRecord::Base.respond_to?(:shared_connection)
+          ActiveRecord::Base.shared_connection = ActiveRecord::Base.retrieve_connection
+        end
+      rescue ActiveRecord::AdapterNotSpecified
+      end
     end
 
     def reconnect_redis
