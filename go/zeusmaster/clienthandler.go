@@ -61,6 +61,10 @@ func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
 
 	command, clientPid, arguments, err := receiveCommandArgumentsAndPid(usock, nil)
 	commandNode, slaveNode, err := findCommandAndSlaveNodes(tree, command, err)
+	if err != nil {
+		// connection was established, no data was sent. Ignore.
+		return
+	}
 	command = commandNode.Name // resolve aliases
 
 	clientFile, err := receiveTTY(usock, err)
