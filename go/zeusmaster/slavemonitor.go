@@ -88,10 +88,17 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	}
 	pid, identifier, err := ParsePidMessage(msg)
 
+	// And the last step before executing its action, the slave sends us a pipe it will later use to
+	// send us all the features it's loaded.
+	featurePipeFd, err := slaveUsock.ReadFD()
+	if err != nil {
+		slog.Error(err)
+	}
+
 	slaveNode := mon.tree.FindSlaveByName(identifier)
 	if slaveNode == nil {
 		Error("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
 	}
 
-	slaveNode.SlaveWasInitialized(pid, slaveUsock)
+	slaveNode.SlaveWasInitialized(pid, slaveUsock, featurePipeFd)
 }

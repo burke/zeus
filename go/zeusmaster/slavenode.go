@@ -1,6 +1,7 @@
 package zeusmaster
 
 import (
+	"bufio"
 	"fmt"
 	"math/rand"
 	"os"
@@ -17,6 +18,7 @@ import (
 type SlaveNode struct {
 	ProcessTreeNode
 	socket                *unixsocket.Usock
+	featurePipe           *os.File
 	Pid                   int
 	Error                 string
 	Slaves                []*SlaveNode
@@ -96,9 +98,12 @@ func (s *SlaveNode) RequestCommandBoot(request *CommandRequest) {
 	s.L.Unlock()
 }
 
-func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock) {
+func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock, featurePipeFd int) {
+	file := os.NewFile(uintptr(featurePipeFd), "featurepipe")
+
 	s.L.Lock()
 	s.wipe()
+	s.featurePipe = file
 	s.Pid = pid
 	s.socket = usock
 	if s.state == sUnbooted {
@@ -319,6 +324,7 @@ func (s *SlaveNode) ForceKill() {
 
 func (s *SlaveNode) wipe() {
 	s.Pid = 0
+	s.featurePipe = nil
 	s.socket = nil
 	s.Error = ""
 }
@@ -342,24 +348,21 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 // we want to republish unneeded messages to channels so other modules
 //can pick them up. (notably, clienthandler.)
 func (s *SlaveNode) handleMessages() {
+	reader := bufio.NewReader(s.featurePipe)
 	for {
-		if msg, err := s.socket.ReadMessage(); err != nil {
+		if msg, err := reader.ReadString('\n'); err != nil {
 			s.L.Lock()
 			s.featureHandlerRunning = false
 			s.L.Unlock()
 			return
 		} else {
-			msg = strings.TrimRight(msg, "\000")
+			msg = strings.TrimRight(msg, "\n")
 			s.handleFeatureMessage(msg)
 		}
 	}
 }
 
 func (s *SlaveNode) handleFeatureMessage(msg string) {
-	if file, err := ParseFeatureMessage(msg); err != nil {
-		slog.Error(err)
-	} else {
-		s.Features[file] = true
-		AddFile(file)
-	}
+	s.Features[msg] = true
+	AddFile(msg)
 }

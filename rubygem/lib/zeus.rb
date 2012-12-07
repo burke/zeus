@@ -39,6 +39,7 @@ module Zeus
 
       setup_dummy_tty!
       master = setup_master_socket!
+      feature_pipe_r, feature_pipe_w = IO.pipe
 
       # I need to give the master a way to talk to me exclusively
       local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
@@ -46,6 +47,7 @@ module Zeus
 
       # Now I need to tell the master about my PID and ID
       local.write "P:#{Process.pid}:#{identifier}\0"
+      local.send_io(feature_pipe_r)
 
       # Now we run the action and report its success/fail status to the master.
       features = Zeus::LoadTracking.features_loaded_by {
@@ -53,7 +55,7 @@ module Zeus
       }
 
       # the master wants to know about the files that running the action caused us to load.
-      Thread.new { notify_features(local, features) }
+      Thread.new { notify_features(feature_pipe_w, features) }
 
       # We are now 'connected'. From this point, we may receive requests to fork.
       loop do
@@ -81,9 +83,8 @@ module Zeus
       remote.close
       sock.close
 
-      pid_and_arguments = local.recv(1024)
+      pid_and_arguments = local.recv(1024) # if starting client before boot slave is latched, we get stuck here. We also get stuck here in #182.
       pid_and_arguments.chomp!("\0")
-      # pid_and_arguments.force_encoding("ASCII-8BIT")
       pid_and_arguments =~ /(.*?):(.*)/
       client_pid, arguments = $1.to_i, $2
       arguments.chomp!("\0")
@@ -123,21 +124,16 @@ module Zeus
             Process.kill(0, client_pid)
           rescue Errno::ESRCH
             Process.kill(9, command_pid)
+            exit 0
           end
           sleep 1
         }
       }
     end
 
-    def notify_features(sock, features)
+    def notify_features(pipe, features)
       features.each do |t|
-        begin
-          sock.write "F:#{t}\0"
-          sock.flush
-        rescue Errno::ENOBUFS
-          sleep 0.2
-          retry
-        end
+        pipe.puts t
       end
     end
 
