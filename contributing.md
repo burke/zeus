@@ -1,3 +1,37 @@
+# Reporting issues
+
+I'd love it if you could use this template, but it's not necessary:
+
+```
+## Description of Problem
+
+One or two sentences giving an overview of the issue.
+
+## System details
+
+* **`uname -a`**: 
+
+* **`ruby -v`**: 
+
+* **`go version`**: (only if hacking on the go code)
+
+## Steps to Reproduce
+
+1) `zeus start` in a new rails project
+
+2) `zeus ponies`
+
+## Observed Behavior
+
+* Ponies die
+
+## Expected Behavior
+
+* Ponies survive
+
+* 
+```
+
 # Hacking on Zeus
 
 ## Step 1: Prerequisites
