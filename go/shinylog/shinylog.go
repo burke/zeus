@@ -66,22 +66,21 @@ func (l *ShinyLogger) Colorized(msg string) (printed bool) {
 }
 
 func (l *ShinyLogger) FatalErrorString(msg string) {
-	l.colorized(3, "{red}"+msg+"\r", true)
+	l.colorized(3, "{red}"+msg, true)
 	os.Exit(1)
 }
 
 func (l *ShinyLogger) FatalError(err error) {
-	l.colorized(3, "{red}"+err.Error()+"\r", true)
+	l.colorized(3, "{red}"+err.Error(), true)
 	os.Exit(1)
 }
 
 func (l *ShinyLogger) Error(err error) bool {
-	// It's easier to just assume we're in raw mode and write a \r at the end.
-	return l.colorized(3, "{red}"+err.Error()+"\r", true)
+	return l.colorized(3, "{red}"+err.Error(), true)
 }
 
 func (l *ShinyLogger) ErrorString(msg string) bool {
-	return l.colorized(3, "{red}"+msg+"\r", true)
+	return l.colorized(3, "{red}"+msg, true)
 }
 
 func (l *ShinyLogger) Red(msg string) bool {

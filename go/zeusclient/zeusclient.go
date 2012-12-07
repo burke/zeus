@@ -43,7 +43,7 @@ func doRun() int {
 		master, slave, err = unixsocket.Socketpair(syscall.SOCK_STREAM)
 	}
 	if err != nil {
-		slog.Error(err)
+		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
 
@@ -52,7 +52,7 @@ func doRun() int {
 	if isTerminal {
 		oldState, err = ttyutils.MakeTerminalRaw(os.Stdout.Fd())
 		if err != nil {
-			slog.Error(err)
+			slog.ErrorString(err.Error() + "\r")
 			return 1
 		}
 		defer ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
@@ -63,7 +63,7 @@ func doRun() int {
 
 	addr, err := net.ResolveUnixAddr("unixgram", zeusSockName)
 	if err != nil {
-		slog.Error(err)
+		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
 
@@ -81,7 +81,7 @@ func doRun() int {
 
 	msg, err = usock.ReadMessage()
 	if err != nil {
-		slog.Error(err)
+		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
 
@@ -95,7 +95,7 @@ func doRun() int {
 	}()
 
 	if err != nil {
-		slog.Error(err)
+		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
 
@@ -124,7 +124,7 @@ func doRun() int {
 	if len(parts) > 2 {
 		exitStatus, err = strconv.Atoi(parts[0])
 		if err != nil {
-			slog.Error(err)
+			slog.ErrorString(err.Error() + "\r")
 			return 1
 		}
 	}
@@ -172,13 +172,13 @@ func doRun() int {
 	if exitStatus == -1 {
 		msg, err = usock.ReadMessage()
 		if err != nil {
-			slog.Error(err)
+			slog.ErrorString(err.Error() + "\r")
 			return 1
 		}
 		parts := strings.Split(msg, "\000")
 		exitStatus, err = strconv.Atoi(parts[0])
 		if err != nil {
-			slog.Error(err)
+			slog.ErrorString(err.Error() + "\r")
 			return 1
 		}
 	}
