@@ -28,8 +28,6 @@ One or two sentences giving an overview of the issue.
 ## Expected Behavior
 
 * Ponies survive
-
-* 
 ```
 
 # Hacking on Zeus
