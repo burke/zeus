@@ -1,6 +1,6 @@
 # Reporting issues
 
-I'd love it if you could use this template, but it's not necessary:
+I'd love it if you could use this template for bug reports, but it's not necessary:
 
 ```
 ## Description of Problem
