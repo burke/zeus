@@ -8,6 +8,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"time"
 
 	slog "github.com/burke/zeus/go/shinylog"
 )
@@ -83,6 +84,7 @@ func startWrapper() *exec.Cmd {
 		for {
 			n, err := watcherOut.Read(buf)
 			if err != nil {
+				time.Sleep(500 * time.Millisecond)
 				errorFailedReadFromWatcher(err)
 			}
 			message := strings.TrimSpace(string(buf[:n]))
@@ -95,6 +97,9 @@ func startWrapper() *exec.Cmd {
 
 	go func() {
 		err := cmd.Wait()
+		// gross, but this is an easy way to work around the case where
+		// signal propagation hits the wrapper before the master disables logging
+		time.Sleep(100 * time.Millisecond)
 		ErrorFileMonitorWrapperCrashed(err)
 	}()
 
