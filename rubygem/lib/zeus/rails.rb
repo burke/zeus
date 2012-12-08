@@ -203,13 +203,11 @@ module Zeus
 
     private
 
+    SPEC_DIR_REGEXP = /^spec/
     SPEC_FILE_REGEXP = /.+_spec\.rb$/
     def spec_file? argv
-      SPEC_FILE_REGEXP.match(first_ruby_file argv) != nil
-    end
-
-    def first_ruby_file argv
-      argv.find { |e| /.+\.rb$/ =~ e }
+      last_arg = argv[-1]
+      last_arg.match (Regexp.union(SPEC_DIR_REGEXP, SPEC_FILE_REGEXP))
     end
 
     def restart_girl_friday
