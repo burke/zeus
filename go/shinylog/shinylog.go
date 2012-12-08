@@ -6,6 +6,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"syscall"
 )
 
 type ShinyLogger struct {
@@ -65,14 +66,22 @@ func (l *ShinyLogger) Colorized(msg string) (printed bool) {
 	return l.colorized(3, msg, false)
 }
 
+// If we send SIGTERM rather than explicitly exiting,
+// the signal can be handled and the master can clean up.
+// This is a workaround for Go not having `atexit` :(.
+func terminate() {
+	proc, _ := os.FindProcess(os.Getpid())
+	proc.Signal(syscall.SIGTERM)
+}
+
 func (l *ShinyLogger) FatalErrorString(msg string) {
 	l.colorized(3, "{red}"+msg, true)
-	os.Exit(1)
+	terminate()
 }
 
 func (l *ShinyLogger) FatalError(err error) {
 	l.colorized(3, "{red}"+err.Error(), true)
-	os.Exit(1)
+	terminate()
 }
 
 func (l *ShinyLogger) Error(err error) bool {

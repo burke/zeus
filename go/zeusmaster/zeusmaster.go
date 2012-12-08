@@ -18,13 +18,13 @@ import (
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
 func Run() {
-	zerror.Init()
 	os.Exit(doRun())
 }
 
 func doRun() int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
 
+	zerror.Init()
 	var tree *processtree.ProcessTree = config.BuildProcessTree()
 
 	done := make(chan bool)
