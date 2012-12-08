@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -19,6 +20,11 @@ func ParsePidMessage(msg string) (int, string, error) {
 	}
 
 	return pid, identifier, nil
+}
+
+func CreateCommandAndArgumentsMessage(command string, pid int, args []string) string {
+	encoded, _ := json.Marshal(args)
+	return "Q:" + command + ":" + strconv.Itoa(pid) + ":" + string(encoded)
 }
 
 func ParseFeatureMessage(msg string) (string, error) {

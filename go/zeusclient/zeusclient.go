@@ -10,8 +10,10 @@ import (
 
 	"github.com/burke/pty"
 	"github.com/burke/ttyutils"
+	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/zerror"
 )
 
 const (
@@ -69,12 +71,12 @@ func doRun() int {
 
 	conn, err := net.DialUnix("unix", nil, addr)
 	if err != nil {
-		errorCantConnectToMaster()
+		zerror.ErrorCantConnectToMaster()
 		return 1
 	}
 	usock := unixsocket.NewUsock(conn)
 
-	msg := CreateCommandAndArgumentsMessage(os.Args[1], os.Getpid(), os.Args[2:])
+	msg := messages.CreateCommandAndArgumentsMessage(os.Args[1], os.Getpid(), os.Args[2:])
 	usock.WriteMessage(msg)
 	usock.WriteFD(int(slave.Fd()))
 	slave.Close()

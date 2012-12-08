@@ -23,6 +23,10 @@ func Error(msg string) {
 	})
 }
 
+func ErrorCantConnectToMaster() {
+	slog.Red("Can't connect to master. Run {yellow}zeus start{red} first.\r")
+}
+
 func ErrorConfigCommandCouldntStart(msg, output string) {
 	ExitNow(1, func() {
 		slog.Red("Failed to initialize application from {yellow}zeus.json{red}.")
