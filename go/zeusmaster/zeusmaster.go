@@ -9,8 +9,8 @@ import (
 	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/processtree"
-	"github.com/burke/zeus/go/statuschart"
 	slog "github.com/burke/zeus/go/shinylog"
+	"github.com/burke/zeus/go/statuschart"
 	"github.com/burke/zeus/go/zerror"
 )
 
@@ -33,11 +33,11 @@ func doRun() int {
 	filesChanged, filemonitorDone := filemonitor.Start(done)
 
 	defer exit(processtree.StartSlaveMonitor(tree, done), done)
-	defer exit(clienthandler.StartClientHandler(tree, done), done)
+	defer exit(clienthandler.Start(tree, done), done)
 	defer exit(filemonitorDone, done)
 	defer slog.Suppress()
 	defer printFinalOutput()
-	defer exit(statuschart.StartStatusChart(tree, done), done)
+	defer exit(statuschart.Start(tree, done), done)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, terminatingSignals...)

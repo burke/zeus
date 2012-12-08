@@ -35,7 +35,7 @@ type StatusChart struct {
 
 var theChart *StatusChart
 
-func StartStatusChart(tree *processtree.ProcessTree, done chan bool) chan bool {
+func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		theChart = &StatusChart{}
