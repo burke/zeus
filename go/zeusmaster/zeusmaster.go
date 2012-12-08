@@ -3,23 +3,19 @@ package zeusmaster
 import (
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
+	"github.com/burke/zeus/go/zerror"
 )
 
-var exitNow chan int
-
-var finalOutput []func()
-
-func ExitNow(code int, finalOuputCallback func()) {
-	finalOutput = append(finalOutput, finalOuputCallback)
-	exitNow <- code
-}
+// man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
+var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
 func Run() {
-	finalOutput = make([]func(), 0)
+	zerror.FinalOutput = make([]func(), 0)
 	os.Exit(doRun())
 }
 
@@ -41,14 +37,16 @@ func doRun() int {
 	defer exit(StartStatusChart(tree, done), done)
 
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, terminatingSignals...)
 
 	for {
 		select {
-		case <-c:
-			return 0
-		case exitStatus := <-exitNow:
-			return exitStatus
+		case sig := <-c:
+			if sig == syscall.SIGINT {
+				return 0
+			} else {
+				return 1
+			}
 		case changed := <-filesChanged:
 			go tree.RestartNodesWithFeature(changed)
 		}
@@ -63,12 +61,8 @@ func exit(quit, done chan bool) {
 	<-done
 }
 
-func init() {
-	exitNow = make(chan int)
-}
-
 func printFinalOutput() {
-	for _, cb := range finalOutput {
+	for _, cb := range zerror.FinalOutput {
 		cb()
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"path"
 
 	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/zeus/go/zerror"
 )
 
 const configFile string = "zeus.json"
@@ -27,7 +28,7 @@ func BuildProcessTree() *processtree.ProcessTree {
 
 	plan, ok := conf.Plan.(map[string]interface{})
 	if !ok {
-		ErrorConfigFileInvalidFormat()
+		zerror.ErrorConfigFileInvalidFormat()
 	}
 	iteratePlan(tree, plan, nil)
 
@@ -55,7 +56,7 @@ func iteratePlan(tree *processtree.ProcessTree, plan map[string]interface{}, par
 			} else if v == nil {
 				newNode = tree.NewCommandNode(name, nil, parent)
 			} else {
-				ErrorConfigFileInvalidFormat()
+				zerror.ErrorConfigFileInvalidFormat()
 			}
 			parent.Commands = append(parent.Commands, newNode)
 		}
@@ -87,7 +88,7 @@ func parseConfig() (c config) {
 
 	contents, err := readConfigFileOrDefault(configFile)
 	if err != nil {
-		ErrorConfigFileInvalidJson()
+		zerror.ErrorConfigFileInvalidJson()
 	}
 
 	json.Unmarshal(contents, &conf)

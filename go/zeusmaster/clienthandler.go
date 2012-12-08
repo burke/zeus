@@ -12,6 +12,7 @@ import (
 	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/zerror"
 )
 
 const zeusSockName string = ".zeus.sock"
@@ -22,18 +23,18 @@ func StartClientHandler(tree *processtree.ProcessTree, done chan bool) chan bool
 		path, _ := filepath.Abs(zeusSockName)
 		addr, err := net.ResolveUnixAddr("unix", path)
 		if err != nil {
-			Error("Can't open socket.")
+			zerror.Error("Can't open socket.")
 		}
 		listener, err := net.ListenUnix("unix", addr)
 		if err != nil {
-			ErrorCantCreateListener()
+			zerror.ErrorCantCreateListener()
 		}
 
 		connections := make(chan *unixsocket.Usock)
 		go func() {
 			for {
 				if conn, err := listener.AcceptUnix(); err != nil {
-					errorUnableToAcceptSocketConnection()
+					zerror.ErrorUnableToAcceptSocketConnection()
 					time.Sleep(500 * time.Millisecond)
 				} else {
 					connections <- unixsocket.NewUsock(conn)

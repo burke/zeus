@@ -1,11 +1,21 @@
-package zeusmaster
+package zerror
 
 import (
 	"fmt"
 	"os"
+	"syscall"
 
 	slog "github.com/burke/zeus/go/shinylog"
 )
+
+var FinalOutput []func()
+
+// TODO: this is gross because code is ignored.
+func ExitNow(code int, finalOuputCallback func()) {
+	FinalOutput = append(FinalOutput, finalOuputCallback)
+	proc, _ := os.FindProcess(os.Getpid())
+	proc.Signal(syscall.SIGTERM)
+}
 
 func Error(msg string) {
 	ExitNow(1, func() {
@@ -48,6 +58,6 @@ func ErrorCantCreateListener() {
 	})
 }
 
-func errorUnableToAcceptSocketConnection() {
+func ErrorUnableToAcceptSocketConnection() {
 	slog.Red("Unable to accept socket connection.")
 }
