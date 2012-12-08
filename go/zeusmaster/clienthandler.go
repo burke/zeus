@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 	"github.com/burke/zeus/go/zerror"
@@ -113,7 +114,7 @@ func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, 
 	if err != nil {
 		return "", -1, "", err
 	}
-	command, clientPid, arguments, err := ParseClientCommandRequestMessage(msg)
+	command, clientPid, arguments, err := messages.ParseClientCommandRequestMessage(msg)
 	if err != nil {
 		return "", -1, "", err
 	}
@@ -156,7 +157,7 @@ func sendClientPidAndArgumentsToCommand(commandUsock *unixsocket.Usock, clientPi
 		return err
 	}
 
-	msg := CreatePidAndArgumentsMessage(clientPid, arguments)
+	msg := messages.CreatePidAndArgumentsMessage(clientPid, arguments)
 	_, err = commandUsock.WriteMessage(msg)
 	return err
 }
@@ -187,7 +188,7 @@ func receivePidFromCommand(commandUsock *unixsocket.Usock, err error) (int, erro
 	if err != nil {
 		return -1, err
 	}
-	intPid, _, _ := ParsePidMessage(msg)
+	intPid, _, _ := messages.ParsePidMessage(msg)
 
 	return intPid, err
 }
