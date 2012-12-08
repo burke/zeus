@@ -56,4 +56,6 @@ See also the handy contribution guide at [`contributing.md`](/burke/zeus/tree/ma
 
 The default plan bundled with zeus only supports Rails 3.x. There is a project (currently WIP) to provide Rails 2.3 support at https://github.com/tyler-smith/zeus-rails23.
 
-Like it? [![endorse](http://api.coderwall.com/burke/endorsecount.png)](http://coderwall.com/burke)
+---
+
+[![endorse](http://api.coderwall.com/burke/endorsecount.png)](http://coderwall.com/burke)
