@@ -64,7 +64,11 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 	return values
 }
 
+var restartMutex sync.Mutex
+
 func (tree *ProcessTree) RestartNodesWithFeature(file string) {
+	restartMutex.Lock()
+	defer restartMutex.Unlock()
 	tree.Root.restartNodesWithFeature(tree, file)
 }
 

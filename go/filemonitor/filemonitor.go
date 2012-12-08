@@ -1,4 +1,4 @@
-package zeusmaster
+package filemonitor
 
 import (
 	"io"
@@ -8,13 +8,27 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
+// {{{ public API
+func Start(done chan bool) (filesChanged chan string, quit chan bool) {
+	quit = make(chan bool)
+	filesChanged = make(chan string, 1024)
+	go start(filesChanged, done, quit)
+	return
+}
+
+func AddFile(file string) {
+	filesToWatch <- file
+}
+
+// }}}
+
 var filesToWatch chan string
-var filesChanged chan string
 
 var watcherIn io.WriteCloser
 var watcherOut io.ReadCloser
@@ -24,32 +38,25 @@ var fileMutex sync.Mutex
 
 var allWatchedFiles map[string]bool
 
-func StartFileMonitor(tree *ProcessTree, done chan bool) chan bool {
-	quit := make(chan bool)
-	go func() {
-		// this is obscenely large, just because as long as we start
-		// watching the files eventually, it's more of a priority to 
-		// get the slaves booted as quickly as possible.
-		filesToWatch = make(chan string, 8192)
-		filesChanged = make(chan string, 256)
-		allWatchedFiles = make(map[string]bool)
+func start(filesChanged chan string, done, quit chan bool) {
+	// this is large because as long as we start
+	// watching the files eventually, it's more of a priority to
+	// get the slaves booted as quickly as possible.
+	filesToWatch = make(chan string, 8192)
+	allWatchedFiles = make(map[string]bool)
 
-		cmd := startWrapper()
+	cmd := startWrapper(filesChanged)
 
-		for {
-			select {
-			case <-quit:
-				cmd.Process.Kill()
-				done <- true
-				return
-			case path := <-filesToWatch:
-				go handleLoadedFileNotification(path)
-			case path := <-filesChanged:
-				go handleChangedFileNotification(tree, path)
-			}
+	for {
+		select {
+		case <-quit:
+			cmd.Process.Kill()
+			done <- true
+			return
+		case path := <-filesToWatch:
+			go handleLoadedFileNotification(path)
 		}
-	}()
-	return quit
+	}
 }
 
 func executablePath() string {
@@ -60,21 +67,21 @@ func executablePath() string {
 		gemRoot := path.Dir(path.Dir(os.Args[0]))
 		return path.Join(gemRoot, "ext/inotify-wrapper/inotify-wrapper")
 	}
-	Error("Unsupported OS")
+	terminate("Unsupported OS")
 	return ""
 }
 
-func startWrapper() *exec.Cmd {
+func startWrapper(filesChanged chan string) *exec.Cmd {
 	cmd := exec.Command(executablePath())
 	var err error
 	if watcherIn, err = cmd.StdinPipe(); err != nil {
-		Error(err.Error())
+		terminate(err.Error())
 	}
 	if watcherOut, err = cmd.StdoutPipe(); err != nil {
-		Error(err.Error())
+		terminate(err.Error())
 	}
 	if watcherErr, err = cmd.StderrPipe(); err != nil {
-		Error(err.Error())
+		terminate(err.Error())
 	}
 
 	cmd.Start()
@@ -85,7 +92,7 @@ func startWrapper() *exec.Cmd {
 			n, err := watcherOut.Read(buf)
 			if err != nil {
 				time.Sleep(500 * time.Millisecond)
-				errorFailedReadFromWatcher(err)
+				slog.Red("Failed to read from FileSystem watcher process: " + err.Error())
 			}
 			message := strings.TrimSpace(string(buf[:n]))
 			files := strings.Split(message, "\n")
@@ -100,14 +107,10 @@ func startWrapper() *exec.Cmd {
 		// gross, but this is an easy way to work around the case where
 		// signal propagation hits the wrapper before the master disables logging
 		time.Sleep(100 * time.Millisecond)
-		ErrorFileMonitorWrapperCrashed(err)
+		terminate("The FS watcher process crashed: " + err.Error())
 	}()
 
 	return cmd
-}
-
-func AddFile(file string) {
-	filesToWatch <- file
 }
 
 func handleLoadedFileNotification(file string) {
@@ -120,16 +123,16 @@ func handleLoadedFileNotification(file string) {
 	fileMutex.Unlock()
 }
 
-func handleChangedFileNotification(tree *ProcessTree, file string) {
-	// slog.Magenta("[filechange] " + file)
-	fileMutex.Lock()
-	tree.RestartNodesWithFeature(file)
-	fileMutex.Unlock()
-}
-
 func startWatchingFile(file string) {
 	_, err := watcherIn.Write([]byte(file + "\n"))
 	if err != nil {
 		slog.Error(err)
 	}
+}
+
+func terminate(message string) {
+	slog.Red(message)
+	println(message)
+	proc, _ := os.FindProcess(os.Getpid())
+	proc.Signal(syscall.SIGTERM)
 }

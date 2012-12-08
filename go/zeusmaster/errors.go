@@ -51,13 +51,3 @@ func ErrorCantCreateListener() {
 func errorUnableToAcceptSocketConnection() {
 	slog.Red("Unable to accept socket connection.")
 }
-
-func errorFailedReadFromWatcher(err error) {
-	slog.Red("Failed to read from FileSystem watcher process: " + err.Error())
-}
-
-func ErrorFileMonitorWrapperCrashed(err error) {
-	ExitNow(1, func() {
-		slog.Red("The FileSystem watcher process crashed: " + err.Error())
-	})
-}

@@ -11,6 +11,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/burke/zeus/go/filemonitor"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 )
@@ -364,5 +365,5 @@ func (s *SlaveNode) handleMessages() {
 
 func (s *SlaveNode) handleFeatureMessage(msg string) {
 	s.Features[msg] = true
-	AddFile(msg)
+	filemonitor.AddFile(msg)
 }

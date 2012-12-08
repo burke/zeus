@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 
+	"github.com/burke/zeus/go/filemonitor"
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
@@ -27,10 +28,13 @@ func doRun() int {
 	var tree *ProcessTree = BuildProcessTree()
 
 	done := make(chan bool)
+
 	// Start processes and register them for exit when the function returns.
+	filesChanged, filemonitorDone := filemonitor.Start(done)
+
 	defer exit(StartSlaveMonitor(tree, done), done)
 	defer exit(StartClientHandler(tree, done), done)
-	defer exit(StartFileMonitor(tree, done), done)
+	defer exit(filemonitorDone, done)
 	defer slog.Suppress()
 	defer printFinalOutput()
 	defer exit(StartStatusChart(tree, done), done)
@@ -38,11 +42,15 @@ func doRun() int {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 
-	select {
-	case <-c:
-		return 0
-	case exitStatus := <-exitNow:
-		return exitStatus
+	for {
+		select {
+		case <-c:
+			return 0
+		case exitStatus := <-exitNow:
+			return exitStatus
+		case changed := <-filesChanged:
+			go tree.RestartNodesWithFeature(changed)
+		}
 	}
 	return -1 // satisfy the compiler
 }
