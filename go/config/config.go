@@ -1,4 +1,4 @@
-package zeusmaster
+package config
 
 import (
 	"bufio"

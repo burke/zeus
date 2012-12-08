@@ -10,6 +10,7 @@ import (
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/zeusclient"
 	"github.com/burke/zeus/go/zeusmaster"
+	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/zeusversion"
 )
 
@@ -42,7 +43,7 @@ func main() {
 	} else if args[0] == "commands" {
 		zeusCommands()
 	} else {
-		tree := zeusmaster.BuildProcessTree()
+		tree := config.BuildProcessTree()
 		for _, name := range tree.AllCommandsAndAliases() {
 			if args[0] == name {
 				zeusclient.Run()
@@ -112,7 +113,7 @@ func zeusInit() {
 }
 
 func zeusCommands() {
-	tree := zeusmaster.BuildProcessTree()
+	tree := config.BuildProcessTree()
 	for _, command := range tree.Commands {
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string

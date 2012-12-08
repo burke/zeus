@@ -1,4 +1,4 @@
-package zeusmaster
+package clienthandler
 
 import (
 	"errors"
@@ -9,8 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/burke/zeus/go/processtree"
 	"github.com/burke/zeus/go/messages"
+	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 	"github.com/burke/zeus/go/zerror"
