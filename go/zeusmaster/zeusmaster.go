@@ -18,7 +18,7 @@ import (
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
 func Run() {
-	zerror.FinalOutput = make([]func(), 0)
+	zerror.Init()
 	os.Exit(doRun())
 }
 
@@ -36,7 +36,7 @@ func doRun() int {
 	defer exit(clienthandler.Start(tree, done), done)
 	defer exit(filemonitorDone, done)
 	defer slog.Suppress()
-	defer printFinalOutput()
+	defer zerror.PrintFinalOutput()
 	defer exit(statuschart.Start(tree, done), done)
 
 	c := make(chan os.Signal, 1)
@@ -62,10 +62,4 @@ func exit(quit, done chan bool) {
 	quit <- true
 	// Wait until the process signals it's done.
 	<-done
-}
-
-func printFinalOutput() {
-	for _, cb := range zerror.FinalOutput {
-		cb()
-	}
 }

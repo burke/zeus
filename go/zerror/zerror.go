@@ -8,11 +8,21 @@ import (
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
-var FinalOutput []func()
+var finalOutput []func()
+
+func Init() {
+	finalOutput = make([]func(), 0)
+}
+
+func PrintFinalOutput() {
+	for _, cb := range finalOutput {
+		cb()
+	}
+}
 
 // TODO: this is gross because code is ignored.
 func ExitNow(code int, finalOuputCallback func()) {
-	FinalOutput = append(FinalOutput, finalOuputCallback)
+	finalOutput = append(finalOutput, finalOuputCallback)
 	proc, _ := os.FindProcess(os.Getpid())
 	proc.Signal(syscall.SIGTERM)
 }
