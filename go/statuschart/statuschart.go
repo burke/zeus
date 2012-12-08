@@ -1,4 +1,4 @@
-package zeusmaster
+package statuschart
 
 import (
 	"fmt"
@@ -78,10 +78,6 @@ func StartStatusChart(tree *processtree.ProcessTree, done chan bool) chan bool {
 		}
 	}()
 	return quit
-}
-
-func StatusChartUpdate() {
-	theChart.update <- true
 }
 
 func printStateInfo(indentation, identifier, state string, verbose bool) {
