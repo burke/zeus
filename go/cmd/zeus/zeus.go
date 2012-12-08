@@ -7,10 +7,10 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/burke/zeus/go/config"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/zeusclient"
 	"github.com/burke/zeus/go/zeusmaster"
-	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/zeusversion"
 )
 

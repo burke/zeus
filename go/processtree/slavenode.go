@@ -130,6 +130,7 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 		s.L.Lock()
 		s.changeState(nextState)
 		s.L.Unlock()
+		monitor.tree.StateChanged <- true
 		switch nextState {
 		case SWaiting:
 			nextState = s.doWaitingState()
@@ -315,8 +316,6 @@ func (s *SlaveNode) bootQueuedCommandsAndSlaves() {
 
 // This should only be called while holding a lock on s.L.
 func (s *SlaveNode) changeState(newState string) {
-	// TODO
-	/* StatusChartUpdate() */
 	s.stateChange.L.Lock()
 	s.State = newState
 	s.stateChange.Broadcast()

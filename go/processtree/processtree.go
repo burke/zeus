@@ -9,6 +9,7 @@ type ProcessTree struct {
 	ExecCommand  string
 	SlavesByName map[string]*SlaveNode
 	Commands     []*CommandNode
+	StateChanged chan bool
 }
 
 type ProcessTreeNode struct {
