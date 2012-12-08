@@ -9,13 +9,14 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 )
 
 const zeusSockName string = ".zeus.sock"
 
-func StartClientHandler(tree *ProcessTree, done chan bool) chan bool {
+func StartClientHandler(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		path, _ := filepath.Abs(zeusSockName)
@@ -55,7 +56,7 @@ func StartClientHandler(tree *ProcessTree, done chan bool) chan bool {
 }
 
 // see docs/client_master_handshake.md
-func handleClientConnection(tree *ProcessTree, usock *unixsocket.Usock) {
+func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Usock) {
 	defer usock.Close()
 	// we have established first contact to the client.
 
@@ -119,7 +120,7 @@ func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, 
 	return command, clientPid, arguments, err
 }
 
-func findCommandAndSlaveNodes(tree *ProcessTree, command string, err error) (*CommandNode, *SlaveNode, error) {
+func findCommandAndSlaveNodes(tree *processtree.ProcessTree, command string, err error) (*processtree.CommandNode, *processtree.SlaveNode, error) {
 	if err != nil {
 		return nil, nil, err
 	}
@@ -201,17 +202,12 @@ func sendCommandPidToClient(usock *unixsocket.Usock, pid int, err error) error {
 	return err
 }
 
-type CommandRequest struct {
-	Name    string
-	Retchan chan *os.File
-}
-
-func bootNewCommand(slaveNode *SlaveNode, command string, err error) (*unixsocket.Usock, error) {
+func bootNewCommand(slaveNode *processtree.SlaveNode, command string, err error) (*unixsocket.Usock, error) {
 	if err != nil {
 		return nil, err
 	}
 
-	request := &CommandRequest{command, make(chan *os.File)}
+	request := &processtree.CommandRequest{command, make(chan *os.File)}
 	slaveNode.RequestCommandBoot(request)
 	commandFile := <-request.Retchan // TODO: don't really want to wait indefinitely.
 	// defer commandFile.Close() // TODO: can't do this here anymore.

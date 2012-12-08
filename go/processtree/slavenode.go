@@ -1,4 +1,4 @@
-package zeusmaster
+package processtree
 
 import (
 	"bufio"
@@ -12,6 +12,7 @@ import (
 	"syscall"
 
 	"github.com/burke/zeus/go/filemonitor"
+	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 )
@@ -34,18 +35,23 @@ type SlaveNode struct {
 	slaveBootRequests   chan *SlaveNode      // size 256
 
 	L           sync.Mutex
-	state       string
+	State       string
 	stateChange *sync.Cond
 
 	event chan bool
 }
 
+type CommandRequest struct {
+	Name    string
+	Retchan chan *os.File
+}
+
 const (
-	sWaiting  = "W"
-	sUnbooted = "U"
-	sBooting  = "B"
-	sReady    = "R"
-	sCrashed  = "C"
+	SWaiting  = "W"
+	SUnbooted = "U"
+	SBooting  = "B"
+	SReady    = "R"
+	SCrashed  = "C"
 )
 
 func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *SlaveNode {
@@ -65,7 +71,7 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 
 func (s *SlaveNode) WaitUntilReadyOrCrashed() {
 	s.stateChange.L.Lock()
-	for s.state != sReady && s.state != sCrashed && len(s.needsRestart) == 0 {
+	for s.State != SReady && s.State != SCrashed && len(s.needsRestart) == 0 {
 		s.stateChange.Wait()
 	}
 	s.stateChange.L.Unlock()
@@ -76,7 +82,7 @@ func (s *SlaveNode) WaitUntilReadyOrCrashed() {
 // execute its action, and there's no need to queue multiple restarts.
 func (s *SlaveNode) RequestRestart() {
 	s.L.Lock()
-	if s.state == sBooting || s.state == sReady || s.state == sCrashed {
+	if s.State == SBooting || s.State == SReady || s.State == SCrashed {
 		if len(s.needsRestart) == 0 {
 			s.needsRestart <- true
 		}
@@ -107,7 +113,7 @@ func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock, featur
 	s.featurePipe = file
 	s.Pid = pid
 	s.socket = usock
-	if s.state == sUnbooted {
+	if s.State == SUnbooted {
 		s.event <- true
 	} else {
 		if pid > 0 {
@@ -119,21 +125,21 @@ func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock, featur
 }
 
 func (s *SlaveNode) Run(monitor *SlaveMonitor) {
-	nextState := sWaiting
+	nextState := SWaiting
 	for {
 		s.L.Lock()
 		s.changeState(nextState)
 		s.L.Unlock()
 		switch nextState {
-		case sWaiting:
+		case SWaiting:
 			nextState = s.doWaitingState()
-		case sUnbooted:
+		case SUnbooted:
 			nextState = s.doUnbootedState(monitor)
-		case sBooting:
+		case SBooting:
 			nextState = s.doBootingState()
-		case sCrashed:
+		case SCrashed:
 			nextState = s.doCrashedOrReadyState()
-		case sReady:
+		case SReady:
 			nextState = s.doCrashedOrReadyState()
 		default:
 			slog.FatalErrorString("Unrecognized state: " + nextState)
@@ -144,24 +150,24 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 // These "doXState" functions are called when a SlaveNode enters a state. They are expected
 // to continue to execute until 
 
-// The "sWaiting" state represents the state where a Slave is currently
+// The "SWaiting" state represents the state where a Slave is currently
 // not running, and neither is its parent. Before we can start booting
 // this slave, we must first wait for its parent to finish booting, so
 // that we can fork off of it.
-func (s *SlaveNode) doWaitingState() string { // -> sUnbooted
+func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 	if s.Parent == nil {
 		// this is the root state. We get to skip this step. Hooray!
-		return sUnbooted
+		return SUnbooted
 	}
 	s.Parent.WaitUntilReadyOrCrashed()
-	return sUnbooted
+	return SUnbooted
 }
 
-// "sUnbooted" represents the state where the parent process is ready, but
+// "SUnbooted" represents the state where the parent process is ready, but
 // we do not yet have the PID of a process to use for *this* node. In this
 // state, we tell the parent process to spawn a process for us, and wait
 // to hear back from the SlaveMonitor.
-func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {sBooting, sCrashed}
+func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBooting, SCrashed}
 	if s.Parent == nil {
 		s.L.Lock()
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
@@ -178,16 +184,16 @@ func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {sBoot
 	s.L.Lock()
 	defer s.L.Unlock()
 	if s.Error != "" {
-		return sCrashed
+		return SCrashed
 	}
-	return sBooting
+	return SBooting
 }
 
-// In "sBooting", we have a pid and socket to the process we will use,
+// In "SBooting", we have a pid and socket to the process we will use,
 // but it has not yet finished initializing (generally, running the code
 // specific to this slave. When we receive a message about the success or
 // failure of this operation, we transition to either crashed or ready.
-func (s *SlaveNode) doBootingState() string { // -> {sCrashed, sReady}
+func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	// The slave will execute its action and respond with a status...
 	// Note we don't hold the mutex while waiting for the action to execute.
 	msg, err := s.socket.ReadMessage()
@@ -198,12 +204,12 @@ func (s *SlaveNode) doBootingState() string { // -> {sCrashed, sReady}
 	s.L.Lock()
 	defer s.L.Unlock()
 
-	msg, err = ParseActionResponseMessage(msg)
+	msg, err = messages.ParseActionResponseMessage(msg)
 	if err != nil {
 		slog.ErrorString("[" + s.Name + "] " + err.Error())
 	}
 	if msg == "OK" {
-		return sReady
+		return SReady
 	}
 
 	if s.Pid > 0 {
@@ -211,20 +217,20 @@ func (s *SlaveNode) doBootingState() string { // -> {sCrashed, sReady}
 	}
 	s.wipe()
 	s.Error = msg
-	return sCrashed
+	return SCrashed
 }
 
-// In the "sCrashed" and "sReady" states, we have either a functioning process
+// In the "SCrashed" and "SReady" states, we have either a functioning process
 // we can spawn new processes off of, or an error message to propagate to
 // the user. The high-level operation of these two states is identical:
 // First, we work off the queue of command and slave boot requests that have
 // built up while this process was booting. Then, we begin a 3-way select
 // over those channels with the addition of the "restart" channel, which
-// kills the process and transitions us to "sWaiting".
+// kills the process and transitions us to "SWaiting".
 // In this way, we always serve queued fork requests before killing the process.
-func (s *SlaveNode) doCrashedOrReadyState() string { // -> sWaiting
+func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 	s.L.Lock()
-	if s.state == sReady && !s.featureHandlerRunning {
+	if s.State == SReady && !s.featureHandlerRunning {
 		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
 		go s.handleMessages()
@@ -248,7 +254,7 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> sWaiting
 			s.ForceKill()
 			s.wipe()
 			s.L.Unlock()
-			return sWaiting
+			return SWaiting
 		}
 	}
 	return "impossible"
@@ -263,7 +269,7 @@ func (s *SlaveNode) bootSlave(slave *SlaveNode) {
 		slave.L.Unlock()
 		return
 	}
-	msg := CreateSpawnSlaveMessage(slave.Name)
+	msg := messages.CreateSpawnSlaveMessage(slave.Name)
 	_, err := s.socket.WriteMessage(msg)
 	if err != nil {
 		slog.Error(err)
@@ -277,7 +283,7 @@ func (s *SlaveNode) bootSlave(slave *SlaveNode) {
 func (s *SlaveNode) bootCommand(request *CommandRequest) {
 	identifier := request.Name
 	// TODO: If crashed, do something different...
-	msg := CreateSpawnCommandMessage(identifier)
+	msg := messages.CreateSpawnCommandMessage(identifier)
 	_, err := s.socket.WriteMessage(msg)
 	if err != nil {
 		slog.Error(err)
@@ -309,9 +315,10 @@ func (s *SlaveNode) bootQueuedCommandsAndSlaves() {
 
 // This should only be called while holding a lock on s.L.
 func (s *SlaveNode) changeState(newState string) {
-	StatusChartUpdate()
+	// TODO
+	/* StatusChartUpdate() */
 	s.stateChange.L.Lock()
-	s.state = newState
+	s.State = newState
 	s.stateChange.Broadcast()
 	s.stateChange.L.Unlock()
 }
@@ -337,11 +344,15 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 	// and we do nothing.
 	output, err := cmd.CombinedOutput()
 	if err == nil {
-		ErrorConfigCommandCrashed(string(output))
+		// TODO
+		println(string(output))
+		/* ErrorConfigCommandCrashed(string(output)) */
 	}
 	msg := err.Error()
 	if s.hasSuccessfullyBooted == false {
-		ErrorConfigCommandCouldntStart(msg, string(output))
+		// TODO
+		println(msg)
+		/* ErrorConfigCommandCouldntStart(msg, string(output)) */
 	}
 }
 

@@ -1,4 +1,4 @@
-package zeusmaster
+package processtree
 
 import (
 	"math/rand"
@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"syscall"
 
+	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 )
@@ -13,6 +14,11 @@ import (
 type SlaveMonitor struct {
 	tree             *ProcessTree
 	remoteMasterFile *os.File
+}
+
+func Error(err string) {
+	// TODO
+	println(err)
 }
 
 func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
@@ -86,7 +92,7 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	if err != nil {
 		slog.Error(err)
 	}
-	pid, identifier, err := ParsePidMessage(msg)
+	pid, identifier, err := messages.ParsePidMessage(msg)
 
 	// And the last step before executing its action, the slave sends us a pipe it will later use to
 	// send us all the features it's loaded.

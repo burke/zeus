@@ -5,6 +5,7 @@ import (
 	"os/signal"
 
 	"github.com/burke/zeus/go/filemonitor"
+	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
@@ -25,14 +26,14 @@ func Run() {
 func doRun() int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
 
-	var tree *ProcessTree = BuildProcessTree()
+	var tree *processtree.ProcessTree = BuildProcessTree()
 
 	done := make(chan bool)
 
 	// Start processes and register them for exit when the function returns.
 	filesChanged, filemonitorDone := filemonitor.Start(done)
 
-	defer exit(StartSlaveMonitor(tree, done), done)
+	defer exit(processtree.StartSlaveMonitor(tree, done), done)
 	defer exit(StartClientHandler(tree, done), done)
 	defer exit(filemonitorDone, done)
 	defer slog.Suppress()

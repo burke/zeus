@@ -8,6 +8,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/burke/zeus/go/processtree"
 )
 
 const (
@@ -18,11 +20,11 @@ const (
 )
 
 type StatusChart struct {
-	RootSlave *SlaveNode
+	RootSlave *processtree.SlaveNode
 	update    chan bool
 
 	numberOfSlaves int
-	Commands       []*CommandNode
+	Commands       []*processtree.CommandNode
 	L              sync.Mutex
 	drawnInitial   bool
 
@@ -33,7 +35,7 @@ type StatusChart struct {
 
 var theChart *StatusChart
 
-func StartStatusChart(tree *ProcessTree, done chan bool) chan bool {
+func StartStatusChart(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		theChart = &StatusChart{}
@@ -83,17 +85,17 @@ func StatusChartUpdate() {
 func printStateInfo(indentation, identifier, state string, verbose bool) {
 	log := theChart.directLogger
 	switch state {
-	case sUnbooted:
+	case processtree.SUnbooted:
 		if verbose {
 			log.Colorized(indentation + "{magenta}" + identifier + "\033[K")
 		}
-	case sBooting:
+	case processtree.SBooting:
 		log.Colorized(indentation + "{blue}" + identifier + "\033[K")
-	case sCrashed:
+	case processtree.SCrashed:
 		log.Colorized(indentation + "{red}" + identifier + "\033[K")
-	case sReady:
+	case processtree.SReady:
 		log.Colorized(indentation + "{green}" + identifier + "\033[K")
-	case sWaiting:
+	case processtree.SWaiting:
 		fallthrough
 	default:
 		log.Colorized(indentation + "{yellow}" + identifier + "\033[K")
@@ -151,7 +153,7 @@ func (s *StatusChart) lengthOfOutput() int {
 
 func (s *StatusChart) drawCommands() {
 	for _, command := range s.Commands {
-		state := command.Parent.state
+		state := command.Parent.State
 
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string
@@ -164,9 +166,9 @@ func (s *StatusChart) drawCommands() {
 		log := theChart.directLogger
 
 		switch state {
-		case sReady:
+		case processtree.SReady:
 			log.Green(text + reset)
-		case sCrashed:
+		case processtree.SCrashed:
 			log.Red(text + " {yellow}[run to see backtrace]" + reset)
 		default:
 			log.Yellow(text + reset)
@@ -174,8 +176,8 @@ func (s *StatusChart) drawCommands() {
 	}
 }
 
-func (s *StatusChart) drawSubtree(node *SlaveNode, myIndentation, childIndentation string) {
-	printStateInfo(myIndentation, node.Name, node.state, true)
+func (s *StatusChart) drawSubtree(node *processtree.SlaveNode, myIndentation, childIndentation string) {
+	printStateInfo(myIndentation, node.Name, node.State, true)
 
 	for i, slave := range node.Slaves {
 		if i == len(node.Slaves)-1 {

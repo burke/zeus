@@ -6,6 +6,8 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+
+	"github.com/burke/zeus/go/processtree"
 )
 
 const configFile string = "zeus.json"
@@ -16,10 +18,10 @@ type config struct {
 	Items   map[string]string
 }
 
-func BuildProcessTree() *ProcessTree {
+func BuildProcessTree() *processtree.ProcessTree {
 	conf := parseConfig()
-	tree := &ProcessTree{}
-	tree.SlavesByName = make(map[string]*SlaveNode)
+	tree := &processtree.ProcessTree{}
+	tree.SlavesByName = make(map[string]*processtree.SlaveNode)
 
 	tree.ExecCommand = conf.Command
 
@@ -32,7 +34,7 @@ func BuildProcessTree() *ProcessTree {
 	return tree
 }
 
-func iteratePlan(tree *ProcessTree, plan map[string]interface{}, parent *SlaveNode) {
+func iteratePlan(tree *processtree.ProcessTree, plan map[string]interface{}, parent *processtree.SlaveNode) {
 	for name, v := range plan {
 		if subPlan, ok := v.(map[string]interface{}); ok {
 			newNode := tree.NewSlaveNode(name, parent)
@@ -43,7 +45,7 @@ func iteratePlan(tree *ProcessTree, plan map[string]interface{}, parent *SlaveNo
 			}
 			iteratePlan(tree, subPlan, newNode)
 		} else {
-			var newNode *CommandNode
+			var newNode *processtree.CommandNode
 			if aliases, ok := v.([]interface{}); ok {
 				strs := make([]string, len(aliases))
 				for i, alias := range aliases {
