@@ -93,6 +93,7 @@ module Zeus
 
     def default_bundle
       Bundler.require(:default)
+      Zeus::LoadTracking.add_feature('./Gemfile.lock')
     end
 
     def development_environment
