@@ -34,7 +34,7 @@ One or two sentences giving an overview of the issue.
 
 ## Step 1: Prerequisites
 
-You'll need ruby 1.9+ installed, and the `ronn` gem is required to build manpages (`gem install ronn`).
+You'll need ruby 1.9+ installed and `rake`, `bundler` and `ronn` gems are required to build the gem and manpages (`gem install rake bundler ronn`).
 
 You will also need a working Go toolchain. You can get one from http://golang.org/doc/install.
 
