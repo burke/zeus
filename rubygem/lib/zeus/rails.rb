@@ -234,7 +234,7 @@ module Zeus
     def reconnect_redis
       return unless defined?(Redis::Client)
       ObjectSpace.each_object(Redis::Client) do |client|
-        client.connect
+        client.connect rescue nil
       end
     end
 
