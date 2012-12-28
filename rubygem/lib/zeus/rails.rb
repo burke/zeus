@@ -29,7 +29,7 @@ module Zeus
     def after_fork
       reconnect_activerecord
       restart_girl_friday
-      reconnect_redis
+      reconnect_redis unless Rails.env.test?
     end
 
     def _monkeypatch_rake
