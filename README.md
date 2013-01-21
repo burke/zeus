@@ -44,6 +44,15 @@ Run some commands in another shell:
     zeus rake -T
     zeus runner omg.rb
 
+## Related gems
+
+* [Spork](https://github.com/sporkrb/spork) - a [DRb server](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/drb/rdoc/DRb.html) that forks before each run to ensure a clean testing state
+* [Commands](https://github.com/rails/commands) - a persistent console that runs Rails commands without reloading the env
+* [Spring](https://github.com/jonleighton/spring) - like Zeus but in pure Ruby, totally automatic, alpha and limited compatibility
+
+If you're switching from Spork, be sure to [read the wiki page on Spork](https://github.com/burke/zeus/wiki/Spork).
+
+
 ## Hacking
 
 To add/modify commands, see [`docs/ruby/modifying.md`](/burke/zeus/tree/master/docs/ruby/modifying.md).
