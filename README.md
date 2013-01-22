@@ -16,6 +16,8 @@ More technically speaking, Zeus is a language-agnostic application checkpointer 
 
 You can install the GC-patched ruby from [this gist for rbenv](https://gist.github.com/1688857) or [this gist for RVM](https://gist.github.com/4136373). This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
 
+*Please note*: Zeus requires your project to be running on a file system that supports FSEvents or inotify.
+
 ## Installation
 
 Install the gem.
