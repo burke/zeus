@@ -126,12 +126,11 @@ module Zeus
     end
 
     def console
-      require 'irb'
+      require 'rails/commands/console'
       if defined?(Pry) && IRB == Pry
         require "pry"
         Pry.start 
       else
-        require 'rails/commands/console'
         ::Rails::Console.start(::Rails.application)
       end 
     end
