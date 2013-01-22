@@ -16,6 +16,8 @@ More technically speaking, Zeus is a language-agnostic application checkpointer 
 
 You can install the GC-patched ruby from [this gist for rbenv](https://gist.github.com/1688857) or [this gist for RVM](https://gist.github.com/4136373). This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
 
+*Please note*: Zeus requires your project to be running on a file system that supports FSEvents or inotify.
+
 ## Installation
 
 Install the gem.
@@ -43,6 +45,15 @@ Run some commands in another shell:
     zeus generate model omg
     zeus rake -T
     zeus runner omg.rb
+
+## Related gems
+
+* [Spork](https://github.com/sporkrb/spork) - a [DRb server](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/drb/rdoc/DRb.html) that forks before each run to ensure a clean testing state
+* [Commands](https://github.com/rails/commands) - a persistent console that runs Rails commands without reloading the env
+* [Spring](https://github.com/jonleighton/spring) - like Zeus but in pure Ruby, totally automatic, alpha and limited compatibility
+
+If you're switching from Spork, be sure to [read the wiki page on Spork](https://github.com/burke/zeus/wiki/Spork).
+
 
 ## Hacking
 
