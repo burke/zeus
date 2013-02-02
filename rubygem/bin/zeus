@@ -1,3 +1,4 @@
+#!/usr/bin/env ruby
 platform = `uname -sm`
 
 exe = case platform
