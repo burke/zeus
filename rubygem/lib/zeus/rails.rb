@@ -183,6 +183,8 @@ module Zeus
 
     def test
       if spec_file?(ARGV) && defined?(RSpec)
+        # disable autorun in case the user left it in spec_helper.rb
+        RSpec::Core::Runner.disable_autorun!
         exit RSpec::Core::Runner.run(ARGV)
       else
         Zeus::M.run(ARGV)
