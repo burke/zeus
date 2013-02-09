@@ -59,7 +59,7 @@ module Zeus
 
       # We are now 'connected'. From this point, we may receive requests to fork.
       loop do
-        messages = local.recv(1024)
+        messages = local.recv(2**16)
         messages.split("\0").each do |new_identifier|
           new_identifier =~ /^(.):(.*)/
           code, ident = $1, $2
