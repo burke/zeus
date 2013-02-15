@@ -129,10 +129,10 @@ module Zeus
       require 'rails/commands/console'
       if defined?(Pry) && IRB == Pry
         require "pry"
-        Pry.start 
+        Pry.start
       else
         ::Rails::Console.start(::Rails.application)
-      end 
+      end
     end
 
     def dbconsole
@@ -179,6 +179,7 @@ module Zeus
       else
         require 'test_helper'
       end
+      ActiveRecord::Base.clear_all_connections! if defined?(ActiveRecord::Base)
     end
 
     def test
