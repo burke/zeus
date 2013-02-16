@@ -1,0 +1,9 @@
+# Not using to test compilation of go component of project because it requires
+# xcodebuild which is not available in the ubuntu environment travis-ci
+# provides.
+language: ruby
+rvm:
+  - 1.9.3
+gemfile: rubygem/Gemfile
+script: cd rubygem && rake version && bundle exec rspec spec
+
