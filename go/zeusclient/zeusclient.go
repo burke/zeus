@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/burke/pty"
+	"github.com/kr/pty"
 	"github.com/burke/ttyutils"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
