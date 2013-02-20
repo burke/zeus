@@ -129,10 +129,10 @@ module Zeus
       require 'rails/commands/console'
       if defined?(Pry) && IRB == Pry
         require "pry"
-        Pry.start 
+        Pry.start
       else
         ::Rails::Console.start(::Rails.application)
-      end 
+      end
     end
 
     def dbconsole
@@ -205,7 +205,7 @@ module Zeus
 
     private
 
-    SPEC_DIR_REGEXP = /^spec/
+    SPEC_DIR_REGEXP = %r"(^|/)spec"
     SPEC_FILE_REGEXP = /.+_spec\.rb$/
     def spec_file? argv
       last_arg = argv[-1]
@@ -250,4 +250,3 @@ module Zeus
 end
 
 Zeus.plan ||= Zeus::Rails.new
-
