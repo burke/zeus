@@ -1,8 +1,8 @@
 # Modifying the boot process
 
-Running `zeus init` creates a default [`zeus.json`](/burke/zeus/tree/master/examples/custom_plan/zeus.json) and [`custom_plan.rb`](/burke/zeus/tree/master/examples/custom_plan/custom_plan.rb) that define the boot order for your application. 
+Running `zeus init` creates a default [`zeus.json`](../../examples/custom_plan/zeus.json) and [`custom_plan.rb`](../../examples/custom_plan/custom_plan.rb) that define the boot order for your application. 
 
-Each node under "plan" in the JSON file has an action associated with it. You can see the "command" value at the top of the hash requires `"./custom_plan.rb"`. Inspecting that file, you can see that it creates an empty subclass of `Zeus::Rails`. If you look at [that file](/burke/zeus/tree/master/rubygem/lib/zeus/rails.rb), you will see a class with a method name corresponding to each node -- something along the lines of:
+Each node under "plan" in the JSON file has an action associated with it. You can see the "command" value at the top of the hash requires `"./custom_plan.rb"`. Inspecting that file, you can see that it creates an empty subclass of `Zeus::Rails`. If you look at [that file](../../rubygem/lib/zeus/rails.rb), you will see a class with a method name corresponding to each node -- something along the lines of:
 
 ```ruby
 class Zeus::Rails < Zeus::Plan
