@@ -8,7 +8,7 @@ Zeus is composed of three components:
 
 3. [Slaves/Commands](../rubygem). These are the target application. A small shim, written in the target language, manages the communication between the application and the Master process, and boots the application in phases. Though the Master and Client are completely language-agnostic, currently ruby is the only language for which a Slave shim exists.
 
-If you've read Tony Hoare's (or C.A.R. Hoare's) "Communicating Sequential Processes", [`csp.pdf`](csp.pdf) might be a bit helpful in addition to this document. I haven't studied the math enough for it to be fully correct, but it gets some of the point across.
+If you've read Tony Hoare's (or C.A.R. Hoare's) "Communicating Sequential Processes", [`csp.pdf`](http://www.usingcsp.com/cspbook.pdf) might be a bit helpful in addition to this document. I haven't studied the math enough for it to be fully correct, but it gets some of the point across.
 
 See: [`terminology.md`](terminology.md)
 
@@ -24,36 +24,36 @@ See: [`terminology.md`](terminology.md)
 
 4. SlaveMonitor
 
-![arch.png](//raw.github.com/burke/zeus/master/docs/arch.png)
+![arch.png](arch.png)
 
-The Master process revolves around the [`ProcessTree`](../go/zeusmaster/processtree.go) -- the core data structure that maintains most of the state of the application. Each module performs most of its communication with other modules through interactions with the Tree.
+The Master process revolves around the [`ProcessTree`](../go/processtree/processtree.go) -- the core data structure that maintains most of the state of the application. Each module performs most of its communication with other modules through interactions with the Tree.
 
 ### 1. Config
 
 This component reads the configuration file on initialization, and constructs the initial `ProcessTree` for the rest of the application to use.
 
-* [`config.go`](../go/zeusmaster/config.go)
+* [`config.go`](../go/config/config.go)
 * [`zeus.json`](../examples/zeus.json)
 
 ### 2. ClientHandler
 
 The `ClientHandler` listens on a socket for incoming requests from Client processes, and negotiates connections to running Slave processes. It is responsible for interactions with the client for its entire life-cycle.
 
-* [`clienthandler.go`](../go/zeusmaster/clienthandler.go)
+* [`clienthandler.go`](../go/clienthandler/clienthandler.go)
 
 ### 3. FileMonitor
 
 The `FileMonitor`'s job is to restart slaves when one of their dependencies has changed. Slaves are expected to report back with a list of files they have loaded. The `FileMonitor` listens for these messages and registers them with an external process that watches the filesystem for changes. When the external process reports a change, the `FileMonitor` restarts any slaves that have loaded that file.
 
-* [`filemonitor.go`](../go/zeusmaster/filemonitor.go)
+* [`filemonitor.go`](../go/filemonitor/filemonitor.go)
 * [`fsevents/main.m`](../ext/fsevents/main.m)
 
 ### 4. SlaveMonitor
 
 This component is responsible for communication with the target-language shim to manage booting and forking of application phase slaves. It constantly attempts to keep all slaves booted, restarting them when they are killed or die.
 
-* [`slavemonitor.go`](../go/zeusmaster/slavemonitor.go)
-* [`slavenode.go`](../go/zeusmaster/slavenode.go)
+* [`slavemonitor.go`](../go/processtree/slavemonitor.go)
+* [`slavenode.go`](../go/processtree/slavenode.go)
 * [`master_slave_handshake.md`](master_slave_handshake.md)
 
 ## Client Process
@@ -78,5 +78,5 @@ The Slave processes boot the actual application, and run commands. See [`master_
 
 ## Contributing to Zeus
 
-See the handy contribution guide at [`docs/contributing.md`](/burke/zeus/tree/master/docs/contributing.md).
+See the handy contribution guide at [`docs/contributing.md`](../contributing.md).
 
