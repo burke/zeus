@@ -58,11 +58,11 @@ If you're switching from Spork, be sure to [read the wiki page on Spork](https:/
 
 ## Hacking
 
-To add/modify commands, see [`docs/ruby/modifying.md`](/burke/zeus/tree/master/docs/ruby/modifying.md).
+To add/modify commands, see [`docs/ruby/modifying.md`](docs/ruby/modifying.md).
 
-To get started hacking on Zeus itself, see [`docs/overview.md`](/burke/zeus/tree/master/docs/overview.md).
+To get started hacking on Zeus itself, see [`docs/overview.md`](docs/overview.md).
 
-See also the handy contribution guide at [`contributing.md`](/burke/zeus/tree/master/contributing.md).
+See also the handy contribution guide at [`contributing.md`](contributing.md).
 
 ## Alternative plans
 
