@@ -199,7 +199,8 @@ module Zeus
 
     def cucumber
       cucumber_main = Cucumber::Cli::Main.new(ARGV.dup)
-      exit cucumber_main.execute!(@cucumber_runtime)
+      cucumber_main.execute!(@cucumber_runtime)
+      exit
     end
 
 
