@@ -53,5 +53,6 @@ task :clean do
   FileUtils.rm(RUBYGEM_PATH + "lib/zeus/version.rb") rescue nil
   FileUtils.rm_r(RUBYGEM_PATH + "man") rescue nil
   FileUtils.rm_r(RUBYGEM_PATH + "build") rescue nil
+  FileUtils.rm_r(RUBYGEM_PATH + "pkg") rescue nil
 end
 
