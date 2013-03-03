@@ -118,14 +118,17 @@ module Zeus
 
       kill_command_if_client_quits!(pid, client_pid)
 
-      at_exit{ Process.kill(:TERM, client_pid) }
-
       Process.wait(pid)
       code = $?.exitstatus || 0
 
       local.write "#{code}\0"
 
       local.close
+    rescue Exception
+      # If anything at all went wrong, kill the client - if anything
+      # went wrong before the runner can clean up, it might hang
+      # around forever.
+      Process.kill(:TERM, client_pid)
     end
 
     def kill_command_if_client_quits!(command_pid, client_pid)
