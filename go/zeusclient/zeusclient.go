@@ -8,12 +8,12 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/kr/pty"
 	"github.com/burke/ttyutils"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 	"github.com/burke/zeus/go/zerror"
+	"github.com/kr/pty"
 )
 
 const (
