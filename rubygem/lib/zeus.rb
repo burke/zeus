@@ -58,15 +58,26 @@ module Zeus
       Thread.new { notify_features(feature_pipe_w, features) }
 
       # We are now 'connected'. From this point, we may receive requests to fork.
+      children = Set.new
       loop do
         messages = local.recv(2**16)
+
+        # Reap any child runners or slaves that might have exited in
+        # the meantime. Note that reaping them like this can leave <=1
+        # zombie process per slave around while the slave waits for a
+        # new command.
+        children.each do |pid|
+          children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)
+        end
+
         messages.split("\0").each do |new_identifier|
           new_identifier =~ /^(.):(.*)/
           code, ident = $1, $2
+          pid = nil
           if code == "S"
-            fork { go(ident.to_sym) }
+            children << fork { go(ident.to_sym) }
           else
-            fork { command(ident.to_sym, local) }
+            children << fork { command(ident.to_sym, local) }
           end
         end
       end
