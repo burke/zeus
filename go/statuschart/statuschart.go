@@ -30,7 +30,8 @@ type StatusChart struct {
 
 	directLogger *slog.ShinyLogger
 
-	extraOutput string
+	extraOutput       string
+	terminalSupported bool
 }
 
 var theChart *StatusChart
@@ -44,13 +45,14 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 		theChart.Commands = tree.Commands
 		theChart.update = make(chan bool, 10)
 		theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
+		theChart.terminalSupported = true
 
 		scw := &StringChannelWriter{make(chan string, 10)}
 		slog.DefaultLogger = slog.NewShinyLogger(scw, scw)
 
 		termios, err := ttyutils.NoEcho(uintptr(os.Stdout.Fd()))
 		if err != nil {
-			slog.Error(err)
+			theChart.terminalSupported = false
 		}
 
 		ticker := time.Tick(1000 * time.Millisecond)
@@ -61,7 +63,9 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 				done <- true
 				return
 			case <-ticker:
-				theChart.draw()
+				if theChart.terminalSupported {
+					theChart.draw()
+				}
 			case output := <-scw.Notif:
 				theChart.L.Lock()
 				if theChart.drawnInitial {
@@ -107,7 +111,11 @@ func (s *StatusChart) draw() {
 	if s.drawnInitial {
 		lengthOfOutput := s.lengthOfOutput()
 		numberOfOutputLines := s.numberOfSlaves + len(s.Commands) + lengthOfOutput + 3
-		fmt.Printf("\033[%dA", numberOfOutputLines)
+		if s.terminalSupported {
+			fmt.Printf("\033[%dA", numberOfOutputLines)
+		} else {
+			fmt.Printf("\n==== UPDATED %s =====\n", time.Now().Format(time.UnixDate))
+		}
 	} else {
 		s.drawnInitial = true
 	}
