@@ -41,9 +41,14 @@ type SlaveNode struct {
 	event chan bool
 }
 
+type CommandReply struct {
+	State string
+	File  *os.File
+}
+
 type CommandRequest struct {
 	Name    string
-	Retchan chan *os.File
+	Retchan chan *CommandReply
 }
 
 const (
@@ -149,7 +154,7 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 }
 
 // These "doXState" functions are called when a SlaveNode enters a state. They are expected
-// to continue to execute until 
+// to continue to execute until
 
 // The "SWaiting" state represents the state where a Slave is currently
 // not running, and neither is its parent. Before we can start booting
@@ -282,8 +287,11 @@ func (s *SlaveNode) bootSlave(slave *SlaveNode) {
 // command dies super early, the entire slave pretty well deadlocks.
 // TODO: review this.
 func (s *SlaveNode) bootCommand(request *CommandRequest) {
+	if s.State == SCrashed {
+		request.Retchan <- &CommandReply{SCrashed, nil}
+		return
+	}
 	identifier := request.Name
-	// TODO: If crashed, do something different...
 	msg := messages.CreateSpawnCommandMessage(identifier)
 	_, err := s.socket.WriteMessage(msg)
 	if err != nil {
@@ -298,7 +306,7 @@ func (s *SlaveNode) bootCommand(request *CommandRequest) {
 	}
 	fileName := strconv.Itoa(rand.Int())
 	commandFile := unixsocket.FdToFile(commandFD, fileName)
-	request.Retchan <- commandFile
+	request.Retchan <- &CommandReply{s.State, commandFile}
 }
 
 func (s *SlaveNode) bootQueuedCommandsAndSlaves() {

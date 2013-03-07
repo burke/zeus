@@ -74,17 +74,18 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	defer clientFile.Close()
 
 	if err == nil && slaveNode.Error != "" {
-		// we can skip steps 3-5 as they deal with the command process we're not spawning.
-		// Write a fake pid (step 6)
-		usock.WriteMessage("0")
-		// Write the error message to the terminal
-		clientFile.Write([]byte(slaveNode.Error))
-		// Skip step 7, and write an exit code to the client (step 8)
-		usock.WriteMessage("1")
+		writeStacktrace(usock, slaveNode, clientFile)
 		return
 	}
 
 	commandUsock, err := bootNewCommand(slaveNode, command, err)
+	if err != nil {
+		// If a client connects while the command is just
+		// booting up, it actually makes it here - still
+		// expects a backtrace, of course.
+		writeStacktrace(usock, slaveNode, clientFile)
+		return
+	}
 	defer commandUsock.Close()
 
 	err = sendClientPidAndArgumentsToCommand(commandUsock, clientPid, arguments, err)
@@ -103,6 +104,16 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 		slog.Error(err)
 	}
 	// Done! Hooray!
+}
+
+func writeStacktrace(usock *unixsocket.Usock, slaveNode *processtree.SlaveNode, clientFile *os.File) {
+	// Fake process ID / output / error codes:
+	// Write a fake pid (step 6)
+	usock.WriteMessage("0")
+	// Write the error message to the terminal
+	clientFile.Write([]byte(slaveNode.Error))
+	// Write a non-positive exit code to the client
+	usock.WriteMessage("1")
 }
 
 func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, int, string, error) {
@@ -209,12 +220,16 @@ func bootNewCommand(slaveNode *processtree.SlaveNode, command string, err error)
 		return nil, err
 	}
 
-	request := &processtree.CommandRequest{command, make(chan *os.File)}
+	request := &processtree.CommandRequest{command, make(chan *processtree.CommandReply)}
 	slaveNode.RequestCommandBoot(request)
-	commandFile := <-request.Retchan // TODO: don't really want to wait indefinitely.
+	reply := <-request.Retchan // TODO: don't really want to wait indefinitely.
 	// defer commandFile.Close() // TODO: can't do this here anymore.
 
-	return unixsocket.NewUsockFromFile(commandFile)
+	if reply.State == processtree.SCrashed {
+		return nil, errors.New("Process has crashed")
+	}
+
+	return unixsocket.NewUsockFromFile(reply.File)
 }
 
 func sendTTYToCommand(commandUsock *unixsocket.Usock, clientFile *os.File, err error) error {
