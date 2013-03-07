@@ -1,3 +1,15 @@
+### 0.13.3
+
+https://github.com/burke/zeus/compare/v0.13.2...v0.13.3
+
+* Returns correct status code [#252](https://github.com/burke/zeus/issues/252)
+
+* Other bug fixes
+
+### 0.13.2
+
+https://github.com/burke/zeus/compare/v0.13.1...v0.13.2
+
 ### 0.13.1
 
 * Handle the `shared_connection` hack that some people do to share an AR connection between threads (77d2b9bfc67977dfd8c17eed03fe2a8a25870c11)
