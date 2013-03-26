@@ -209,9 +209,11 @@ module Zeus
 
     SPEC_DIR_REGEXP = %r"(^|/)spec"
     SPEC_FILE_REGEXP = /.+_spec\.rb$/
+    
     def spec_file? argv
-      last_arg = argv[-1]
-      last_arg.match (Regexp.union(SPEC_DIR_REGEXP, SPEC_FILE_REGEXP))
+      argv.any? do |arg|
+        arg.match(Regexp.union(SPEC_DIR_REGEXP, SPEC_FILE_REGEXP))
+      end
     end
 
     def restart_girl_friday
