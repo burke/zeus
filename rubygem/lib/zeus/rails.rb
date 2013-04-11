@@ -1,7 +1,13 @@
+def find_rails_path(root_path)
+  paths = %w(spec/dummy test/dummy .)
+  paths.find { |path| File.exists?(File.expand_path(path, root_path)) }
+end
+
 ROOT_PATH = File.expand_path(Dir.pwd)
-ENV_PATH  = File.expand_path('config/environment',  ROOT_PATH)
-BOOT_PATH = File.expand_path('config/boot',  ROOT_PATH)
-APP_PATH  = File.expand_path('config/application',  ROOT_PATH)
+RAILS_PATH = find_rails_path(ROOT_PATH)
+ENV_PATH  = File.expand_path('config/environment',  RAILS_PATH)
+BOOT_PATH = File.expand_path('config/boot',  RAILS_PATH)
+APP_PATH  = File.expand_path('config/application',  RAILS_PATH)
 
 require 'zeus'
 
@@ -209,7 +215,7 @@ module Zeus
 
     SPEC_DIR_REGEXP = %r"(^|/)spec"
     SPEC_FILE_REGEXP = /.+_spec\.rb$/
-    
+
     def spec_file? argv
       argv.any? do |arg|
         arg.match(Regexp.union(SPEC_DIR_REGEXP, SPEC_FILE_REGEXP))
