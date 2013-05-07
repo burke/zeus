@@ -1,6 +1,7 @@
 package shinylog
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -63,7 +64,11 @@ func (l *ShinyLogger) DisableColor() {
 }
 
 func (l *ShinyLogger) Colorized(msg string) (printed bool) {
-	return l.colorized(3, msg, false)
+	return l.colorized(3, msg, false, true)
+}
+
+func (l *ShinyLogger) ColorizedSansNl(msg string) (printed bool) {
+	return l.colorized(3, msg, false, false)
 }
 
 // If we send SIGTERM rather than explicitly exiting,
@@ -75,45 +80,45 @@ func terminate() {
 }
 
 func (l *ShinyLogger) FatalErrorString(msg string) {
-	l.colorized(3, "{red}"+msg, true)
+	l.colorized(3, "{red}"+msg, true, true)
 	terminate()
 }
 
 func (l *ShinyLogger) FatalError(err error) {
-	l.colorized(3, "{red}"+err.Error(), true)
+	l.colorized(3, "{red}"+err.Error(), true, true)
 	terminate()
 }
 
 func (l *ShinyLogger) Error(err error) bool {
-	return l.colorized(3, "{red}"+err.Error(), true)
+	return l.colorized(3, "{red}"+err.Error(), true, true)
 }
 
 func (l *ShinyLogger) ErrorString(msg string) bool {
-	return l.colorized(3, "{red}"+msg, true)
+	return l.colorized(3, "{red}"+msg, true, true)
 }
 
 func (l *ShinyLogger) Red(msg string) bool {
-	return l.colorized(3, "{red}"+msg, false)
+	return l.colorized(3, "{red}"+msg, false, true)
 }
 
 func (l *ShinyLogger) Green(msg string) bool {
-	return l.colorized(3, "{green}"+msg, false)
+	return l.colorized(3, "{green}"+msg, false, true)
 }
 
 func (l *ShinyLogger) Brightgreen(msg string) bool {
-	return l.colorized(3, "{brightgreen}"+msg, false)
+	return l.colorized(3, "{brightgreen}"+msg, false, true)
 }
 
 func (l *ShinyLogger) Yellow(msg string) bool {
-	return l.colorized(3, "{yellow}"+msg, false)
+	return l.colorized(3, "{yellow}"+msg, false, true)
 }
 
 func (l *ShinyLogger) Blue(msg string) bool {
-	return l.colorized(3, "{blue}"+msg, false)
+	return l.colorized(3, "{blue}"+msg, false, true)
 }
 
 func (l *ShinyLogger) Magenta(msg string) bool {
-	return l.colorized(3, "{magenta}"+msg, false)
+	return l.colorized(3, "{magenta}"+msg, false, true)
 }
 
 func (l *ShinyLogger) formatColors(msg string) string {
@@ -137,7 +142,7 @@ func (l *ShinyLogger) formatColors(msg string) string {
 	return msg
 }
 
-func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool) (printed bool) {
+func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool, printNewline bool) (printed bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -150,7 +155,11 @@ func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool) (printe
 		if isError {
 			l.sadLogger.Output(callDepth, msg+reset)
 		} else {
-			println(msg + reset)
+			if printNewline {
+				fmt.Println(msg + reset)
+			} else {
+				fmt.Print(msg + reset)
+			}
 			//l.happyLogger.Output(callDepth, msg+reset)
 		}
 	}
