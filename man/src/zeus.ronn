@@ -3,13 +3,13 @@ zeus(1) -- boot rails in under a second
 
 ## SYNOPSIS
 
-`zeus` [--no-color] COMMAND [ARGS]
+`zeus` [--no-color] [--log FILE] [--file-change-delay TIME] COMMAND [ARGS]
 
 ## DESCRIPTION
 
 Zeus makes working with large codebases much less painful.
 
-To use Zeus with Ruby on Rails 3.0+, Just run `zeus start` in your 
+To use Zeus with Ruby on Rails 3.0+, Just run `zeus start` in your
 project directory. It will output a list of available commands, including
 tasks to spawn consoles, servers, tests, and rake tasks.
 
@@ -48,6 +48,14 @@ See `https://github.com/burke/zeus/blob/master/docs/overview.md`
 * `--no-color`:
   Prints all output without color
 
+* `--log` trace-log-name:
+  Prints process tree state details to the log file specified.
+
+* `--file-change-delay` delay:
+  Collect all file changes that happen within the specified delay time
+  and restart processes only after this deadline expires. The argument
+  must be parseable by time.ParseDuration. The default delay is 300ms.
+
 ## BUILTIN COMMANDS
 
 * [zeus start(1)][zeus-start]:
@@ -58,4 +66,3 @@ See `https://github.com/burke/zeus/blob/master/docs/overview.md`
 
 * `zeus commands(1)`:
   List the commands defined by zeus.json
-
