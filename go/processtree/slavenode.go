@@ -2,7 +2,6 @@ package processtree
 
 import (
 	"bufio"
-	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -11,6 +10,7 @@ import (
 	"sync"
 	"syscall"
 
+	"fmt"
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
@@ -33,6 +33,7 @@ type SlaveNode struct {
 	needsRestart        chan bool            // size 1
 	commandBootRequests chan *CommandRequest // size 256
 	slaveBootRequests   chan *SlaveNode      // size 256
+	parentRestarts      chan bool            // size 256 (TODO: rename me)
 
 	L           sync.Mutex
 	State       string
@@ -52,11 +53,12 @@ type CommandRequest struct {
 }
 
 const (
-	SWaiting  = "W"
-	SUnbooted = "U"
-	SBooting  = "B"
-	SReady    = "R"
-	SCrashed  = "C"
+	SWaiting    = "W"
+	SUnbooted   = "U"
+	SBooting    = "B"
+	SReady      = "R"
+	SCrashed    = "C"
+	SRestarting = "S"
 )
 
 func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *SlaveNode {
@@ -64,6 +66,7 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 	s.needsRestart = make(chan bool, 1)
 	s.commandBootRequests = make(chan *CommandRequest, 256)
 	s.slaveBootRequests = make(chan *SlaveNode, 256)
+	s.parentRestarts = make(chan bool, 256)
 	s.Features = make(map[string]bool)
 	s.event = make(chan bool, 1)
 	s.Name = identifier
@@ -86,15 +89,21 @@ func (s *SlaveNode) WaitUntilReadyOrCrashed() {
 // There's no need to trigger a restart if the slave has not yet begun to
 // execute its action, and there's no need to queue multiple restarts.
 func (s *SlaveNode) RequestRestart() {
+	s.requestRestart(false)
+}
+
+func (s *SlaveNode) requestRestart(asChild bool) {
 	s.L.Lock()
-	if s.State == SBooting || s.State == SReady || s.State == SCrashed {
+	if s.State == SBooting || s.State == SReady || s.State == SCrashed || s.State == SWaiting {
 		if len(s.needsRestart) == 0 {
-			s.needsRestart <- true
+			s.needsRestart <- asChild
 		}
 	}
 	s.L.Unlock()
 	for _, slave := range s.Slaves {
-		slave.RequestRestart()
+		if slave.State == SBooting || slave.State == SReady || slave.State == SCrashed {
+			slave.requestRestart(true)
+		}
 	}
 }
 
@@ -147,6 +156,8 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 			nextState = s.doCrashedOrReadyState()
 		case SReady:
 			nextState = s.doCrashedOrReadyState()
+		case SRestarting:
+			nextState = s.doRestartingState()
 		default:
 			slog.FatalErrorString("Unrecognized state: " + nextState)
 		}
@@ -249,6 +260,13 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 
 	for {
 		select {
+		case asChild := <-s.needsRestart:
+			s.L.Lock()
+			if !asChild {
+				s.parentRestarts <- true
+			}
+			s.L.Unlock()
+			return SRestarting
 		case slave := <-s.slaveBootRequests:
 			s.L.Lock()
 			slog.Trace("%s/%d now booting slave %s", s.Name, s.Pid, slave.Name)
@@ -256,17 +274,33 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 			s.L.Unlock()
 		case request := <-s.commandBootRequests:
 			s.L.Lock()
+			slog.Trace("%s/%d sending boot command %v", s.Name, s.Pid, request)
 			s.bootCommand(request)
 			s.L.Unlock()
-		case <-s.needsRestart:
-			s.L.Lock()
-			s.ForceKill()
-			s.wipe()
-			s.L.Unlock()
-			return SWaiting
 		}
 	}
 	return "impossible"
+}
+
+// In the "SRestarting" state, the slave node is waiting for its
+// parent node to exit so that restarts align correctly with the new
+// code being loaded, as otherwise a particularly fast child node may
+// ask the parent to restart it before its time has come.
+func (s *SlaveNode) doRestartingState() string {
+	slog.Trace("%s/%d is waiting on a restart: %d entries on parentRestarts", s.Name, s.Pid, len(s.parentRestarts))
+	select {
+	case <-s.parentRestarts:
+		slog.Trace("%s/%d's parent is initiating a restart now, safe to terminate now.", s.Name, s.Pid)
+		s.L.Lock()
+		s.ForceKill()
+		s.wipe()
+		s.L.Unlock()
+	}
+	for _, slave := range s.Slaves {
+		slave.parentRestarts <- true
+	}
+
+	return SWaiting
 }
 
 // This should only be called while holding a lock on s.L.
