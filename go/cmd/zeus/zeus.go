@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -17,17 +18,26 @@ import (
 var color bool = true
 
 func main() {
-	if len(os.Args) == 1 {
-		execManPage("zeus")
-	}
-
 	var args []string
-	if os.Args[1] == "--no-color" {
-		color = false
-		slog.DisableColor()
-		args = os.Args[2:]
-	} else {
-		args = os.Args[1:]
+
+	for args = os.Args[1:]; args != nil && len(args) > 0 && args[0][0] == '-'; args = args[1:] {
+		switch args[0] {
+		case "--no-color":
+			color = false
+			slog.DisableColor()
+		case "--log":
+			tracefile, err := os.OpenFile(args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+			if err == nil {
+				slog.TraceLogger = slog.NewTraceLogger(tracefile)
+				args = args[1:]
+			} else {
+				fmt.Printf("Could not open trace file %s", args[1])
+				return
+			}
+		}
+	}
+	if len(args) == 0 {
+		execManPage("zeus")
 	}
 
 	if generalHelpRequested(args) {

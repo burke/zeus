@@ -174,6 +174,7 @@ func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 // state, we tell the parent process to spawn a process for us, and wait
 // to hear back from the SlaveMonitor.
 func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBooting, SCrashed}
+	slog.Trace("%s is unbooted", s.Name)
 	if s.Parent == nil {
 		s.L.Lock()
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
@@ -206,7 +207,7 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	if err != nil {
 		slog.Error(err)
 	}
-
+	slog.Trace("%s is booting", s.Name)
 	s.L.Lock()
 	defer s.L.Unlock()
 
@@ -239,6 +240,7 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 	if s.State == SReady && !s.featureHandlerRunning {
 		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
+		slog.Trace("%s entered state SReady", s.Name)
 		go s.handleMessages()
 	}
 	s.L.Unlock()
@@ -249,6 +251,7 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 		select {
 		case slave := <-s.slaveBootRequests:
 			s.L.Lock()
+			slog.Trace("%s/%d now booting slave %s", s.Name, s.Pid, slave.Name)
 			s.bootSlave(slave)
 			s.L.Unlock()
 		case request := <-s.commandBootRequests:
