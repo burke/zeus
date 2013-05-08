@@ -33,7 +33,8 @@ type SlaveNode struct {
 	needsRestart        chan bool            // size 1
 	commandBootRequests chan *CommandRequest // size 256
 	slaveBootRequests   chan *SlaveNode      // size 256
-	parentRestarts      chan bool            // size 256 (TODO: rename me)
+	parentReadiness     chan bool            // size 256 (TODO: rename me)
+	childBootRequests   chan *SlaveNode      // size 1
 
 	L           sync.Mutex
 	State       string
@@ -53,12 +54,11 @@ type CommandRequest struct {
 }
 
 const (
-	SWaiting    = "W"
-	SUnbooted   = "U"
-	SBooting    = "B"
-	SReady      = "R"
-	SCrashed    = "C"
-	SRestarting = "S"
+	SWaiting  = "W"
+	SUnbooted = "U"
+	SBooting  = "B"
+	SReady    = "R"
+	SCrashed  = "C"
 )
 
 func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *SlaveNode {
@@ -66,7 +66,8 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 	s.needsRestart = make(chan bool, 1)
 	s.commandBootRequests = make(chan *CommandRequest, 256)
 	s.slaveBootRequests = make(chan *SlaveNode, 256)
-	s.parentRestarts = make(chan bool, 256)
+	s.parentReadiness = make(chan bool, 1)
+	s.childBootRequests = make(chan *SlaveNode, 256)
 	s.Features = make(map[string]bool)
 	s.event = make(chan bool, 1)
 	s.Name = identifier
@@ -75,14 +76,6 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 	s.stateChange = sync.NewCond(&mutex)
 	tree.SlavesByName[identifier] = &s
 	return &s
-}
-
-func (s *SlaveNode) WaitUntilReadyOrCrashed() {
-	s.stateChange.L.Lock()
-	for s.State != SReady && s.State != SCrashed && len(s.needsRestart) == 0 {
-		s.stateChange.Wait()
-	}
-	s.stateChange.L.Unlock()
 }
 
 // If the slave is executing, or has executed its action, trigger a restart.
@@ -156,8 +149,6 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 			nextState = s.doCrashedOrReadyState()
 		case SReady:
 			nextState = s.doCrashedOrReadyState()
-		case SRestarting:
-			nextState = s.doRestartingState()
 		default:
 			slog.FatalErrorString("Unrecognized state: " + nextState)
 		}
@@ -176,7 +167,11 @@ func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 		// this is the root state. We get to skip this step. Hooray!
 		return SUnbooted
 	}
-	s.Parent.WaitUntilReadyOrCrashed()
+	s.Parent.childBootRequests <- s
+	select {
+	case <-s.parentReadiness:
+		slog.Trace("%s/%d's parent is ready now", s.Name, s.Pid)
+	}
 	return SUnbooted
 }
 
@@ -238,13 +233,14 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	return SCrashed
 }
 
-// In the "SCrashed" and "SReady" states, we have either a functioning process
-// we can spawn new processes off of, or an error message to propagate to
-// the user. The high-level operation of these two states is identical:
-// First, we work off the queue of command and slave boot requests that have
-// built up while this process was booting. Then, we begin a 3-way select
-// over those channels with the addition of the "restart" channel, which
-// kills the process and transitions us to "SWaiting".
+// In the "SCrashed" and "SReady" states, we have either a functioning
+// process we can spawn new processes off of, or an error message to
+// propagate to the user. The high-level operation of these two states
+// is identical: First, we work off the queue of command and slave
+// boot requests that have built up while this process was
+// booting. Then, we begin a 4-way select over those channels, the
+// "restart" channel (which kills the process and transitions us to
+// "SWaiting") and a channel for restarted children to request booting.
 // In this way, we always serve queued fork requests before killing the process.
 func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 	s.L.Lock()
@@ -260,13 +256,14 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 
 	for {
 		select {
-		case asChild := <-s.needsRestart:
+		case <-s.needsRestart:
 			s.L.Lock()
-			if !asChild {
-				s.parentRestarts <- true
-			}
+			s.ForceKill()
+			s.wipe()
 			s.L.Unlock()
-			return SRestarting
+			return SWaiting
+		case child := <-s.childBootRequests:
+			child.parentReadiness <- true
 		case slave := <-s.slaveBootRequests:
 			s.L.Lock()
 			slog.Trace("%s/%d now booting slave %s", s.Name, s.Pid, slave.Name)
@@ -280,27 +277,6 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 		}
 	}
 	return "impossible"
-}
-
-// In the "SRestarting" state, the slave node is waiting for its
-// parent node to exit so that restarts align correctly with the new
-// code being loaded, as otherwise a particularly fast child node may
-// ask the parent to restart it before its time has come.
-func (s *SlaveNode) doRestartingState() string {
-	slog.Trace("%s/%d is waiting on a restart: %d entries on parentRestarts", s.Name, s.Pid, len(s.parentRestarts))
-	select {
-	case <-s.parentRestarts:
-		slog.Trace("%s/%d's parent is initiating a restart now, safe to terminate now.", s.Name, s.Pid)
-		s.L.Lock()
-		s.ForceKill()
-		s.wipe()
-		s.L.Unlock()
-	}
-	for _, slave := range s.Slaves {
-		slave.parentRestarts <- true
-	}
-
-	return SWaiting
 }
 
 // This should only be called while holding a lock on s.L.
