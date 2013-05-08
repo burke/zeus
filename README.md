@@ -47,6 +47,13 @@ Run some commands in another shell:
     zeus rake -T
     zeus runner omg.rb
 
+## Limitations
+
+You need to restart zeus if you make changes to various initialization files. Examples of these files include:
+
+    FactoryGirl factories
+    RSpec support files
+
 ## Related gems
 
 * [Spork](https://github.com/sporkrb/spork) - a [DRb server](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/drb/rdoc/DRb.html) that forks before each run to ensure a clean testing state
