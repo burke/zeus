@@ -33,6 +33,9 @@ module Zeus
     end
 
     def _monkeypatch_rake
+      if version = gem_is_bundled?('rake')
+        gem 'rake', version
+      end
       require 'rake/testtask'
       Rake::TestTask.class_eval {
 
