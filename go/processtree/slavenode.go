@@ -15,6 +15,7 @@ import (
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+	"runtime"
 )
 
 type SlaveNode struct {
@@ -170,7 +171,7 @@ func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 	s.Parent.childBootRequests <- s
 	select {
 	case <-s.parentReadiness:
-		slog.Trace("%s/%d's parent is ready now", s.Name, s.Pid)
+		s.trace("my parent is ready now")
 	}
 	return SUnbooted
 }
@@ -180,7 +181,7 @@ func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 // state, we tell the parent process to spawn a process for us, and wait
 // to hear back from the SlaveMonitor.
 func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBooting, SCrashed}
-	slog.Trace("%s is unbooted", s.Name)
+	s.trace("in unbooted state")
 	if s.Parent == nil {
 		s.L.Lock()
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
@@ -213,7 +214,7 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	if err != nil {
 		slog.Error(err)
 	}
-	slog.Trace("%s is booting", s.Name)
+	s.trace("in booting state")
 	s.L.Lock()
 	defer s.L.Unlock()
 
@@ -247,7 +248,7 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 	if s.State == SReady && !s.featureHandlerRunning {
 		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
-		slog.Trace("%s entered state SReady", s.Name)
+		s.trace("entered state SReady")
 		go s.handleMessages()
 	}
 	s.L.Unlock()
@@ -266,12 +267,12 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 			child.parentReadiness <- true
 		case slave := <-s.slaveBootRequests:
 			s.L.Lock()
-			slog.Trace("%s/%d now booting slave %s", s.Name, s.Pid, slave.Name)
+			s.trace("now sending slave boot request to %s", slave.Name)
 			s.bootSlave(slave)
 			s.L.Unlock()
 		case request := <-s.commandBootRequests:
 			s.L.Lock()
-			slog.Trace("%s/%d sending boot command %v", s.Name, s.Pid, request)
+			s.trace("now sending command boot request %v", request)
 			s.bootCommand(request)
 			s.L.Unlock()
 		}
@@ -362,17 +363,22 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 	// die... either on program termination or when its dependencies change
 	// and we kill it. when it's requested to restart, err is "signal 9",
 	// and we do nothing.
+	s.trace("running the root command now")
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		// TODO
+		s.trace("root process exited; output was: %s", output)
 		println(string(output))
 		/* ErrorConfigCommandCrashed(string(output)) */
 	}
 	msg := err.Error()
 	if s.hasSuccessfullyBooted == false {
 		// TODO
+		s.trace("root process exited with an error before it could boot: %s; output was: %s", msg, output)
 		println(msg)
 		/* ErrorConfigCommandCouldntStart(msg, string(output)) */
+	} else {
+		s.trace("root process exited with an error & will be restarted: %s; output was: %s", msg, output)
 	}
 }
 
@@ -397,4 +403,21 @@ func (s *SlaveNode) handleMessages() {
 func (s *SlaveNode) handleFeatureMessage(msg string) {
 	s.Features[msg] = true
 	filemonitor.AddFile(msg)
+}
+
+func (s *SlaveNode) trace(format string, args ...interface{}) {
+	_, file, line, _ := runtime.Caller(1)
+
+	var prefix string
+	if s.Pid != 0 {
+		prefix = fmt.Sprintf("[%s:%d] %s/(%d)", file, line, s.Name, s.Pid)
+	} else {
+		prefix = fmt.Sprintf("[%s:%d] %s/(no PID)", file, line, s.Name)
+	}
+	new_args := make([]interface{}, len(args)+1)
+	new_args[0] = prefix
+	for i, v := range args {
+		new_args[i+1] = v
+	}
+	slog.Trace("%s "+format, new_args...)
 }
