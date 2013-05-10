@@ -60,8 +60,12 @@ func Yellow(msg string) bool              { return DefaultLogger.Yellow(msg) }
 func Blue(msg string) bool                { return DefaultLogger.Blue(msg) }
 func Magenta(msg string) bool             { return DefaultLogger.Magenta(msg) }
 
+func TraceEnabled() bool {
+	return TraceLogger != nil
+}
+
 func Trace(format string, v ...interface{}) bool {
-	if TraceLogger != nil {
+	if TraceEnabled() {
 		TraceLogger.Printf(format, v...)
 		return true
 	}

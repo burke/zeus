@@ -406,6 +406,10 @@ func (s *SlaveNode) handleFeatureMessage(msg string) {
 }
 
 func (s *SlaveNode) trace(format string, args ...interface{}) {
+	if !slog.TraceEnabled() {
+		return
+	}
+
 	_, file, line, _ := runtime.Caller(1)
 
 	var prefix string
