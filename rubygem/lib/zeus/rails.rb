@@ -76,6 +76,7 @@ module Zeus
 
     def boot
       _monkeypatch_rake
+      $LOAD_PATH.unshift "./lib"
 
       require BOOT_PATH
       # config/application.rb normally requires 'rails/all'.
