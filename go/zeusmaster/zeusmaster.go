@@ -9,6 +9,7 @@ import (
 	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/zeus/go/restarter"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/statuschart"
 	"github.com/burke/zeus/go/zerror"
@@ -36,6 +37,7 @@ func doRun() int {
 	defer exit(processtree.StartSlaveMonitor(tree, done), done)
 	defer exit(clienthandler.Start(tree, done), done)
 	defer exit(filemonitorDone, done)
+	defer exit(restarter.Start(tree, filesChanged, done), done)
 	defer slog.Suppress()
 	defer zerror.PrintFinalOutput()
 	defer exit(statuschart.Start(tree, done), done)
@@ -51,8 +53,6 @@ func doRun() int {
 			} else {
 				return 1
 			}
-		case changed := <-filesChanged:
-			go tree.RestartNodesWithFeature(changed)
 		}
 	}
 	return -1 // satisfy the compiler

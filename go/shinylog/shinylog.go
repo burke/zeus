@@ -27,6 +27,12 @@ func NewShinyLogger(out, err interface {
 	return &ShinyLogger{mu, *happyLogger, *sadLogger, false, false}
 }
 
+func NewTraceLogger(out interface {
+	io.Writer
+},) *log.Logger {
+	return log.New(out, "", log.Ldate|log.Ltime|log.Lmicroseconds)
+}
+
 const (
 	red         = "\x1b[31m"
 	green       = "\x1b[32m"
@@ -38,6 +44,7 @@ const (
 )
 
 var DefaultLogger *ShinyLogger = NewShinyLogger(os.Stdout, os.Stderr)
+var TraceLogger *log.Logger = nil
 
 func Suppress()                           { DefaultLogger.Suppress() }
 func DisableColor()                       { DefaultLogger.DisableColor() }
@@ -52,6 +59,18 @@ func Brightgreen(msg string) bool         { return DefaultLogger.Brightgreen(msg
 func Yellow(msg string) bool              { return DefaultLogger.Yellow(msg) }
 func Blue(msg string) bool                { return DefaultLogger.Blue(msg) }
 func Magenta(msg string) bool             { return DefaultLogger.Magenta(msg) }
+
+func TraceEnabled() bool {
+	return TraceLogger != nil
+}
+
+func Trace(format string, v ...interface{}) bool {
+	if TraceEnabled() {
+		TraceLogger.Printf(format, v...)
+		return true
+	}
+	return false
+}
 
 func (l *ShinyLogger) Suppress() {
 	l.mu.Lock()

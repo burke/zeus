@@ -2,7 +2,6 @@ package processtree
 
 import (
 	"bufio"
-	"fmt"
 	"math/rand"
 	"os"
 	"os/exec"
@@ -11,10 +10,12 @@ import (
 	"sync"
 	"syscall"
 
+	"fmt"
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+	"runtime"
 )
 
 type SlaveNode struct {
@@ -33,6 +34,8 @@ type SlaveNode struct {
 	needsRestart        chan bool            // size 1
 	commandBootRequests chan *CommandRequest // size 256
 	slaveBootRequests   chan *SlaveNode      // size 256
+	parentReadiness     chan bool            // size 256 (TODO: rename me)
+	childBootRequests   chan *SlaveNode      // size 1
 
 	L           sync.Mutex
 	State       string
@@ -64,6 +67,8 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 	s.needsRestart = make(chan bool, 1)
 	s.commandBootRequests = make(chan *CommandRequest, 256)
 	s.slaveBootRequests = make(chan *SlaveNode, 256)
+	s.parentReadiness = make(chan bool, 1)
+	s.childBootRequests = make(chan *SlaveNode, 256)
 	s.Features = make(map[string]bool)
 	s.event = make(chan bool, 1)
 	s.Name = identifier
@@ -74,27 +79,25 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 	return &s
 }
 
-func (s *SlaveNode) WaitUntilReadyOrCrashed() {
-	s.stateChange.L.Lock()
-	for s.State != SReady && s.State != SCrashed && len(s.needsRestart) == 0 {
-		s.stateChange.Wait()
-	}
-	s.stateChange.L.Unlock()
-}
-
 // If the slave is executing, or has executed its action, trigger a restart.
 // There's no need to trigger a restart if the slave has not yet begun to
 // execute its action, and there's no need to queue multiple restarts.
 func (s *SlaveNode) RequestRestart() {
+	s.requestRestart(false)
+}
+
+func (s *SlaveNode) requestRestart(asChild bool) {
 	s.L.Lock()
-	if s.State == SBooting || s.State == SReady || s.State == SCrashed {
+	if s.State == SBooting || s.State == SReady || s.State == SCrashed || s.State == SWaiting {
 		if len(s.needsRestart) == 0 {
-			s.needsRestart <- true
+			s.needsRestart <- asChild
 		}
 	}
 	s.L.Unlock()
 	for _, slave := range s.Slaves {
-		slave.RequestRestart()
+		if slave.State == SBooting || slave.State == SReady || slave.State == SCrashed {
+			slave.requestRestart(true)
+		}
 	}
 }
 
@@ -165,7 +168,11 @@ func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 		// this is the root state. We get to skip this step. Hooray!
 		return SUnbooted
 	}
-	s.Parent.WaitUntilReadyOrCrashed()
+	s.Parent.childBootRequests <- s
+	select {
+	case <-s.parentReadiness:
+		s.trace("my parent is ready now")
+	}
 	return SUnbooted
 }
 
@@ -174,6 +181,7 @@ func (s *SlaveNode) doWaitingState() string { // -> SUnbooted
 // state, we tell the parent process to spawn a process for us, and wait
 // to hear back from the SlaveMonitor.
 func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBooting, SCrashed}
+	s.trace("in unbooted state")
 	if s.Parent == nil {
 		s.L.Lock()
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
@@ -206,7 +214,7 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	if err != nil {
 		slog.Error(err)
 	}
-
+	s.trace("in booting state")
 	s.L.Lock()
 	defer s.L.Unlock()
 
@@ -226,19 +234,21 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	return SCrashed
 }
 
-// In the "SCrashed" and "SReady" states, we have either a functioning process
-// we can spawn new processes off of, or an error message to propagate to
-// the user. The high-level operation of these two states is identical:
-// First, we work off the queue of command and slave boot requests that have
-// built up while this process was booting. Then, we begin a 3-way select
-// over those channels with the addition of the "restart" channel, which
-// kills the process and transitions us to "SWaiting".
+// In the "SCrashed" and "SReady" states, we have either a functioning
+// process we can spawn new processes off of, or an error message to
+// propagate to the user. The high-level operation of these two states
+// is identical: First, we work off the queue of command and slave
+// boot requests that have built up while this process was
+// booting. Then, we begin a 4-way select over those channels, the
+// "restart" channel (which kills the process and transitions us to
+// "SWaiting") and a channel for restarted children to request booting.
 // In this way, we always serve queued fork requests before killing the process.
 func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 	s.L.Lock()
 	if s.State == SReady && !s.featureHandlerRunning {
 		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
+		s.trace("entered state SReady")
 		go s.handleMessages()
 	}
 	s.L.Unlock()
@@ -247,20 +257,24 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 
 	for {
 		select {
-		case slave := <-s.slaveBootRequests:
-			s.L.Lock()
-			s.bootSlave(slave)
-			s.L.Unlock()
-		case request := <-s.commandBootRequests:
-			s.L.Lock()
-			s.bootCommand(request)
-			s.L.Unlock()
 		case <-s.needsRestart:
 			s.L.Lock()
 			s.ForceKill()
 			s.wipe()
 			s.L.Unlock()
 			return SWaiting
+		case child := <-s.childBootRequests:
+			child.parentReadiness <- true
+		case slave := <-s.slaveBootRequests:
+			s.L.Lock()
+			s.trace("now sending slave boot request to %s", slave.Name)
+			s.bootSlave(slave)
+			s.L.Unlock()
+		case request := <-s.commandBootRequests:
+			s.L.Lock()
+			s.trace("now sending command boot request %v", request)
+			s.bootCommand(request)
+			s.L.Unlock()
 		}
 	}
 	return "impossible"
@@ -349,17 +363,32 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 	// die... either on program termination or when its dependencies change
 	// and we kill it. when it's requested to restart, err is "signal 9",
 	// and we do nothing.
+	s.trace("running the root command now")
 	output, err := cmd.CombinedOutput()
 	if err == nil {
 		// TODO
+		s.trace("root process exited; output was: %s", output)
 		println(string(output))
 		/* ErrorConfigCommandCrashed(string(output)) */
 	}
 	msg := err.Error()
 	if s.hasSuccessfullyBooted == false {
 		// TODO
+		s.trace("root process exited with an error before it could boot: %s; output was: %s", msg, output)
 		println(msg)
 		/* ErrorConfigCommandCouldntStart(msg, string(output)) */
+	} else if msg == "signal 9" {
+		s.trace("root process exited because we killed it & it will be restarted: %s; output was: %s", msg, output)
+	} else {
+		s.L.Lock()
+		defer s.L.Unlock()
+		if s.State == SUnbooted {
+			s.trace("root process exited with error. Sending it to crashed state. Message was: %s; output: %s", msg, output)
+			s.Error = fmt.Sprintf("Zeus root process (%s) died with message %s:\n%s", s.Name, msg, output)
+			s.event <- true
+		} else {
+			s.trace("Unexpected state for root process to be in at this time: %s", s.State)
+		}
 	}
 }
 
@@ -384,4 +413,25 @@ func (s *SlaveNode) handleMessages() {
 func (s *SlaveNode) handleFeatureMessage(msg string) {
 	s.Features[msg] = true
 	filemonitor.AddFile(msg)
+}
+
+func (s *SlaveNode) trace(format string, args ...interface{}) {
+	if !slog.TraceEnabled() {
+		return
+	}
+
+	_, file, line, _ := runtime.Caller(1)
+
+	var prefix string
+	if s.Pid != 0 {
+		prefix = fmt.Sprintf("[%s:%d] %s/(%d)", file, line, s.Name, s.Pid)
+	} else {
+		prefix = fmt.Sprintf("[%s:%d] %s/(no PID)", file, line, s.Name)
+	}
+	new_args := make([]interface{}, len(args)+1)
+	new_args[0] = prefix
+	for i, v := range args {
+		new_args[i+1] = v
+	}
+	slog.Trace("%s "+format, new_args...)
 }
