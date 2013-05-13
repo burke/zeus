@@ -377,8 +377,18 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 		s.trace("root process exited with an error before it could boot: %s; output was: %s", msg, output)
 		println(msg)
 		/* ErrorConfigCommandCouldntStart(msg, string(output)) */
+	} else if msg == "signal 9" {
+		s.trace("root process exited because we killed it & it will be restarted: %s; output was: %s", msg, output)
 	} else {
-		s.trace("root process exited with an error & will be restarted: %s; output was: %s", msg, output)
+		s.L.Lock()
+		defer s.L.Unlock()
+		if s.State == SUnbooted {
+			s.trace("root process exited with error. Sending it to crashed state. Message was: %s; output: %s", msg, output)
+			s.Error = fmt.Sprintf("Zeus root process (%s) died with message %s:\n%s", s.Name, msg, output)
+			s.event <- true
+		} else {
+			s.trace("Unexpected state for root process to be in at this time: %s", s.State)
+		}
 	}
 }
 
