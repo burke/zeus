@@ -67,18 +67,20 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 
 var restartMutex sync.Mutex
 
-func (tree *ProcessTree) RestartNodesWithFeature(file string) {
+func (tree *ProcessTree) RestartNodesWithFeatures(files map[string]bool) {
 	restartMutex.Lock()
 	defer restartMutex.Unlock()
-	tree.Root.restartNodesWithFeature(tree, file)
+	tree.Root.restartNodesWithFeatures(tree, files)
 }
 
-func (node *SlaveNode) restartNodesWithFeature(tree *ProcessTree, file string) {
-	if node.Features[file] {
-		node.RequestRestart()
-	} else {
-		for _, s := range node.Slaves {
-			s.restartNodesWithFeature(tree, file)
+func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files map[string]bool) {
+	for file, _ := range files {
+		if node.Features[file] {
+			node.RequestRestart()
+			return
 		}
+	}
+	for _, s := range node.Slaves {
+		s.restartNodesWithFeatures(tree, files)
 	}
 }

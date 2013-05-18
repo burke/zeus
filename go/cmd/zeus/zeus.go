@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path"
@@ -8,26 +9,48 @@ import (
 	"syscall"
 
 	"github.com/burke/zeus/go/config"
+	"github.com/burke/zeus/go/restarter"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/zeusclient"
 	"github.com/burke/zeus/go/zeusmaster"
 	"github.com/burke/zeus/go/zeusversion"
+	"time"
 )
 
 var color bool = true
 
 func main() {
-	if len(os.Args) == 1 {
-		execManPage("zeus")
-	}
-
 	var args []string
-	if os.Args[1] == "--no-color" {
-		color = false
-		slog.DisableColor()
-		args = os.Args[2:]
-	} else {
-		args = os.Args[1:]
+
+	for args = os.Args[1:]; args != nil && len(args) > 0 && args[0][0] == '-'; args = args[1:] {
+		switch args[0] {
+		case "--no-color":
+			color = false
+			slog.DisableColor()
+		case "--log":
+			tracefile, err := os.OpenFile(args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+			if err == nil {
+				slog.TraceLogger = slog.NewTraceLogger(tracefile)
+				args = args[1:]
+			} else {
+				fmt.Printf("Could not open trace file %s", args[1])
+				return
+			}
+		case "--file-change-delay":
+			if len(args) > 1 {
+				delay, err := time.ParseDuration(args[1])
+				if err != nil {
+					execManPage("zeus")
+				}
+				args = args[1:]
+				restarter.FileChangeWindow = delay
+			} else {
+				execManPage("zeus")
+			}
+		}
+	}
+	if len(args) == 0 {
+		execManPage("zeus")
 	}
 
 	if generalHelpRequested(args) {
