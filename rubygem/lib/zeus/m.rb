@@ -198,9 +198,7 @@ module Zeus
         case framework
         when :minitest
           nerf_test_unit_autorunner
-          exit_code = nil
-          at_exit { exit false if exit_code && exit_code != 0 }
-          exit_code = MiniTest::Unit.runner.run test_arguments
+          exit(MiniTest::Unit.runner.run(test_arguments).to_i)
         when :testunit1, :testunit2
           exit Test::Unit::AutoRunner.run(false, nil, test_arguments)
         else
