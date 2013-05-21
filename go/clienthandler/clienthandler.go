@@ -16,12 +16,10 @@ import (
 	"github.com/burke/zeus/go/zerror"
 )
 
-const zeusSockName string = ".zeus.sock"
-
 func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
-		path, _ := filepath.Abs(zeusSockName)
+		path, _ := filepath.Abs(unixsocket.ZeusSockName())
 		addr, err := net.ResolveUnixAddr("unix", path)
 		if err != nil {
 			zerror.Error("Can't open socket.")

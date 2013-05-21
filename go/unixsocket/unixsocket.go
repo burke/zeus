@@ -23,6 +23,19 @@ type Usock struct {
 	partialMessage string
 }
 
+var sockName string
+
+func init() {
+	sockName = os.Getenv("ZEUSSOCK")
+	if sockName == "" {
+		sockName = ".zeus.sock"
+	}
+}
+
+func ZeusSockName() string {
+	return sockName
+}
+
 func NewUsock(conn *net.UnixConn) *Usock {
 	return &Usock{Conn: conn}
 }
