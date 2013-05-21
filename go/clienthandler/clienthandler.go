@@ -16,7 +16,6 @@ import (
 	"github.com/burke/zeus/go/zerror"
 )
 
-
 func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
