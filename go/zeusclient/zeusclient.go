@@ -17,9 +17,9 @@ import (
 )
 
 const (
-	sigInt       = 3 // todo: this doesn't seem unicode-friendly...
-	sigQuit      = 28
-	sigTstp      = 26
+	sigInt  = 3 // todo: this doesn't seem unicode-friendly...
+	sigQuit = 28
+	sigTstp = 26
 )
 
 func Run() {
