@@ -7,6 +7,8 @@ This screencast gives a quick overview of how to use zeus with Rails.
 
 [![Watch the screencast!](http://s3.amazonaws.com/burkelibbey/vimeo-zeus.png)](http://vimeo.com/burkelibbey/zeus)
 
+Zeus is also covered in [RailsCasts episode 412](http://railscasts.com/episodes/412-fast-rails-commands)
+
 More technically speaking, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is on the horizon.
 
 ## Requirements (for use with Rails)
