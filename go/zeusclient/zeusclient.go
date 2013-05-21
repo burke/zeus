@@ -17,7 +17,6 @@ import (
 )
 
 const (
-	zeusSockName = ".zeus.sock"
 	sigInt       = 3 // todo: this doesn't seem unicode-friendly...
 	sigQuit      = 28
 	sigTstp      = 26
@@ -63,7 +62,7 @@ func doRun() int {
 	// should this happen if we're running over a pipe? I think maybe not?
 	ttyutils.MirrorWinsize(os.Stdout, master)
 
-	addr, err := net.ResolveUnixAddr("unixgram", zeusSockName)
+	addr, err := net.ResolveUnixAddr("unixgram", unixsocket.ZeusSockName())
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
