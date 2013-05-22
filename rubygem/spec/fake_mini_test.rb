@@ -20,12 +20,23 @@ def fake_suite
                   :instance_method => fake_instance_method)
 end
 
+def fake_suite_with_special_characters
+  @suite ||= stub("TestSuite",
+                  :test_methods => [fake_special_characters_test_method],
+                  :instance_method => fake_instance_method(fake_special_characters_test_method))
+end
+
 def fake_test_method
   "test_method"
 end
 
-def fake_instance_method
+def fake_special_characters_test_method
+  "test_my_test_method?"
+end
+
+def fake_instance_method(name=fake_test_method)
   @instance_method ||=  stub("InstanceMethod",
                              :source_location => ["path/to/file.rb", 2],
-                             :source => "def #{fake_test_method} \n assert true \n end")
+                             :source => "def #{name} \n assert true \n end")
 end
+

@@ -219,7 +219,7 @@ module Zeus
           abort_with_no_test_found_by_line_number if @tests_to_run.empty?
 
           # assemble the regexp to run these tests,
-          test_names = @tests_to_run.map(&:name).join('|')
+          test_names = @tests_to_run.map(&:escaped_name).join('|')
 
           # set up the args needed for the runner
           ["-n", "/(#{test_names})/"]
@@ -246,7 +246,7 @@ module Zeus
         # For every test ordered by line number,
         # spit out the test name and line number where it starts,
         tests.by_line_number do |test|
-          message << "#{sprintf("%0#{tests.column_size}s", test.name)}: zeus test #{@files[0]}:#{test.start_line}\n"
+          message << "#{sprintf("%0#{tests.column_size}s", test.escaped_name)}: zeus test #{@files[0]}:#{test.start_line}\n"
         end
 
         # fail like a good unix process should.
@@ -254,7 +254,7 @@ module Zeus
       end
 
       def test_name_to_s
-        @test_name.is_a?(Regexp)? "/#{@test_name.source}/" : @test_name
+        @test_name.is_a?(Regexp)? "/#{Regexp.escape(@test_name.source)}/" : Regexp.escape(@test_name)
       end
 
       def user_specified_name?
