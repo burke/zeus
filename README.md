@@ -31,6 +31,8 @@ Q: "I should put it in my `Gemfile`, right?"
 
 A: No. You can, but running `bundle exec zeus` instead of `zeus` adds precious seconds to commands that otherwise would be quite a bit faster. Zeus was built to be run from outside of bundler.
 
+If using RSpec, you may need to disable `require 'rspec/autotest'` or `require 'rspec/autorun'` (see #134)
+
 ## Usage
 
 Start the server:
