@@ -4,6 +4,33 @@ require 'fake_mini_test'
 describe Zeus::M::Runner do
   Runner = Zeus::M::Runner
 
+  context "given a test with a question mark" do
+    before do
+      MiniTest::Unit::TestCase.stub!(:test_suites).and_return [fake_suite_with_special_characters]
+      MiniTest::Unit.stub!(:runner).and_return fake_runner
+    end
+
+    it "escapes the question mark when using line number" do
+      argv = ["path/to/file.rb:2"]
+
+      fake_runner.should_receive(:run).with(["-n", "/(test_my_test_method\\?)/"])
+
+      lambda { Runner.new(argv).run }.should exit_with_code(0)
+    end
+
+    it "escapes the question mark from explicit names" do
+      argv = ["path/to/file.rb", "--name", fake_special_characters_test_method]
+
+      fake_runner.should_receive(:run).with(["-n", "test_my_test_method\\?"])
+
+      lambda { Runner.new(argv).run }.should exit_with_code(0)
+    end
+  end
+end
+
+describe Zeus::M::Runner do
+  Runner = Zeus::M::Runner
+
   before do
     stub_mini_test_methods
   end
