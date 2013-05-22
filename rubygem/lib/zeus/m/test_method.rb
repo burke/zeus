@@ -30,6 +30,10 @@ module Zeus
         # Shove the given attributes into a new databag
         new(test_method, start_line, end_line)
       end
+
+      def escaped_name
+        Regexp.escape(name)
+      end
     end
   end
 end
