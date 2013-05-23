@@ -48,10 +48,11 @@ module Zeus
       # Now I need to tell the master about my PID and ID
       local.write "P:#{Process.pid}:#{identifier}\0"
       local.send_io(feature_pipe_r)
+      feature_pipe_r.close
 
       # Now we run the action and report its success/fail status to the master.
       features = Zeus::LoadTracking.features_loaded_by {
-        run_action(local, identifier)
+        run_action(local, identifier, feature_pipe_w)
       }
 
       # the master wants to know about the files that running the action caused us to load.
@@ -161,13 +162,22 @@ module Zeus
       local.write str
     end
 
-    def run_action(socket, identifier)
-      plan.after_fork unless identifier == :boot
-      plan.send(identifier)
-      socket.write "R:OK\0"
-    rescue Exception => e
-      report_error_to_master(socket, e)
-    end
+    def run_action(socket, identifier, feature_pipe_w)
+      loaded = false
+      begin
+        plan.after_fork unless identifier == :boot
+        plan.send(identifier)
+        loaded = true
+        socket.write "R:OK\0"
+      rescue Exception => e
+        report_error_to_master(socket, e)
 
+        # Report any setup-time failures back to the Zeus master:
+        unless loaded
+          notify_features(feature_pipe_w, Zeus::LoadTracking.all_features)
+        end
+        feature_pipe_w.close
+      end
+    end
   end
 end

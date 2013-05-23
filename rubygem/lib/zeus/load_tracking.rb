@@ -18,12 +18,12 @@ module Zeus
         add_extra_feature(path) if path
       end
 
-      private
-
       def all_features
         untracked = defined?($untracked_features) ? $untracked_features : []
         $LOADED_FEATURES + untracked
       end
+
+      private
 
       def add_extra_feature(path)
         $untracked_features ||= []

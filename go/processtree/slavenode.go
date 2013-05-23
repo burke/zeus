@@ -226,6 +226,13 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 		return SReady
 	}
 
+	// Drain the process's feature messages, if we have any, so
+	// that reloads happen when any load-time problems get fixed:
+	s.L.Unlock()
+	s.handleMessages()
+	s.L.Lock()
+
+	// Clean up:
 	if s.Pid > 0 {
 		syscall.Kill(s.Pid, syscall.SIGKILL)
 	}

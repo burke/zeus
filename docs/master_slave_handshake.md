@@ -13,7 +13,7 @@ The Slave sends `remote` across `globalMasterSock`.
 #### 2. PID and Identifier
 
 The Slave determines whether it has been given an Identifier. If it is the first-booted slave, it was booted
-by the Master, and will not have one. When a Slave forks, it is passed an Identifier by the Master that it 
+by the Master, and will not have one. When a Slave forks, it is passed an Identifier by the Master that it
 passes along to the newly-forked process.
 
 The Slave sends a "Pid & Identifier" message containing the pid and the identifier (blank if initial process)
@@ -26,9 +26,12 @@ as a module that responds to a method named according to each identifier.
 
 If there were no runtime errors in evaluating the action, the Slave writes "OK" to `local`.
 
-If there were runtime errors, the slave returns a string representing the errors in an arbitrary and 
+If there were runtime errors, the slave returns a string representing the errors in an arbitrary and
 hopefully helpful format. It should normally be identical to the console output format should the errors
 have been raised and printed to stderr.
+
+Before the server kills a crashed slave process, it attempts to read
+any loaded files from `local`, until that socket is closed.
 
 #### 5. Loaded Files
 
