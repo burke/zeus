@@ -319,7 +319,7 @@ func (s *SlaveNode) bootCommand(request *CommandRequest) {
 		return
 	}
 	fileName := strconv.Itoa(rand.Int())
-	commandFile := unixsocket.FdToFile(commandFD, fileName)
+	commandFile := os.NewFile(uintptr(commandFD), fileName)
 	request.Retchan <- &CommandReply{s.State, commandFile}
 }
 

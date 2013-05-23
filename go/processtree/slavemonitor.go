@@ -31,7 +31,7 @@ func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 
 		monitor := &SlaveMonitor{tree, remoteMasterFile}
 
-		localMasterSocket, err := unixsocket.NewUsockFromFile(localMasterFile)
+		localMasterSocket, err := unixsocket.NewFromFile(localMasterFile)
 		if err != nil {
 			Error("Couldn't Open UNIXSocket")
 		}
@@ -40,11 +40,11 @@ func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 		registeringFds := make(chan int, 3)
 		go func() {
 			for {
-				fd, err := localMasterSocket.ReadFD()
-				if err != nil {
+				if fd, err := localMasterSocket.ReadFD(); err != nil {
 					slog.Error(err)
+				} else {
+					registeringFds <- fd
 				}
-				registeringFds <- fd
 			}
 		}()
 
@@ -75,15 +75,9 @@ func (mon *SlaveMonitor) cleanupChildren() {
 func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	// Having just started the process, we expect an IO, which we convert to a UNIX domain socket
 	fileName := strconv.Itoa(rand.Int())
-	slaveFile := unixsocket.FdToFile(fd, fileName)
-	slaveUsock, err := unixsocket.NewUsockFromFile(slaveFile)
+	slaveFile := os.NewFile(uintptr(fd), fileName)
+	slaveUsock, err := unixsocket.NewFromFile(slaveFile)
 	if err != nil {
-		slog.Error(err)
-	}
-	if err = slaveUsock.Conn.SetReadBuffer(1024); err != nil {
-		slog.Error(err)
-	}
-	if err = slaveUsock.Conn.SetWriteBuffer(1024); err != nil {
 		slog.Error(err)
 	}
 

@@ -1,6 +1,7 @@
 package unixsocket
 
 import (
+	"bufio"
 	"errors"
 	"fmt"
 	"io"
@@ -15,35 +16,6 @@ import (
 // https://github.com/hanwen/go-fuse/blob/master/fuse/mount.go
 // http://code.google.com/p/go/source/browse/src/pkg/syscall/syscall_bsd.go?spec=svn982df2b2cb4b6001e8b60f9e8a000751e9a42198&name=982df2b2cb4b&r=982df2b2cb4b6001e8b60f9e8a000751e9a42198
 
-type Usock struct {
-	Conn           *net.UnixConn
-	mu             sync.Mutex
-	readFDs        []int
-	readMessages   []string
-	partialMessage string
-}
-
-var sockName string
-
-func init() {
-	sockName = os.Getenv("ZEUSSOCK")
-	if sockName == "" {
-		sockName = ".zeus.sock"
-	}
-}
-
-func ZeusSockName() string {
-	return sockName
-}
-
-func NewUsock(conn *net.UnixConn) *Usock {
-	return &Usock{Conn: conn}
-}
-
-func FdToFile(fd int, name string) *os.File {
-	return os.NewFile(uintptr(fd), name)
-}
-
 func Socketpair(typ int) (a, b *os.File, err error) {
 	fd, err := syscall.Socketpair(syscall.AF_UNIX, typ, 0)
 	if err != nil {
@@ -51,26 +23,23 @@ func Socketpair(typ int) (a, b *os.File, err error) {
 		return nil, nil, e
 	}
 
-	a = FdToFile(fd[0], "socketpair-a")
-	b = FdToFile(fd[1], "socketpair-b")
+	a = os.NewFile(uintptr(fd[0]), "socketpair-a")
+	b = os.NewFile(uintptr(fd[1]), "socketpair-b")
 	return
 }
 
-func NewUsockFromFile(f *os.File) (*Usock, error) {
-	fileConn, err := net.FileConn(f)
-	if err != nil {
-		return nil, err
-	}
+type Usock struct {
+	Conn *net.UnixConn
+	oobs [][]byte
 
-	unixConn, ok := fileConn.(*net.UnixConn)
-	if !ok {
-		return nil, errors.New(fmt.Sprintf("unexpected FileConn type; expected UnixConn, got %T", unixConn))
-	}
-
-	return NewUsock(unixConn), nil
+	sync.Mutex
 }
 
-func MakeUnixSocket(f *os.File) (*net.UnixConn, error) {
+func New(conn *net.UnixConn) *Usock {
+	return &Usock{Conn: conn}
+}
+
+func NewFromFile(f *os.File) (*Usock, error) {
 	fileConn, err := net.FileConn(f)
 	if err != nil {
 		return nil, err
@@ -81,11 +50,51 @@ func MakeUnixSocket(f *os.File) (*net.UnixConn, error) {
 		return nil, errors.New(fmt.Sprintf("unexpected FileConn type; expected UnixConn, got %T", unixConn))
 	}
 
-	return unixConn, nil
+	return New(unixConn), nil
 }
 
 func (usock *Usock) Close() {
 	usock.Conn.Close()
+}
+
+func (u *Usock) ReadFD() (int, error) {
+	u.Lock()
+	defer u.Unlock()
+
+	if len(u.oobs) > 0 {
+		oob := u.oobs[0]
+		u.oobs = u.oobs[1:]
+		return extractFileDescriptorFromOOB(oob)
+	}
+
+	b := make([]byte, 0)
+	_, err := u.readLocked(b)
+	if err != nil {
+		return -1, err
+	}
+
+	if len(u.oobs) > 0 {
+		oob := u.oobs[0]
+		u.oobs = u.oobs[1:]
+		return extractFileDescriptorFromOOB(oob)
+	}
+
+	return -1, errors.New("No FD received :(")
+}
+
+func (usock *Usock) ReadMessage() (s string, err error) {
+	r := bufio.NewReader(usock)
+	s, err = r.ReadString(0)
+	if err == nil {
+		s = strings.TrimRight(s, "\000")
+	}
+	return
+}
+
+func (u *Usock) Read(b []byte) (int, error) {
+	u.Lock()
+	defer u.Unlock()
+	return u.readLocked(b)
 }
 
 func (usock *Usock) WriteMessage(msg string) (int, error) {
@@ -98,7 +107,7 @@ func (usock *Usock) WriteMessage(msg string) (int, error) {
 func (usock *Usock) WriteFD(fd int) error {
 	rights := syscall.UnixRights(fd)
 
-	dummyByte := []byte("\000")
+	dummyByte := []byte{0}
 	n, oobn, err := usock.Conn.WriteMsgUnix(dummyByte, rights, nil)
 	if err != nil {
 		str := fmt.Sprintf("Usock#WriteFD:WriteMsgUnix: %v %v\n", err, syscall.EINVAL)
@@ -110,127 +119,15 @@ func (usock *Usock) WriteFD(fd int) error {
 	}
 	return nil
 }
-
-func (usock *Usock) ReadFD() (int, error) {
-	usock.mu.Lock()
-	defer usock.mu.Unlock()
-
-	if fd := usock.returnFDIfRead(); fd >= 0 {
-		return fd, nil
-	}
-
-	if err := usock.readFromSocket(); err != nil {
-		return -1, err
-	}
-
-	if fd := usock.returnFDIfRead(); fd >= 0 {
-		return fd, nil
-	}
-
-	return -1, errors.New("Expected File Descriptor from socket; none received.")
-}
-
-func (usock *Usock) ReadMessage() (string, error) {
-	usock.mu.Lock()
-	defer usock.mu.Unlock()
-
-	if msg := usock.returnMessageIfRead(); msg != "" {
-		return msg, nil
-	}
-
-	if err := usock.readFromSocket(); err != nil {
-		return "", err
-	}
-
-	if msg := usock.returnMessageIfRead(); msg != "" {
-		return msg, nil
-	}
-
-	return "", errors.New("Expected message from socket; none received.")
-}
-
-func (usock *Usock) ReadMessageOrFD() (string, int, error) {
-	usock.mu.Lock()
-	defer usock.mu.Unlock()
-
-	if fd := usock.returnFDIfRead(); fd >= 0 {
-		return "", fd, nil
-	}
-	if msg := usock.returnMessageIfRead(); msg != "" {
-		return msg, -1, nil
-	}
-
-	if err := usock.readFromSocket(); err != nil {
-		return "", -1, err
-	}
-
-	if fd := usock.returnFDIfRead(); fd >= 0 {
-		return "", fd, nil
-	}
-	if msg := usock.returnMessageIfRead(); msg != "" {
-		return msg, -1, nil
-	}
-
-	return "", -1, errors.New("Expected message or FD from socket; none received.")
-}
-
-func (usock *Usock) returnFDIfRead() int {
-	if len(usock.readFDs) > 0 {
-		fd := usock.readFDs[0]
-		usock.readFDs = usock.readFDs[1:]
-		return fd
-	}
-	return -1
-}
-
-func (usock *Usock) returnMessageIfRead() string {
-	if len(usock.readMessages) > 0 {
-		msg := usock.readMessages[0]
-		usock.readMessages = usock.readMessages[1:]
-		return msg
-	}
-	return ""
-}
-
-func (usock *Usock) readFromSocket() (err error) {
-	buf := make([]byte, 1024)
+func (u *Usock) readLocked(b []byte) (int, error) {
 	oob := make([]byte, 32)
-
-	n, oobn, _, _, err := usock.Conn.ReadMsgUnix(buf, oob)
-	if err != nil {
-		return err
+	n, oobn, _, _, err := u.Conn.ReadMsgUnix(b, oob)
+	if oobn > 0 {
+		newOob := make([]byte, oobn)
+		copy(newOob, oob[:oobn])
+		u.oobs = append(u.oobs, newOob)
 	}
-	if oobn > 0 { // we got a file descriptor.
-		if fd, err := extractFileDescriptorFromOOB(oob[:oobn]); err != nil {
-			return err
-		} else {
-			usock.readFDs = append(usock.readFDs, fd)
-		}
-	}
-	if n > 0 {
-		// This relies on the fact that a message should be null terminated.
-		// `messages` for a single full message ("a message\000") then will be ["a message", ""]
-		messages := strings.Split(string(buf[:n]), "\000")
-		for index, message := range messages {
-			if message == "" {
-				continue
-			}
-			if usock.partialMessage != "" {
-				message = usock.partialMessage + message
-				usock.partialMessage = ""
-			}
-			if index == len(messages)-1 {
-				usock.partialMessage = message
-			} else {
-				usock.readMessages = append(usock.readMessages, message)
-			}
-		}
-		// if we only got a partial message, and there's nothing currently buffered to return, read again.
-		if len(usock.readMessages) == 0 && usock.partialMessage != "" {
-			return usock.readFromSocket()
-		}
-	}
-	return nil
+	return n, err
 }
 
 func extractFileDescriptorFromOOB(oob []byte) (int, error) {

@@ -36,7 +36,7 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 					zerror.ErrorUnableToAcceptSocketConnection()
 					time.Sleep(500 * time.Millisecond)
 				} else {
-					connections <- unixsocket.NewUsock(conn)
+					connections <- unixsocket.New(conn)
 				}
 			}
 		}()
@@ -156,7 +156,7 @@ func receiveTTY(usock *unixsocket.Usock, err error) (*os.File, error) {
 		return nil, errors.New("Expected FD, none received!")
 	}
 	fileName := strconv.Itoa(rand.Int())
-	clientFile := unixsocket.FdToFile(clientFd, fileName)
+	clientFile := os.NewFile(uintptr(clientFd), fileName)
 
 	return clientFile, nil
 }
@@ -227,7 +227,7 @@ func bootNewCommand(slaveNode *processtree.SlaveNode, command string, err error)
 		return nil, errors.New("Process has crashed")
 	}
 
-	return unixsocket.NewUsockFromFile(reply.File)
+	return unixsocket.NewFromFile(reply.File)
 }
 
 func sendTTYToCommand(commandUsock *unixsocket.Usock, clientFile *os.File, err error) error {

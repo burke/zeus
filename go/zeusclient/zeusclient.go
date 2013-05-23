@@ -73,7 +73,7 @@ func doRun() int {
 		zerror.ErrorCantConnectToMaster()
 		return 1
 	}
-	usock := unixsocket.NewUsock(conn)
+	usock := unixsocket.New(conn)
 
 	msg := messages.CreateCommandAndArgumentsMessage(os.Args[1], os.Getpid(), os.Args[2:])
 	usock.WriteMessage(msg)
