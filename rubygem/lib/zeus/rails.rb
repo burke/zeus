@@ -182,6 +182,14 @@ module Zeus
     end
 
     def test_helper
+      # don't let minitest setup another exit hook
+      begin
+        require 'minitest/unit'
+        MiniTest::Unit.class_variable_set("@@installed_at_exit", true)
+      rescue LoadError
+        # noop
+      end
+
       if File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
         require 'spec_helper'
       elsif File.exist?(ROOT_PATH + "/test/minitest_helper.rb")
