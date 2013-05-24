@@ -1,3 +1,17 @@
+// package unixsocket implements an io.Reader type Usock which supports
+// out-of-band transfer of open files over a net.UnixConn. The Read method of
+// Usock behaves the same as for a normal net.Conn, but it pushes any
+// out-of-band data received into a queue.
+//
+// When ReadFD is called, it will interpret the first queued OOB datum already
+// received, if any. Otherwise it will attempt to receive OOB data from the next
+// packet. The packet will be assumed to be a UnixRights message, granting
+// access to an open file from another process, and will be decoded as such.
+//
+// ReadFD will not always block if called in a scenario where there is pending
+// data but no OOB data in the first pending packet. This situation is undefined
+// (realistically, currently un-thought-about, as zeus has a very regular
+// protocol that obviates this concern).
 package unixsocket
 
 import (
@@ -31,12 +45,16 @@ func Socketpair(typ int) (a, b *os.File, err error) {
 type Usock struct {
 	Conn *net.UnixConn
 	oobs [][]byte
+	oob  []byte
+	rbuf *bufio.Reader
 
 	sync.Mutex
 }
 
 func New(conn *net.UnixConn) *Usock {
-	return &Usock{Conn: conn}
+	u := &Usock{Conn: conn, oob: make([]byte, 32)}
+	u.rbuf = bufio.NewReader(u)
+	return u
 }
 
 func NewFromFile(f *os.File) (*Usock, error) {
@@ -82,11 +100,15 @@ func (u *Usock) ReadFD() (int, error) {
 	return -1, errors.New("No FD received :(")
 }
 
-func (usock *Usock) ReadMessage() (s string, err error) {
-	r := bufio.NewReader(usock)
-	s, err = r.ReadString(0)
-	if err == nil {
-		s = strings.TrimRight(s, "\000")
+func (u *Usock) ReadMessage() (s string, err error) {
+	for {
+		s, err = u.rbuf.ReadString(0)
+		if err == nil {
+			s = strings.TrimRight(s, "\000")
+		}
+		if err != nil || s != "" {
+			return
+		}
 	}
 	return
 }
@@ -119,12 +141,12 @@ func (usock *Usock) WriteFD(fd int) error {
 	}
 	return nil
 }
+
 func (u *Usock) readLocked(b []byte) (int, error) {
-	oob := make([]byte, 32)
-	n, oobn, _, _, err := u.Conn.ReadMsgUnix(b, oob)
+	n, oobn, _, _, err := u.Conn.ReadMsgUnix(b, u.oob)
 	if oobn > 0 {
 		newOob := make([]byte, oobn)
-		copy(newOob, oob[:oobn])
+		copy(newOob, u.oob[:oobn])
 		u.oobs = append(u.oobs, newOob)
 	}
 	return n, err

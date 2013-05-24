@@ -8,6 +8,15 @@ import (
 	"testing"
 )
 
+func TestLongMessage(t *testing.T) {
+	message := strings.Repeat("abcdefghijklmonpqrstuvwxyz", 1000)
+
+	a, b := makeUsockPair(t)
+
+	go sendMessage(t, a, message)
+	expectMessage(t, b, message)
+}
+
 func TestMessagesAndFDs(t *testing.T) {
 	var msg string
 	a, b := makeUsockPair(t)
@@ -28,27 +37,18 @@ func TestMessagesAndFDs(t *testing.T) {
 	expectFD(t, b, tempFile.Fd())
 }
 
-func TestLongMessage(t *testing.T) {
-	message := strings.Repeat("abcdefghijklmonpqrstuvwxyz", 1000)
-
-	a, b := makeUsockPair(t)
-
-	go sendMessage(t, a, message)
-	expectMessage(t, b, message)
-}
-
 func makeUsockPair(t *testing.T) (sockA, sockB *Usock) {
 	a, b, err := Socketpair(syscall.SOCK_STREAM)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	sockA, err = NewUsockFromFile(a)
+	sockA, err = NewFromFile(a)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	sockB, err = NewUsockFromFile(b)
+	sockB, err = NewFromFile(b)
 	if err != nil {
 		t.Fatal(err)
 	}
