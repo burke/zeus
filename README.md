@@ -15,9 +15,9 @@ More technically speaking, Zeus is a language-agnostic application checkpointer 
 
 * OS X 10.7+ *OR* Linux 2.6.13+
 * Rails 3.x
-* Ruby 1.9.3+ with backported GC from Ruby 2.0 *OR* Rubinius
+* Ruby 1.9.3+ with backported GC from Ruby 2.0 *OR* Ruby 2.0 *OR* Rubinius
 
-You can install the GC-patched ruby from [this gist for rbenv](https://gist.github.com/1688857) or [this gist for RVM](https://gist.github.com/4136373). This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
+You can install the GC-patched Ruby 1.9.3+ from [this gist for rbenv](https://gist.github.com/1688857) or [this gist for RVM](https://gist.github.com/4136373). This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
 
 *Please note*: Zeus requires your project to be running on a file system that supports FSEvents or inotify.
 
