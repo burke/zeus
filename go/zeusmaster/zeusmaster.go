@@ -13,6 +13,7 @@ import (
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/statuschart"
 	"github.com/burke/zeus/go/zerror"
+	"github.com/burke/zeus/go/zeusversion"
 )
 
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
@@ -24,7 +25,7 @@ func Run() {
 }
 
 func doRun() int {
-	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server")
+	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server v" + zeusversion.VERSION)
 
 	zerror.Init()
 	var tree *processtree.ProcessTree = config.BuildProcessTree()
