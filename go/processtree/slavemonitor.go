@@ -24,7 +24,7 @@ func Error(err string) {
 func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
-		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
+		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
 		if err != nil {
 			Error("Couldn't create socketpair")
 		}
