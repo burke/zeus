@@ -5,7 +5,6 @@ import (
 	"github.com/burke/ttyutils"
 	slog "github.com/burke/zeus/go/shinylog"
 	"strings"
-	"time"
 
 	"github.com/burke/zeus/go/processtree"
 	"os"
@@ -28,15 +27,12 @@ func ttyStart(tree *processtree.ProcessTree, done, quit chan bool) {
 			theChart.terminalSupported = false
 		}
 
-		ticker := time.Tick(1000 * time.Millisecond)
 		for {
 			select {
 			case <-quit:
 				ttyutils.RestoreTerminalState(uintptr(os.Stdout.Fd()), termios)
 				done <- true
 				return
-			case <-ticker:
-				theChart.draw()
 			case output := <-scw.Notif:
 				theChart.L.Lock()
 				if theChart.drawnInitial {
