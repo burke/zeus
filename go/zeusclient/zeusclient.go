@@ -32,6 +32,9 @@ var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIG
 func doRun() int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
+		println("As a safety precaution to protect you from nuking your development database,")
+		println("Zeus will now cowardly refuse to proceed. Please unset RAILS_ENV and try again.")
+		return 1
 	}
 
 	isTerminal := ttyutils.IsTerminal(os.Stdout.Fd())
