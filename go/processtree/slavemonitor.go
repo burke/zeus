@@ -30,6 +30,7 @@ func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 		}
 
 		monitor := &SlaveMonitor{tree, remoteMasterFile}
+		defer monitor.cleanupChildren()
 
 		localMasterSocket, err := unixsocket.NewFromFile(localMasterFile)
 		if err != nil {
@@ -55,7 +56,6 @@ func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 		for {
 			select {
 			case <-quit:
-				monitor.cleanupChildren()
 				done <- true
 				return
 			case fd := <-registeringFds:
