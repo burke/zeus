@@ -1,9 +1,5 @@
 require 'zeus/rails'
 
-module Zeus::M
-  VERSION = "0.0.0.test"
-end
-
 RSpec::Matchers.define :exit_with_code do |exp_code|
   actual = nil
   match do |block|
