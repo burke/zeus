@@ -100,6 +100,7 @@ module Zeus
       pid_and_arguments =~ /(.*?):(.*)/
       client_pid, arguments = $1.to_i, $2
       arguments.chomp!("\0")
+      arguments = arguments.split(/\x01/)
 
       pid = fork {
         $0 = "zeus command: #{identifier}"
@@ -112,7 +113,7 @@ module Zeus
         $stdin.reopen(client_terminal)
         $stdout.reopen(client_terminal)
         $stderr.reopen(client_terminal)
-        ARGV.replace(JSON.parse(arguments))
+        ARGV.replace(arguments)
 
         plan.send(identifier)
       }
