@@ -1,5 +1,6 @@
 # encoding: utf-8
 require 'socket'
+require 'json'
 require 'pty'
 
 require 'zeus/load_tracking'
@@ -111,7 +112,7 @@ module Zeus
         $stdin.reopen(client_terminal)
         $stdout.reopen(client_terminal)
         $stderr.reopen(client_terminal)
-        ARGV.replace(arguments.split(/\0/))
+        ARGV.replace(JSON.parse(arguments))
 
         plan.send(identifier)
       }

@@ -1,6 +1,7 @@
 package messages
 
 import (
+	"encoding/json"
 	"errors"
 	"strconv"
 	"strings"
@@ -21,10 +22,9 @@ func ParsePidMessage(msg string) (int, string, error) {
 	return pid, identifier, nil
 }
 
-// The overloading of NUL is kind of unfortunate here, but ruby-land doesn't do
-// the message-oriented thing so it's not a big deal.
 func CreateCommandAndArgumentsMessage(command string, pid int, args []string) string {
-	return "Q:" + command + ":" + strconv.Itoa(pid) + ":" + strings.Join(args, "\000")
+	encoded, _ := json.Marshal(args)
+	return "Q:" + command + ":" + strconv.Itoa(pid) + ":" + string(encoded)
 }
 
 func ParseFeatureMessage(msg string) (string, error) {
