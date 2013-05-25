@@ -17,7 +17,7 @@ import (
 )
 
 const (
-	sigInt  = 3 // todo: this doesn't seem unicode-friendly...
+	sigInt  = 3
 	sigQuit = 28
 	sigTstp = 26
 )
