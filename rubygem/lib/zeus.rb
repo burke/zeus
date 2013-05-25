@@ -95,7 +95,10 @@ module Zeus
       remote.close
       sock.close
 
-      pid_and_arguments = local.recv(2**16) # if starting client before boot slave is latched, we get stuck here. We also get stuck here in #182.
+      pid_and_arguments = ""
+      until pid_and_arguments =~ /\x00$/
+        pid_and_arguments << local.recv(2**16)
+      end
       pid_and_arguments.chomp!("\0")
       pid_and_arguments =~ /(.*?):(.*)/
       client_pid, arguments = $1.to_i, $2
