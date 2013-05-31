@@ -7,19 +7,24 @@ This screencast gives a quick overview of how to use zeus with Rails.
 
 [![Watch the screencast!](http://s3.amazonaws.com/burkelibbey/vimeo-zeus.png)](http://vimeo.com/burkelibbey/zeus)
 
-Zeus is also covered in [RailsCasts episode 412](http://railscasts.com/episodes/412-fast-rails-commands)
+Zeus is also covered in [RailsCasts episode 412](http://railscasts.com/episodes/412-fast-rails-commands).
 
 More technically speaking, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is on the horizon.
+
 
 ## Requirements (for use with Rails)
 
 * OS X 10.7+ *OR* Linux 2.6.13+
 * Rails 3.x
-* Ruby 1.9.3+ with backported GC from Ruby 2.0 *OR* Ruby 2.0 *OR* Rubinius
+* Compatible Ruby installation
+  * Ruby 1.9.3+ with backported GC from Ruby 2.0 ([rbenv instructions](https://gist.github.com/1688857), [rvm instructions](https://github.com/skaes/rvm-patchsets))
+  * Ruby 2.0
+  * Rubinius
 
-You can install the GC-patched Ruby 1.9.3+ from [this gist for rbenv](https://gist.github.com/1688857) or [this gist for RVM](https://gist.github.com/4136373). This is not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched ruby will fix it.
+For Ruby 1.9.3+, GC patches are not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched Ruby will fix it.
 
 *Please note*: Zeus requires your project to be running on a file system that supports FSEvents or inotify.
+
 
 ## Installation
 
@@ -31,7 +36,8 @@ Q: "I should put it in my `Gemfile`, right?"
 
 A: No. You can, but running `bundle exec zeus` instead of `zeus` adds precious seconds to commands that otherwise would be quite a bit faster. Zeus was built to be run from outside of bundler.
 
-If using RSpec, you may need to disable `require 'rspec/autotest'` or `require 'rspec/autorun'` (see #134)
+If using RSpec, you may need to disable `require 'rspec/autotest'` or `require 'rspec/autorun'`. If you're using MiniTest you'll want to disable `require 'minitest/autorun'` as well. (see [#134](https://github.com/burke/zeus/issues/134) for more information).
+
 
 ## Usage
 
@@ -67,15 +73,18 @@ You need to restart zeus if you make changes to various initialization files. Ex
 If you're switching from Spork, be sure to [read the wiki page on Spork](https://github.com/burke/zeus/wiki/Spork).
 
 
-## Hacking
+## Customizing Zeus Commands
 
 To add/modify commands, see [`docs/ruby/modifying.md`](docs/ruby/modifying.md).
+
+
+## Contributing
 
 To get started hacking on Zeus itself, see [`docs/overview.md`](docs/overview.md).
 
 See also the handy contribution guide at [`contributing.md`](contributing.md).
 
-## Alternative plans
+
+## Rails 2.3 Support
 
 The default plan bundled with zeus only supports Rails 3.x. There is a project (currently WIP) to provide Rails 2.3 support at https://github.com/tyler-smith/zeus-rails23.
-
