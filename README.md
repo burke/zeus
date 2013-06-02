@@ -61,8 +61,8 @@ Run some commands in another shell:
 
 You need to restart zeus if you make changes to various initialization files. Examples of these files include:
 
-    FactoryGirl factories
-    RSpec support files
+ * FactoryGirl factories
+ * RSpec support files
 
 ## Related gems
 
