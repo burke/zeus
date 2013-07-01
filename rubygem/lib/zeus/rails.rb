@@ -197,6 +197,7 @@ module Zeus
       else
         require 'test_helper'
       end
+      ActiveRecord::Base.clear_all_connections! if defined?(ActiveRecord::Base)
     end
 
     def test(argv=ARGV)
