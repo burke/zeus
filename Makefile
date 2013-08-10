@@ -21,6 +21,16 @@ fsevents:
 	mkdir -p build
 	cp ext/fsevents/build/Release/fsevents-wrapper build
 
+ifeq ($(uname -i), 'x86_64')
+	linux_v = 'linux-amd64'
+else
+	linux_v = 'linux-386'
+endif
+linux: fmt manpages $(linux_v)
+	mkdir rubygem/man
+	cp -R man/build rubygem/man/
+	cd rubygem ; /usr/bin/env rake
+
 linux-386: goversion
 	cd go/cmd/zeus; CGO_ENABLED=0 GOOS=linux GOARCH=386 $(MAKE) -o zeus-linux-386
 
