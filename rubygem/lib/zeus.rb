@@ -110,7 +110,7 @@ module Zeus
       $0 = "zeus runner: #{identifier}"
       Process.setsid
 
-      local, remote = UNIXSocket.pair(:STREAM)
+      local, remote = UNIXSocket.pair(:DGRAM)
       sock.send_io(remote)
       remote.close
       sock.close
