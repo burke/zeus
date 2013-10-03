@@ -70,6 +70,10 @@ func (u *Usock) WriteMessage(msg string) (int, error) {
 
 	completeMessage := strings.NewReader(msg + "\000")
 
+	err := u.reader.Conn.SetWriteBuffer(completeMessage.Len())
+	if err != nil {
+		return 0, err
+	}
 	n, err := io.Copy(u.reader.Conn, completeMessage)
 	return int(n - 1), err
 }
