@@ -21,13 +21,12 @@ fsevents:
 	mkdir -p build
 	cp ext/fsevents/build/Release/fsevents-wrapper build
 
-ifeq ($(uname -i), 'x86_64')
-	linux_v = 'linux-amd64'
-else
-	linux_v = 'linux-386'
+linux_v = linux-386
+ifeq ($(shell uname -m), x86_64)
+	linux_v := linux-amd64
 endif
 linux: fmt manpages $(linux_v)
-	mkdir rubygem/man
+	mkdir -p rubygem/man
 	cp -R man/build rubygem/man/
 	cd rubygem ; /usr/bin/env rake
 
