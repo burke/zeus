@@ -35,65 +35,69 @@ module Zeus
     end
 
     def go(identifier=:boot)
+      # Thanks to the magic of fork, this following line will return
+      # many times: Every time the parent step receives a request to
+      # run a command.
+      if run_command = boot_steps(identifier)
+        ident, local = run_command
+        return command(ident, local)
+      end
+    end
+
+    def boot_steps(identifier)
       while true
         boot_step = catch(:boot_step) do
-          run_command = catch(:run_command) do
-            $0 = "zeus slave: #{identifier}"
+          $0 = "zeus slave: #{identifier}"
 
-            setup_dummy_tty!
-            master = setup_master_socket!
-            feature_pipe_r, feature_pipe_w = IO.pipe
+          setup_dummy_tty!
+          master = setup_master_socket!
+          feature_pipe_r, feature_pipe_w = IO.pipe
 
-            # I need to give the master a way to talk to me exclusively
-            local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
-            master.send_io(remote)
+          # I need to give the master a way to talk to me exclusively
+          local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
+          master.send_io(remote)
 
-            # Now I need to tell the master about my PID and ID
-            local.write "P:#{Process.pid}:#{identifier}\0"
-            local.send_io(feature_pipe_r)
-            feature_pipe_r.close
+          # Now I need to tell the master about my PID and ID
+          local.write "P:#{Process.pid}:#{identifier}\0"
+          local.send_io(feature_pipe_r)
+          feature_pipe_r.close
 
-            # Now we run the action and report its success/fail status to the master.
-            features = Zeus::LoadTracking.features_loaded_by {
-              run_action(local, identifier, feature_pipe_w)
-            }
+          # Now we run the action and report its success/fail status to the master.
+          features = Zeus::LoadTracking.features_loaded_by {
+            run_action(local, identifier, feature_pipe_w)
+          }
 
-            # the master wants to know about the files that running the action caused us to load.
-            Thread.new { notify_features(feature_pipe_w, features) }
+          # the master wants to know about the files that running the action caused us to load.
+          Thread.new { notify_features(feature_pipe_w, features) }
 
-            # We are now 'connected'. From this point, we may receive requests to fork.
-            children = Set.new
-            while true
-              messages = local.recv(2**16)
+          # We are now 'connected'. From this point, we may receive requests to fork.
+          children = Set.new
+          while true
+            messages = local.recv(2**16)
 
-              # Reap any child runners or slaves that might have exited in
-              # the meantime. Note that reaping them like this can leave <=1
-              # zombie process per slave around while the slave waits for a
-              # new command.
-              children.each do |pid|
-                children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)
-              end
+            # Reap any child runners or slaves that might have exited in
+            # the meantime. Note that reaping them like this can leave <=1
+            # zombie process per slave around while the slave waits for a
+            # new command.
+            children.each do |pid|
+              children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)
+            end
 
-              messages.split("\0").each do |new_identifier|
-                new_identifier =~ /^(.):(.*)/
-                code, ident = $1, $2
-                pid = fork
-                if pid
-                  # We're in the parent. Record the child:
-                  children << pid
-                elsif code == "S"
-                  # Child, supposed to start another step:
-                  throw(:boot_step, ident.to_sym)
-                else
-                  # Child, supposed to run a command:
-                  throw(:run_command, [ident.to_sym, local])
-                end
+            messages.split("\0").each do |new_identifier|
+              new_identifier =~ /^(.):(.*)/
+              code, ident = $1, $2
+              pid = fork
+              if pid
+                # We're in the parent. Record the child:
+                children << pid
+              elsif code == "S"
+                # Child, supposed to start another step:
+                throw(:boot_step, ident.to_sym)
+              else
+                # Child, supposed to run a command:
+                return [ident.to_sym, local]
               end
             end
-          end
-          if run_command
-            ident, local = run_command
-            command(ident, local)
           end
         end
         identifier = boot_step
