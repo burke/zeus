@@ -21,9 +21,8 @@ func ParsePidMessage(msg string) (int, string, error) {
 	return pid, identifier, nil
 }
 
-func CreateCommandAndArgumentsMessage(command string, pid int, args []string) string {
-	encoded := strings.Join(args, "\001")
-	return "Q:" + command + ":" + strconv.Itoa(pid) + ":" + encoded
+func CreateCommandAndArgumentsMessage(args []string, pid int) string {
+	return "T:" + strconv.Itoa(len(args)-1) + ":" + strconv.Itoa(pid) + ":" + args[0]
 }
 
 func ParseFeatureMessage(msg string) (string, error) {
@@ -50,22 +49,24 @@ func CreateSpawnCommandMessage(identifier string) string {
 	return "C:" + identifier
 }
 
-func ParseClientCommandRequestMessage(msg string) (string, int, string, error) {
+func ParseClientCommandRequestMessage(msg string) (int, int, string, error) {
 	parts := strings.SplitN(msg, ":", 4)
-	if parts[0] != "Q" {
-		return "", -1, "", errors.New("Wrong message type! Expected ClientCommandRequestMessage, got: " + msg)
+	if parts[0] != "T" {
+		return -1, -1, "", errors.New("Wrong message type! Expected ClientCommandRequestMessage, got: " + msg)
 	}
 
-	command := parts[1]
-	arguments := parts[3]
+	argLength, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return -1, -1, "", errors.New("Expected argument count, but none received: " + msg)
+	}
 	pid, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return "", -1, "", errors.New("Expected pid, but none received: " + msg)
+		return argLength, -1, "", errors.New("Expected pid, but none received: " + msg)
 	}
 
-	return command, pid, arguments, nil
+	return argLength, pid, parts[3], nil
 }
 
-func CreatePidAndArgumentsMessage(pid int, arguments string) string {
-	return strconv.Itoa(pid) + ":" + arguments
+func CreatePidAndArgumentsMessage(pid int, argCount int) string {
+	return strconv.Itoa(pid) + ":" + strconv.Itoa(argCount)
 }

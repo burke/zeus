@@ -14,72 +14,72 @@
 package unixsocket
 
 import (
-  "os"
-  "io/ioutil"
-  "path/filepath"
-  "path"
-  "log"
-  "syscall"
+	"io/ioutil"
+	"log"
+	"os"
+	"path"
+	"path/filepath"
+	"syscall"
 )
 
 func Socketpair(typ int) (a, b *os.File, err error) {
-  fd, err := syscall.Socketpair(syscall.AF_UNIX, typ, 0)
-  if err != nil {
-    e := os.NewSyscallError("socketpair", err.(syscall.Errno))
-    return nil, nil, e
-  }
+	fd, err := syscall.Socketpair(syscall.AF_UNIX, typ, 0)
+	if err != nil {
+		e := os.NewSyscallError("socketpair", err.(syscall.Errno))
+		return nil, nil, e
+	}
 
-  a = os.NewFile(uintptr(fd[0]), "socketpair-a")
-  b = os.NewFile(uintptr(fd[1]), "socketpair-b")
-  return
+	a = os.NewFile(uintptr(fd[0]), "socketpair-a")
+	b = os.NewFile(uintptr(fd[1]), "socketpair-b")
+	return
 }
 
 var sockName string
 
 func containsFile(pattern string, files []os.FileInfo) bool {
-  for _, f := range files {
-    matched, err := filepath.Match(pattern, f.Name())
-    if err != nil {
-      log.Fatal(err)
-    }
-    if matched {
-      return true
-    }
-  }
-  return false
+	for _, f := range files {
+		matched, err := filepath.Match(pattern, f.Name())
+		if err != nil {
+			log.Fatal(err)
+		}
+		if matched {
+			return true
+		}
+	}
+	return false
 }
 
 func isProjectRoot(p string) bool {
-  files, err := ioutil.ReadDir(p)
-  if err != nil {
-    log.Fatal(err)
-  }
-  return containsFile("*Gemfile", files)
+	files, err := ioutil.ReadDir(p)
+	if err != nil {
+		log.Fatal(err)
+	}
+	return containsFile("*Gemfile", files)
 }
 
 func projectRoot() string {
-  projectRootPath, err := os.Getwd()
-  if err != nil {
-    log.Fatal(err)
-  }
+	projectRootPath, err := os.Getwd()
+	if err != nil {
+		log.Fatal(err)
+	}
 
-  for isProjectRoot(projectRootPath) != true {
-    projectRootPath, err = filepath.Abs(path.Join(projectRootPath, ".."))
-    if projectRootPath == "/" || err != nil {
-      break
-    }
-  }
-  return projectRootPath
+	for isProjectRoot(projectRootPath) != true {
+		projectRootPath, err = filepath.Abs(path.Join(projectRootPath, ".."))
+		if projectRootPath == "/" || err != nil {
+			break
+		}
+	}
+	return projectRootPath
 }
 
 func init() {
-  sockName = os.Getenv("ZEUSSOCK")
-  if sockName == "" {
-    os.Chdir(projectRoot())
-    sockName = ".zeus.sock"
-  }
+	sockName = os.Getenv("ZEUSSOCK")
+	if sockName == "" {
+		os.Chdir(projectRoot())
+		sockName = ".zeus.sock"
+	}
 }
 
 func ZeusSockName() string {
-  return sockName
+	return sockName
 }

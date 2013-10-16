@@ -60,7 +60,7 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	defer usock.Close()
 	// we have established first contact to the client.
 
-	command, clientPid, arguments, err := receiveCommandArgumentsAndPid(usock, nil)
+	command, clientPid, argCount, argFD, err := receiveCommandArgumentsAndPid(usock, nil)
 	commandNode, slaveNode, err := findCommandAndSlaveNodes(tree, command, err)
 	if err != nil {
 		// connection was established, no data was sent. Ignore.
@@ -86,7 +86,7 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	}
 	defer commandUsock.Close()
 
-	err = sendClientPidAndArgumentsToCommand(commandUsock, clientPid, arguments, err)
+	err = sendClientPidAndArgumentsToCommand(commandUsock, clientPid, argCount, argFD, err)
 
 	err = sendTTYToCommand(commandUsock, clientFile, err)
 
@@ -114,21 +114,32 @@ func writeStacktrace(usock *unixsocket.Usock, slaveNode *processtree.SlaveNode, 
 	usock.WriteMessage("1")
 }
 
-func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, int, string, error) {
+func receiveFileFromFD(usock *unixsocket.Usock) (*os.File, error) {
+	clientFd, err := usock.ReadFD()
 	if err != nil {
-		return "", -1, "", err
+		return nil, errors.New("Expected FD, none received!")
+	}
+	fileName := strconv.Itoa(rand.Int())
+	return os.NewFile(uintptr(clientFd), fileName), nil
+}
+
+func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, int, int, int, error) {
+	if err != nil {
+		return "", -1, -1, -1, err
 	}
 
 	msg, err := usock.ReadMessage()
 	if err != nil {
-		return "", -1, "", err
-	}
-	command, clientPid, arguments, err := messages.ParseClientCommandRequestMessage(msg)
-	if err != nil {
-		return "", -1, "", err
+		return "", -1, -1, -1, err
 	}
 
-	return command, clientPid, arguments, err
+	argCount, clientPid, command, err := messages.ParseClientCommandRequestMessage(msg)
+	if err != nil {
+		return "", -1, -1, -1, err
+	}
+
+	argFD, err := usock.ReadFD()
+	return command, clientPid, argCount, argFD, err
 }
 
 func findCommandAndSlaveNodes(tree *processtree.ProcessTree, command string, err error) (*processtree.CommandNode, *processtree.SlaveNode, error) {
@@ -150,25 +161,21 @@ func receiveTTY(usock *unixsocket.Usock, err error) (*os.File, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	clientFd, err := usock.ReadFD()
-	if err != nil {
-		return nil, errors.New("Expected FD, none received!")
-	}
-	fileName := strconv.Itoa(rand.Int())
-	clientFile := os.NewFile(uintptr(clientFd), fileName)
-
-	return clientFile, nil
+	return receiveFileFromFD(usock)
 }
 
-func sendClientPidAndArgumentsToCommand(commandUsock *unixsocket.Usock, clientPid int, arguments string, err error) error {
+func sendClientPidAndArgumentsToCommand(commandUsock *unixsocket.Usock, clientPid int, argCount int, argFD int, err error) error {
 	if err != nil {
 		return err
 	}
 
-	msg := messages.CreatePidAndArgumentsMessage(clientPid, arguments)
+	msg := messages.CreatePidAndArgumentsMessage(clientPid, argCount)
 	_, err = commandUsock.WriteMessage(msg)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return commandUsock.WriteFD(argFD)
 }
 
 func receiveExitStatus(commandUsock *unixsocket.Usock, err error) (string, error) {

@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	"github.com/burke/ttyutils"
+	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
@@ -78,8 +79,14 @@ func doRun() int {
 	}
 	usock := unixsocket.New(conn)
 
-	msg := messages.CreateCommandAndArgumentsMessage(os.Args[1], os.Getpid(), os.Args[2:])
+	msg := messages.CreateCommandAndArgumentsMessage(config.Args, os.Getpid())
 	usock.WriteMessage(msg)
+	err = sendCommandLineArguments(usock, config.Args)
+	if err != nil {
+		slog.ErrorString(err.Error() + "\r")
+		return 1
+	}
+
 	usock.WriteFD(int(slave.Fd()))
 	slave.Close()
 
@@ -188,4 +195,33 @@ func doRun() int {
 	}
 
 	return exitStatus
+}
+
+func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
+	master, slave, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
+	if err != nil {
+		return err
+	}
+	usock.WriteFD(int(slave.Fd()))
+	if err != nil {
+		return err
+	}
+	slave.Close()
+
+	go func() {
+		defer master.Close()
+		argAsBytes := []byte{}
+		for _, arg := range args[1:] {
+			argAsBytes = append(argAsBytes, []byte(arg)...)
+			argAsBytes = append(argAsBytes, byte(0))
+		}
+		_, err = master.Write(argAsBytes)
+		if err != nil {
+			slog.ErrorString("Could not send arguments across: " +
+				err.Error() + "\r")
+			return
+		}
+	}()
+
+	return nil
 }

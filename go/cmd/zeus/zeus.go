@@ -18,63 +18,62 @@ import (
 )
 
 var color bool = true
+var Args = os.Args[1:]
 
 func main() {
-	var args []string
-
-	for args = os.Args[1:]; args != nil && len(args) > 0 && args[0][0] == '-'; args = args[1:] {
-		switch args[0] {
+	for config.Args = os.Args[1:]; config.Args != nil && len(config.Args) > 0 && config.Args[0][0] == '-'; config.Args = config.Args[1:] {
+		switch config.Args[0] {
 		case "--no-color":
 			color = false
 			slog.DisableColor()
 		case "--log":
-			tracefile, err := os.OpenFile(args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+			tracefile, err := os.OpenFile(config.Args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 			if err == nil {
 				slog.TraceLogger = slog.NewTraceLogger(tracefile)
-				args = args[1:]
+				config.Args = config.Args[1:]
 			} else {
-				fmt.Printf("Could not open trace file %s", args[1])
+				fmt.Printf("Could not open trace file %s", config.Args[1])
 				return
 			}
 		case "--file-change-delay":
-			if len(args) > 1 {
-				delay, err := time.ParseDuration(args[1])
+			if len(config.Args) > 1 {
+				delay, err := time.ParseDuration(config.Args[1])
 				if err != nil {
 					execManPage("zeus")
 				}
-				args = args[1:]
+				config.Args = config.Args[1:]
 				restarter.FileChangeWindow = delay
 			} else {
 				execManPage("zeus")
 			}
 		}
 	}
-	if len(args) == 0 {
+	if len(config.Args) == 0 {
 		execManPage("zeus")
 	}
 
-	if generalHelpRequested(args) {
+	if generalHelpRequested(config.Args) {
 		execManPage("zeus")
-	} else if args[0] == "help" {
-		commandSpecificHelp(args)
-	} else if args[0] == "version" || args[0] == "--version" {
+	} else if config.Args[0] == "help" {
+		commandSpecificHelp(config.Args)
+	} else if config.Args[0] == "version" || config.Args[0] == "--version" {
 		println("Zeus version " + zeusversion.VERSION)
-	} else if args[0] == "start" {
+	} else if config.Args[0] == "start" {
 		zeusmaster.Run()
-	} else if args[0] == "init" {
+	} else if config.Args[0] == "init" {
 		zeusInit()
-	} else if args[0] == "commands" {
+	} else if config.Args[0] == "commands" {
 		zeusCommands()
 	} else {
 		tree := config.BuildProcessTree()
 		for _, name := range tree.AllCommandsAndAliases() {
-			if args[0] == name {
+			if config.Args[0] == name {
 				zeusclient.Run()
 				return
 			}
 		}
 
-		commandNotFound(args[0])
+		commandNotFound(config.Args[0])
 	}
 }
 
