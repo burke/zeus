@@ -11,6 +11,8 @@ import (
 	"github.com/burke/zeus/go/zerror"
 )
 
+var Args = os.Args[1:]
+
 const configFile string = "zeus.json"
 
 type config struct {
