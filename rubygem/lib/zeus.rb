@@ -115,15 +115,15 @@ module Zeus
       remote.close
       sock.close
 
-      pid_and_arguments = ""
-      until pid_and_arguments =~ /\x00$/
-        pid_and_arguments << local.recv(2**16)
+      pid_and_argument_count = local.recv(2**16)
+      pid_and_argument_count.chomp("\0") =~ /(.*?):(.*)/
+      client_pid, argument_count = $1.to_i, $2.to_i
+      arg_io = local.recv_io
+      arguments = arg_io.read.chomp("\0").split("\0")
+
+      if arguments.length != argument_count
+        raise "Argument count mismatch: Expected #{argument_count}, got #{arguments.length}"
       end
-      pid_and_arguments.chomp!("\0")
-      pid_and_arguments =~ /(.*?):(.*)/
-      client_pid, arguments = $1.to_i, $2
-      arguments.chomp!("\0")
-      arguments = arguments.split(/\x01/)
 
       pid = fork {
         $0 = "zeus command: #{identifier}"

@@ -69,11 +69,6 @@ func (u *Usock) WriteMessage(msg string) (int, error) {
 	defer u.Unlock()
 
 	completeMessage := strings.NewReader(msg + "\000")
-
-	err := u.reader.Conn.SetWriteBuffer(completeMessage.Len())
-	if err != nil {
-		return 0, err
-	}
 	n, err := io.Copy(u.reader.Conn, completeMessage)
 	return int(n - 1), err
 }
@@ -94,7 +89,7 @@ func (u *Usock) WriteFD(fd int) error {
 	dummyByte := []byte{0}
 	n, oobn, err := u.reader.Conn.WriteMsgUnix(dummyByte, rights, nil)
 	if err != nil {
-		str := fmt.Sprintf("Usock#WriteFD:WriteMsgUnix: %v %v\n", err, syscall.EINVAL)
+		str := fmt.Sprintf("Usock#WriteFD:WriteMsgUnix: %v / %v\n", err, syscall.EINVAL)
 		return errors.New(str)
 	}
 	if n != 1 || oobn != len(rights) {
