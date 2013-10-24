@@ -1,5 +1,11 @@
 # encoding: utf-8
 require 'socket'
+
+# load exect json version from Gemfile.lock to avoid conflicts
+gemfile = "#{ENV["BUNDLE_GEMFILE"] || "Gemfile"}.lock"
+if File.exist?(gemfile) && version = File.read(gemfile)[/^  json \(= (.*)\)/, 1]
+  gem 'json', version
+end
 require 'json'
 require 'pty'
 
