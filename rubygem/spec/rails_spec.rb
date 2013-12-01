@@ -18,7 +18,7 @@ module Zeus
       end
 
       it "when spec_helper exists spec_helper is required" do
-        File.should_receive(:exists?).with(ROOT_PATH + "/spec/spec_helper.rb").and_return(true)
+        mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", true)
 
         rails.should_receive(:require).with("spec_helper")
 
@@ -26,8 +26,8 @@ module Zeus
       end
 
       it "when minitest_helper exists minitest_helper is required" do
-        File.should_receive(:exists?).with(ROOT_PATH + "/spec/spec_helper.rb").and_return(false)
-        File.should_receive(:exists?).with(ROOT_PATH + "/test/minitest_helper.rb").and_return(true)
+        mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
+        mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", true)
 
         rails.should_receive(:require).with("minitest_helper")
 
@@ -35,8 +35,8 @@ module Zeus
       end
 
       it "when there is no spec_helper or minitest_helper, test_helper is required" do
-        File.should_receive(:exists?).with(ROOT_PATH + "/spec/spec_helper.rb").and_return(false)
-        File.should_receive(:exists?).with(ROOT_PATH + "/test/minitest_helper.rb").and_return(false)
+        mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
+        mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", false)
 
         rails.should_receive(:require).with("test_helper")
 
