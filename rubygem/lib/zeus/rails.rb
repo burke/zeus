@@ -190,12 +190,16 @@ module Zeus
         # noop
       end
 
-      if File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
-        require 'spec_helper'
-      elsif File.exist?(ROOT_PATH + "/test/minitest_helper.rb")
-        require 'minitest_helper'
+      if ENV['RAILS_TEST_HELPER']
+        require ENV['RAILS_TEST_HELPER']
       else
-        require 'test_helper'
+        if File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
+          require 'spec_helper'
+        elsif File.exists?(ROOT_PATH + "/test/minitest_helper.rb")
+          require 'minitest_helper'
+        else
+          require 'test_helper'
+        end
       end
     end
 
