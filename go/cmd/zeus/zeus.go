@@ -46,6 +46,9 @@ func main() {
 			} else {
 				execManPage("zeus")
 			}
+		case "--version":
+			printVersion()
+			return
 		}
 	}
 	if len(Args) == 0 {
@@ -56,8 +59,8 @@ func main() {
 		execManPage("zeus")
 	} else if Args[0] == "help" {
 		commandSpecificHelp(Args)
-	} else if Args[0] == "version" || Args[0] == "--version" {
-		println("Zeus version " + zeusversion.VERSION)
+	} else if Args[0] == "version" {
+		printVersion()
 	} else if Args[0] == "start" {
 		zeusmaster.Run()
 	} else if Args[0] == "init" {
@@ -170,4 +173,8 @@ func generalHelpRequested(args []string) bool {
 		}
 	}
 	return false
+}
+
+func printVersion() {
+	println("Zeus version " + zeusversion.VERSION)
 }
