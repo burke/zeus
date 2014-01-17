@@ -27,6 +27,10 @@ def stub_system_methods
   Kernel.stub!(:load).and_return
 end
 
+def mock_file_existence(file, result)
+  File.should_receive(:exists?).with(file).and_return(result)
+end
+
 RSpec.configure do |config|
   config.before(:each) do
     stub_system_methods
