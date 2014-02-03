@@ -13,7 +13,7 @@ require 'zeus'
 
 def gem_is_bundled?(gem)
   gemfile_lock_contents = File.read(ROOT_PATH + "/Gemfile.lock")
-  gemfile_lock_contents.scan(/\b#{gem} \(([^=~><]+?)\)/).flatten.first
+  gemfile_lock_contents.scan(/^\s*#{gem} \(([^=~><]+?)\)/).flatten.first
 end
 
 if version = gem_is_bundled?('method_source')
