@@ -7,7 +7,7 @@ ROOT_PATH = File.expand_path(Dir.pwd)
 RAILS_PATH = find_rails_path(ROOT_PATH)
 ENV_PATH  = File.expand_path('config/environment',  RAILS_PATH)
 BOOT_PATH = File.expand_path('config/boot',  RAILS_PATH)
-APP_PATH  = File.expand_path('config/application',  RAILS_PATH)
+APP_PATH  = File.expand_path('config/application',  RAILS_PATH) unless defined? APP_PATH
 
 require 'zeus'
 
