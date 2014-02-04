@@ -154,7 +154,7 @@ func commandNotFound(command string) {
 }
 
 func commandSpecificHelp(args []string) {
-	if args[1] == "start" || Args[1] == "s" {
+	if args[1] == "start" || args[1] == "s" {
 		execManPage("zeus-start")
 	} else if args[1] == "init" {
 		execManPage("zeus-init")
