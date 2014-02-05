@@ -92,7 +92,7 @@ module Zeus
       # Some 'alternative' ORMs such as Mongoid give instructions to switch this require
       # out for a list of railties, not including ActiveRecord.
       # We grep config/application.rb for all requires of rails/all or railties, and require them.
-      rails_components = File.read(APP_PATH + ".rb").
+      rails_components = File.read(APP_PATH + ".rb", :encoding => 'utf-8').
         scan(/^\s*require\s*['"](.*railtie.*|rails\/all)['"]/).flatten
 
       rails_components = ["rails/all"] if rails_components == []
