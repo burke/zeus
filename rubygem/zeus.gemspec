@@ -28,6 +28,7 @@ Gem::Specification.new do |gem|
   gem.license       = "MIT"
 
   gem.add_development_dependency "rspec", '~> 2.12.0'
+  gem.add_development_dependency "rake"
   gem.add_development_dependency "ronn", '>= 0.7.0'
 
   gem.add_runtime_dependency "method_source", ">= 0.6.7"

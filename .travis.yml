@@ -5,5 +5,5 @@ language: ruby
 rvm:
   - 1.9.3
 gemfile: rubygem/Gemfile
-script: cd rubygem && rake version && bundle exec rspec spec
+script: make rubygem/lib/zeus/version.rb && cd rubygem && bundle exec rspec spec
 
