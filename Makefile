@@ -47,7 +47,7 @@ build/zeus-%: $(VERSIONFILE) compileBinaries
 	:
 compileBinaries:
 	gox -osarch="linux/386 linux/amd64 darwin/amd64" \
-		-output="build/bin/zeus-{{.OS}}-{{.Arch}}" \
+		-output="build/zeus-{{.OS}}-{{.Arch}}" \
 		github.com/burke/zeus/go/cmd/zeus
 
 $(VERSIONFILE):
