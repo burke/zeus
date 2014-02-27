@@ -15,7 +15,7 @@ More technically speaking, Zeus is a language-agnostic application checkpointer 
 ## Requirements (for use with Rails)
 
 * OS X 10.7+ *OR* Linux 2.6.13+
-* Rails 3.x
+* Rails 3.x or 4.x
 * Compatible Ruby installation
   * Ruby 1.9.3+ with backported GC from Ruby 2.0 ([rbenv instructions](https://gist.github.com/1688857), [rvm instructions](https://github.com/skaes/rvm-patchsets))
   * Ruby 2.0
@@ -89,4 +89,4 @@ See also the handy contribution guide at [`contributing.md`](contributing.md).
 
 ## Rails 2.3 Support
 
-The default plan bundled with zeus only supports Rails 3.x. There is a project (currently WIP) to provide Rails 2.3 support at https://github.com/tyler-smith/zeus-rails23.
+The default plan bundled with zeus only supports Rails 3.x and 4.x. There is a project (currently WIP) to provide Rails 2.3 support at https://github.com/tyler-smith/zeus-rails23.
