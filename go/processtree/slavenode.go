@@ -284,7 +284,6 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 			s.L.Unlock()
 		}
 	}
-	return "impossible"
 }
 
 // This should only be called while holding a lock on s.L.

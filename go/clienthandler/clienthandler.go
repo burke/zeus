@@ -225,7 +225,7 @@ func bootNewCommand(slaveNode *processtree.SlaveNode, command string, err error)
 		return nil, err
 	}
 
-	request := &processtree.CommandRequest{command, make(chan *processtree.CommandReply)}
+	request := &processtree.CommandRequest{Name: command, Retchan: make(chan *processtree.CommandReply)}
 	slaveNode.RequestCommandBoot(request)
 	reply := <-request.Retchan // TODO: don't really want to wait indefinitely.
 	// defer commandFile.Close() // TODO: can't do this here anymore.

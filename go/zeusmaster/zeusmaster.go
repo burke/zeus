@@ -56,7 +56,6 @@ func doRun() int {
 			}
 		}
 	}
-	return -1 // satisfy the compiler
 }
 
 func exit(quit, done chan bool) {

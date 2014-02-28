@@ -61,7 +61,6 @@ func (u *Usock) ReadMessage() (s string, err error) {
 			return
 		}
 	}
-	return
 }
 
 func (u *Usock) WriteMessage(msg string) (int, error) {
