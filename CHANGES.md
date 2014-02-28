@@ -4,6 +4,8 @@ https://github.com/burke/zeus/compare/v0.14.0.rc1...master
 
 * Reworked the build process. Makefile completely rewritten, cross-compilation now done with [gox](github.com/mitchellh/gox).
 
+* Removed cucumber from default plan.
+
 * Various bug fixes
 
 ### 0.14.0.rc1
