@@ -24,14 +24,6 @@ require 'zeus/m'
 
 module Zeus
   class Rails < Plan
-    def deprecated
-      puts "Zeus 0.11.0 changed zeus.json. You'll have to rm zeus.json && zeus init."
-    end
-    alias_method :spec_helper, :deprecated
-    alias_method :testrb,      :deprecated
-    alias_method :rspec,       :deprecated
-
-
     def after_fork
       reconnect_activerecord
       restart_girl_friday
