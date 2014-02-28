@@ -25,7 +25,7 @@ module Zeus
     # Yup.
     def setup_dummy_tty!
       return if self.dummy_tty
-      master, self.dummy_tty = PTY.open
+      master, self.dummy_tty = PTY.send(:open)
       Thread.new {
         loop { master.read(1024) }
       }
