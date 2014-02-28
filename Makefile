@@ -16,7 +16,7 @@ man/build: Gemfile.lock
 	cd man && bundle exec rake
 
 rubygem/pkg/%: \
-	rubygem/ext/fsevents-wrapper/fsevents-wrapper \
+	rubygem/build/fsevents-wrapper \
 	rubygem/man \
 	rubygem/examples \
 	rubygem/lib/zeus/version.rb \
@@ -24,7 +24,7 @@ rubygem/pkg/%: \
 	Gemfile.lock
 	cd rubygem && bundle exec rake
 
-rubygem/ext/fsevents-wrapper/fsevents-wrapper: ext/fsevents/build/Release/fsevents-wrapper
+rubygem/build/fsevents-wrapper: ext/fsevents/build/Release/fsevents-wrapper
 	mkdir -p $(@D)
 	cp $< $@
 
