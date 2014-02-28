@@ -35,6 +35,7 @@ rubygem/build: binaries
 	cp -R build/zeus-* $@
 
 rubygem/examples: examples
+	rm -rf $@
 	cp -r $< $@
 
 ext/fsevents/build/Release/fsevents-wrapper:
@@ -62,7 +63,7 @@ Gemfile.lock: Gemfile
 	bundle check || bundle install
 
 clean:
-	rm -rf ext/fsevents/build man/build go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb rubygem/pkg build
+	rm -rf ext/fsevents/build man/build go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb rubygem/pkg build rubygem/examples
 
 
 
