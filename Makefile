@@ -48,8 +48,10 @@ compileBinaries:
 		github.com/burke/zeus/go/cmd/zeus
 
 go/zeusversion/zeusversion.go:
+	mkdir -p $(@D)
 	@echo 'package zeusversion\n\nconst VERSION string = "$(VERSION)"' > $@
 rubygem/lib/zeus/version.rb:
+	mkdir -p $(@D)
 	@echo 'module Zeus\n  VERSION = "$(VERSION)"\nend' > $@
 
 
