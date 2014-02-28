@@ -1,3 +1,4 @@
+PACKAGE=github.com/burke/zeus
 VERSION=$(shell cat VERSION)
 GEM=rubygem/pkg/zeus-$(VERSION).gem
 
@@ -46,7 +47,7 @@ build/zeus-%: go/zeusversion/zeusversion.go compileBinaries
 compileBinaries:
 	gox -osarch="linux/386 linux/amd64 darwin/amd64" \
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
-		github.com/burke/zeus/go/cmd/zeus
+		$(PACKAGE)/go/cmd/zeus
 
 go/zeusversion/zeusversion.go:
 	mkdir -p $(@D)
