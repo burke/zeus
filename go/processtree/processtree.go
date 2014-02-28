@@ -73,6 +73,7 @@ func (tree *ProcessTree) RestartNodesWithFeatures(files map[string]bool) {
 	tree.Root.restartNodesWithFeatures(tree, files)
 }
 
+// Serialized: restartMutex is always held when this is called.
 func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files map[string]bool) {
 	for file, _ := range files {
 		if node.Features[file] {
