@@ -1,5 +1,5 @@
-VERSIONFILE=go/zeusversion/zeusversion.go
-GEM:=rubygem/pkg/zeus-$(shell cat VERSION).gem
+VERSION=$(shell cat VERSION)
+GEM=rubygem/pkg/zeus-$(VERSION).gem
 
 .PHONY: default all clean binaries compileBinaries fmt install
 default: all
@@ -26,9 +26,6 @@ rubygem/ext/fsevents-wrapper/fsevents-wrapper: ext/fsevents/build/Release/fseven
 	mkdir -p $(@D)
 	cp $< $@
 
-rubygem/lib/zeus/version.rb:
-	cd $(@D) && ./genversion.sh
-
 rubygem/man: man/build
 	mkdir -p $@
 	cp -R $< $@
@@ -43,15 +40,18 @@ rubygem/examples: examples
 ext/fsevents/build/Release/fsevents-wrapper:
 	cd ext/fsevents && xcodebuild
 
-build/zeus-%: $(VERSIONFILE) compileBinaries
+build/zeus-%: go/zeusversion/zeusversion.go compileBinaries
 	:
 compileBinaries:
 	gox -osarch="linux/386 linux/amd64 darwin/amd64" \
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
 		github.com/burke/zeus/go/cmd/zeus
 
-$(VERSIONFILE):
-	cd $(@D) && ./genversion.sh
+go/zeusversion/zeusversion.go:
+	@echo 'package zeusversion\n\nconst VERSION string = "$(VERSION)"' > $@
+rubygem/lib/zeus/version.rb:
+	@echo 'module Zeus\n  VERSION = "$(VERSION)"\nend' > $@
+
 
 install: $(GEM)
 	gem install $< --no-ri --no-rdoc
@@ -60,7 +60,7 @@ Gemfile.lock: Gemfile
 	bundle check || bundle install
 
 clean:
-	rm -rf ext/fsevents/build man/build $(VERSIONFILE) rubygem/lib/zeus/version.rb rubygem/pkg
+	rm -rf ext/fsevents/build man/build go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb rubygem/pkg
 
 
 
