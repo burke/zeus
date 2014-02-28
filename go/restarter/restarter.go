@@ -29,8 +29,7 @@ func start(tree *processtree.ProcessTree, filesChanged chan string, done, quit c
 
 			slog.Trace("Restarter got the first file of potentially many")
 			deadline := time.After(FileChangeWindow)
-			deadline_expired := false
-			for !deadline_expired {
+			for {
 				select {
 				case <-quit:
 					done <- true
@@ -38,7 +37,7 @@ func start(tree *processtree.ProcessTree, filesChanged chan string, done, quit c
 				case file := <-filesChanged:
 					changed[file] = true
 				case <-deadline:
-					deadline_expired = true
+					break
 				}
 			}
 			slog.Trace("Restarter has gathered %d changed files", len(changed))

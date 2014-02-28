@@ -61,7 +61,7 @@ func doRun() int {
 
 func exit(quit, done chan bool) {
 	// Signal the process to quit.
-	quit <- true
+	close(quit)
 	// Wait until the process signals it's done.
 	<-done
 }
