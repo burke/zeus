@@ -20,6 +20,7 @@ rubygem/pkg/%: \
 	rubygem/man \
 	rubygem/examples \
 	rubygem/lib/zeus/version.rb \
+	rubygem/build \
 	Gemfile.lock
 	cd rubygem && bundle exec rake
 
