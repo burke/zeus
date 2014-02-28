@@ -9,7 +9,7 @@ This screencast gives a quick overview of how to use zeus with Rails.
 
 Zeus is also covered in [RailsCasts episode 412](http://railscasts.com/episodes/412-fast-rails-commands).
 
-More technically speaking, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is on the horizon.
+More generally, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is possible.
 
 
 ## Requirements (for use with Rails)
@@ -23,7 +23,7 @@ More technically speaking, Zeus is a language-agnostic application checkpointer 
 
 For Ruby 1.9.3+, GC patches are not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched Ruby will fix it.
 
-*Please note*: Zeus requires your project to be running on a file system that supports FSEvents or inotify.
+**Please note**: Zeus requires your project to be running on a file system that supports FSEvents or inotify. This means no NFS, CIFS, Samba, or VBox/VMWare shared folders.
 
 
 ## Installation
