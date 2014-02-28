@@ -1,3 +1,19 @@
+# 0.15.0
+
+https://github.com/burke/zeus/compare/v0.14.0.rc1...master
+
+* Reworked the build process. Makefile completely rewritten, cross-compilation now done with [gox](github.com/mitchellh/gox).
+
+* Various bug fixes
+
+### 0.14.0.rc1
+
+*0.14.0 was never really released due to bugs and other reasons.*
+
+https://github.com/burke/zeus/compare/v0.13.3...v0.14.0.rc1
+
+### *Undocumented Period*
+
 ### 0.13.3
 
 https://github.com/burke/zeus/compare/v0.13.2...v0.13.3
