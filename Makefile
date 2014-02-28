@@ -41,7 +41,7 @@ ext/fsevents/build/Release/fsevents-wrapper:
 	cd ext/fsevents && xcodebuild
 
 build/zeus-%: go/zeusversion/zeusversion.go compileBinaries
-	:
+	@:
 compileBinaries:
 	gox -osarch="linux/386 linux/amd64 darwin/amd64" \
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
