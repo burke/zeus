@@ -63,7 +63,8 @@ Gemfile.lock: Gemfile
 	bundle check || bundle install
 
 clean:
-	rm -rf ext/fsevents/build man/build go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb rubygem/pkg build rubygem/examples
+	rm -rf ext/fsevents/build man/build go/zeusversion build
+	rm -rf rubygem/{man,build,pkg,examples,lib/zeus/version.rb,ext/fsevents-wrapper,MANIFEST}
 
 
 
