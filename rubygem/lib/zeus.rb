@@ -8,6 +8,7 @@ if File.exist?(gemfile) && version = File.read(gemfile)[/^    json \((.*)\)/, 1]
 end
 require 'json'
 require 'pty'
+require 'set'
 
 require 'zeus/load_tracking'
 require 'zeus/plan'
