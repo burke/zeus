@@ -6,7 +6,13 @@ https://github.com/burke/zeus/compare/v0.14.0.rc1...master
 
 * Removed cucumber from default plan.
 
-* Various bug fixes
+* Bugfix: Read JSON gem version from Gemfile.lock to avoid version conflicts
+
+* Feature: Add TEST_HELPER environment variable to force Rspec or (#393, @despo)
+
+* Bugfix PTY.open issue with Rubinius
+
+* Bugfix: IRB is not a module (@bendilley)
 
 ### 0.14.0.rc1
 
