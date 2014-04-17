@@ -1,6 +1,10 @@
+# 0.16.0
+
+https://github.com/burke/zeus/compare/v0.15.0...master
+
 # 0.15.0
 
-https://github.com/burke/zeus/compare/v0.14.0.rc1...master
+https://github.com/burke/zeus/compare/v0.14.0.rc1...v0.15.0
 
 * Reworked the build process. Makefile completely rewritten, cross-compilation now done with [gox](github.com/mitchellh/gox).
 
