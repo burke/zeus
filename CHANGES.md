@@ -1,12 +1,23 @@
 # 0.16.0
 
-https://github.com/burke/zeus/compare/v0.15.0...master
+https://github.com/burke/zeus/compare/v0.15.1...master
+
+# 0.15.1
+
+https://github.com/burke/zeus/compare/v0.15.0...v0.15.1
+
+* Revert IRB is not a module change in favor of supporting standard rails
+  console and Pry usage. `zeus console` now works out of the box as long as you
+  aren't resorting to reassinging the IRB constant to Pry. If you are doing
+  something like that, please create your own custom plan and zeus.json file to
+  workaround the errors you receive.
 
 # 0.15.0
 
 https://github.com/burke/zeus/compare/v0.14.0.rc1...v0.15.0
 
-* Reworked the build process. Makefile completely rewritten, cross-compilation now done with [gox](github.com/mitchellh/gox).
+* Reworked the build process. Makefile completely rewritten, cross-compilation
+  now done with [gox](github.com/mitchellh/gox).
 
 * Removed cucumber from default plan.
 
@@ -40,10 +51,13 @@ https://github.com/burke/zeus/compare/v0.13.1...v0.13.2
 
 ### 0.13.1
 
-* Handle the `shared_connection` hack that some people do to share an AR connection between threads (77d2b9bfc67977dfd8c17eed03fe2a8a25870c11)
+* Handle the `shared_connection` hack that some people do to share an AR
+  connection between threads (77d2b9bfc67977dfd8c17eed03fe2a8a25870c11)
 
 * Improved a few cases where client processes disconnect unexpectedly.
 
-* Changed up the slave/master IPC, solving a bunch of issues on Linux, by switching from a socket to a pipe.
+* Changed up the slave/master IPC, solving a bunch of issues on Linux, by
+  switching from a socket to a pipe.
 
-* Client terminations are now handled a bit more gracefully. The terminal is always reset from raw mode, and the cursor is reset to column 0.
+* Client terminations are now handled a bit more gracefully. The terminal is
+  always reset from raw mode, and the cursor is reset to column 0.
