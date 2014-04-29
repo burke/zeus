@@ -72,7 +72,7 @@ clean:
 
 
 .PHONY: dev_bootstrap
-dev_bootstrap:
+dev_bootstrap: go/zeusversion/zeusversion.go
 	go get ./...
 	bundle -v || gem install bundler --no-rdoc --no-ri
 	bundle install
