@@ -18,7 +18,7 @@ More generally, Zeus is a language-agnostic application checkpointer for non-mul
 * Rails 3.x or 4.x
 * Compatible Ruby installation
   * Ruby 1.9.3+ with backported GC from Ruby 2.0 ([rbenv instructions](https://gist.github.com/1688857), [rvm instructions](https://github.com/skaes/rvm-patchsets))
-  * Ruby 2.0
+  * Ruby 2.0+
   * Rubinius
 
 For Ruby 1.9.3+, GC patches are not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched Ruby will fix it.
