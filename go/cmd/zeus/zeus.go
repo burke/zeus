@@ -32,7 +32,7 @@ func main() {
 				slog.TraceLogger = slog.NewTraceLogger(tracefile)
 				Args = Args[1:]
 			} else {
-				fmt.Printf("Could not open trace file %s", Args[1])
+				fmt.Printf("Could not open trace file %s\n", Args[1])
 				return
 			}
 		case "--file-change-delay":
@@ -46,6 +46,14 @@ func main() {
 			} else {
 				execManPage("zeus")
 			}
+		case "--config":
+			_, err := os.Stat(Args[1])
+			if err != nil {
+				fmt.Printf("Config file doesn't exist: %s (%e)\n", Args[1], err)
+				return
+			}
+			config.ConfigFile = Args[1]
+			Args = Args[1:]
 		case "--version":
 			printVersion()
 			return
@@ -54,6 +62,10 @@ func main() {
 	if len(Args) == 0 {
 		execManPage("zeus")
 	}
+
+	// Don't confuse the master by sending *full* args to it; just those that are
+	// not zeus-specific.
+	config.Args = Args
 
 	if generalHelpRequested(Args) {
 		execManPage("zeus")
