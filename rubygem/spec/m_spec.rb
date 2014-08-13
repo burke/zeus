@@ -18,10 +18,10 @@ module Zeus::M
         lambda { Runner.new(argv).run }.should exit_with_code(0)
       end
 
-      it "escapes the question mark from explicit names" do
+      it "does not escape regex on explicit names" do
         argv = ["path/to/file.rb", "--name", fake_special_characters_test_method]
 
-        fake_runner.should_receive(:run).with(["-n", "test_my_test_method\\?"])
+        fake_runner.should_receive(:run).with(["-n", "test_my_test_method?"])
 
         lambda { Runner.new(argv).run }.should exit_with_code(0)
       end
