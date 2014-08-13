@@ -229,8 +229,7 @@ module Zeus
         elsif user_specified_name?
           abort_with_no_test_found_by_name unless tests.contains?(@test_name)
 
-          test_names = test_name_to_s
-          ["-n", test_names]
+          ["-n", test_name_to_s]
         else
           []
         end
@@ -257,7 +256,7 @@ module Zeus
       end
 
       def test_name_to_s
-        @test_name.is_a?(Regexp)? "/#{Regexp.escape(@test_name.source)}/" : Regexp.escape(@test_name)
+        @test_name.is_a?(Regexp)? "/#{@test_name.source}/" : @test_name
       end
 
       def user_specified_name?
