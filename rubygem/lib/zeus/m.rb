@@ -196,7 +196,10 @@ module Zeus
 
         # directly run the tests from here and exit with the status of the tests passing or failing
         case framework
-        when :minitest
+        when :minitest5
+          nerf_test_unit_autorunner
+          exit(Minitest.run(test_arguments).to_i)
+        when :minitest_old
           nerf_test_unit_autorunner
           exit(MiniTest::Unit.runner.run(test_arguments).to_i)
         when :testunit1, :testunit2
@@ -263,8 +266,10 @@ module Zeus
 
       def framework
         @framework ||= begin
-          if defined?(MiniTest)
-            :minitest
+          if defined?(Minitest::Runnable)
+            :minitest5
+          elsif defined?(MiniTest)
+            :minitest_old
           elsif defined?(Test)
             if Test::Unit::TestCase.respond_to?(:test_suites)
               :testunit2
@@ -305,7 +310,9 @@ module Zeus
 
         # Figure out what test framework we're using
         case framework
-        when :minitest
+        when :minitest5
+          suites = Minitest::Runnable.runnables
+        when :minitest_old
           suites = MiniTest::Unit::TestCase.test_suites
         when :testunit1, :testunit2
           suites = Test::Unit::TestCase.test_suites
@@ -316,7 +323,13 @@ module Zeus
         # Use some janky internal APIs to group test methods by test suite.
         suites.inject({}) do |suites, suite_class|
           # End up with a hash of suite class name to an array of test methods, so we can later find them and ignore empty test suites
-          suites[suite_class] = suite_class.test_methods if suite_class.test_methods.size > 0
+          test_methods = case framework
+          when :minitest5
+            suite_class.runnable_methods
+          else
+            suite_class.test_methods
+          end
+            suites[suite_class] = test_methods if test_methods.size > 0
           suites
         end
       end
