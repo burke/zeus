@@ -57,7 +57,7 @@ See `https://github.com/burke/zeus/blob/master/docs/overview.md`
   must be parseable by time.ParseDuration. The default delay is 300ms.
 
 * `--config` path:
-  Read from the given JSON config file.
+  Read from the given JSON config file. Defaults to `zeus.json`.
 
 ## BUILTIN COMMANDS
 
