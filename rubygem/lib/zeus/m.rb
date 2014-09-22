@@ -329,7 +329,7 @@ module Zeus
           else
             suite_class.test_methods
           end
-            suites[suite_class] = test_methods if test_methods.size > 0
+          suites[suite_class] = test_methods if test_methods.size > 0
           suites
         end
       end
