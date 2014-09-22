@@ -3,6 +3,7 @@
 https://github.com/burke/zeus/compare/v0.15.1...master
 
 * Add support for Minitest 5.0+ (@rcook)
+* Add `--config` to command line interface for specifying your own zeus.json file (@nevir)
 
 # 0.15.1
 
