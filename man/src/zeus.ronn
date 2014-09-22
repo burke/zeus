@@ -3,7 +3,7 @@ zeus(1) -- boot rails in under a second
 
 ## SYNOPSIS
 
-`zeus` [--no-color] [--log FILE] [--file-change-delay TIME] COMMAND [ARGS]
+`zeus` [--no-color] [--log FILE] [--file-change-delay TIME] [--config PATH] COMMAND [ARGS]
 
 ## DESCRIPTION
 
@@ -55,6 +55,9 @@ See `https://github.com/burke/zeus/blob/master/docs/overview.md`
   Collect all file changes that happen within the specified delay time
   and restart processes only after this deadline expires. The argument
   must be parseable by time.ParseDuration. The default delay is 300ms.
+
+* `--config` path:
+  Read from the given JSON config file.
 
 ## BUILTIN COMMANDS
 

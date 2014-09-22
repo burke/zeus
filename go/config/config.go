@@ -13,7 +13,7 @@ import (
 
 var Args = os.Args[1:]
 
-const configFile string = "zeus.json"
+var ConfigFile string = "zeus.json"
 
 type config struct {
 	Command string
@@ -89,7 +89,7 @@ func readConfigFileOrDefault(configFile string) ([]byte, error) {
 func parseConfig() (c config) {
 	var conf config
 
-	contents, err := readConfigFileOrDefault(configFile)
+	contents, err := readConfigFileOrDefault(ConfigFile)
 	if err != nil {
 		zerror.ErrorConfigFileInvalidJson()
 	}
