@@ -2,6 +2,8 @@
 
 https://github.com/burke/zeus/compare/v0.15.1...master
 
+* Add support for Minitest 5.0+ (@rcook)
+
 # 0.15.1
 
 https://github.com/burke/zeus/compare/v0.15.0...v0.15.1
