@@ -177,7 +177,13 @@ module Zeus
       # don't let minitest setup another exit hook
       begin
         require 'minitest/unit'
-        MiniTest::Unit.class_variable_set("@@installed_at_exit", true)
+        if defined?(Minitest::Runnable)
+          # Minitest 5
+          MiniTest.class_variable_set('@@installed_at_exit', true)
+        elsif defined?(MiniTest)
+          # Old versions of Minitest
+          MiniTest::Unit.class_variable_set("@@installed_at_exit", true)
+        end
       rescue LoadError
         # noop
       end
