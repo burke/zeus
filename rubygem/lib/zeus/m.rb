@@ -198,7 +198,7 @@ module Zeus
         case framework
         when :minitest5
           nerf_test_unit_autorunner
-          exit(Minitest.run(test_arguments).to_i)
+          exit(Minitest.run(test_arguments) ? 0 : 1)
         when :minitest_old
           nerf_test_unit_autorunner
           exit(MiniTest::Unit.runner.run(test_arguments).to_i)
