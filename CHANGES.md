@@ -1,6 +1,6 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.1...master
+https://github.com/burke/zeus/compare/v0.15.2...master
 
 # 0.15.2
 
