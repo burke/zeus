@@ -70,7 +70,7 @@ You need to restart zeus if you make changes to various initialization files. Ex
 
 * [Spork](https://github.com/sporkrb/spork) - a [DRb server](http://www.ruby-doc.org/stdlib-1.9.3/libdoc/drb/rdoc/DRb.html) that forks before each run to ensure a clean testing state
 * [Commands](https://github.com/rails/commands) - a persistent console that runs Rails commands without reloading the env
-* [Spring](https://github.com/jonleighton/spring) - like Zeus but in pure Ruby, totally automatic, alpha and limited compatibility
+* [Spring](https://github.com/rails/spring) - like Zeus but in pure Ruby, totally automatic, and included in Rails 4.1+.
 
 If you're switching from Spork, be sure to [read the wiki page on Spork](https://github.com/burke/zeus/wiki/Spork).
 
@@ -89,4 +89,4 @@ See also the handy contribution guide at [`contributing.md`](contributing.md).
 
 ## Rails 2.3 Support
 
-The default plan bundled with zeus only supports Rails 3.x and 4.x. There is a project (currently WIP) to provide Rails 2.3 support at https://github.com/tyler-smith/zeus-rails23.
+The default plan bundled with zeus only supports Rails 3.x and 4.x. There is a project to provide Rails 2.3 support [here](https://github.com/tyler-smith/zeus-rails23), however it has not been updated in some time.
