@@ -2,8 +2,14 @@
 
 https://github.com/burke/zeus/compare/v0.15.1...master
 
+# 0.15.2
+
+https://github.com/burke/zeus/compare/v0.15.1...v0.15.2
+
 * Add support for Minitest 5.0+ (@rcook)
 * Add `--config` to command line interface for specifying your own zeus.json file (@nevir)
+* Don't double escape Regex generated for test names (@grosser)
+* Add back Linux make command (make linux) for building Linux-only binaries
 
 # 0.15.1
 
