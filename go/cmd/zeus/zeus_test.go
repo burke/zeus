@@ -7,8 +7,7 @@ import (
 )
 
 func TestDefaultConfigFile(t *testing.T) {
-  if config.ConfigFile != "zeus.json" {
-    t.Fail()
-  }
+	if config.ConfigFile != "zeus.json" {
+		t.Fail()
+	}
 }
-
