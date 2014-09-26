@@ -1,6 +1,7 @@
 PACKAGE=github.com/burke/zeus
 VERSION=$(shell cat VERSION)
 GEM=rubygem/pkg/zeus-$(VERSION).gem
+GEM_LINUX=rubygem-linux/pkg/zeus-$(VERSION).gem
 
 .PHONY: default all clean binaries compileBinaries fmt install
 default: all
@@ -9,11 +10,23 @@ all: fmt binaries man/build $(GEM)
 
 binaries: build/zeus-linux-386 build/zeus-linux-amd64 build/zeus-darwin-amd64
 
+linux: fmt linuxBinaries man/build $(GEM_LINUX)
+
+linuxBinaries: build-linux
+
 fmt:
 	find . -name '*.go' | xargs -t -I@ go fmt @
 
 man/build: Gemfile.lock
 	cd man && bundle exec rake
+
+rubygem-linux/pkg/%: \
+	rubygem/man \
+	rubygem/examples \
+	rubygem/lib/zeus/version.rb \
+	rubygem/build \
+	Gemfile.lock
+	cd rubygem && bundle exec rake
 
 rubygem/pkg/%: \
 	rubygem/build/fsevents-wrapper \
@@ -47,6 +60,13 @@ build/zeus-%: go/zeusversion/zeusversion.go compileBinaries
 	@:
 compileBinaries:
 	gox -osarch="linux/386 linux/amd64 darwin/amd64" \
+		-output="build/zeus-{{.OS}}-{{.Arch}}" \
+		$(PACKAGE)/go/cmd/zeus
+
+build-linux: go/zeusversion/zeusversion.go compileLinuxBinaries
+	@:
+compileLinuxBinaries:
+	gox -osarch="linux/386 linux/amd64" \
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
