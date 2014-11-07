@@ -17,7 +17,16 @@ module Zeus
         ENV.clear
       end
 
+      it "requires rails_helper when using rspec 3.0+" do
+        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", true)
+
+        rails.should_receive(:require).with("rails_helper")
+
+        rails.test_helper
+      end
+
       it "when spec_helper exists spec_helper is required" do
+        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", true)
 
         rails.should_receive(:require).with("spec_helper")
@@ -26,6 +35,7 @@ module Zeus
       end
 
       it "when minitest_helper exists minitest_helper is required" do
+        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", true)
 
@@ -34,7 +44,8 @@ module Zeus
         rails.test_helper
       end
 
-      it "when there is no spec_helper or minitest_helper, test_helper is required" do
+      it "when there is no rspec helpers or minitest_helper, test_helper is required" do
+        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", false)
 

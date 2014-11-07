@@ -191,7 +191,11 @@ module Zeus
       if ENV['RAILS_TEST_HELPER']
         require ENV['RAILS_TEST_HELPER']
       else
-        if File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
+        if File.exists?(ROOT_PATH + "/spec/rails_helper.rb")
+          # RSpec >= 3.0+
+          require 'rails_helper'
+        elsif File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
+          # RSpec < 3.0
           require 'spec_helper'
         elsif File.exists?(ROOT_PATH + "/test/minitest_helper.rb")
           require 'minitest_helper'
