@@ -1,6 +1,12 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.2...master
+https://github.com/burke/zeus/compare/v0.15.3...master
+
+# 0.15.3
+
+https://github.com/burke/zeus/compare/v0.15.2...v0.15.3
+
+* Add support for RSpec 3.0+ out of the box (hat tip @PaBLoX-CL, @maxcal, @stabenfeldt, #308, #474)
 
 # 0.15.2
 
