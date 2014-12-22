@@ -206,9 +206,13 @@ module Zeus
     end
 
     def test(argv=ARGV)
-      if spec_file?(argv) && defined?(RSpec)
+      # if there are two test frameworks and one of them is RSpec,
+      # then "zeus test/rspec/testrb" without arguments runs the
+      # RSpec suite by default.
+      if (argv.empty? || spec_file?(argv)) && defined?(RSpec)
         # disable autorun in case the user left it in spec_helper.rb
         RSpec::Core::Runner.disable_autorun!
+        argv = ["spec"] if argv.empty?
         exit RSpec::Core::Runner.run(argv)
       else
         Zeus::M.run(argv)
