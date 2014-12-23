@@ -9,12 +9,11 @@ module Zeus
         expect(rails).to receive(:require).with("minitest/unit")
       end
 
-      it "when ENV['RAILS_TEST_HELPER'] is set helper is loaded from variable" do
-        ENV['RAILS_TEST_HELPER'] = "a_test_helper"
-        expect(rails).to receive(:require).with("a_test_helper")
+      it "loads the test helper from environment when ENV['RAILS_TEST_HELPER'] is set" do
+        allow(ENV).to receive(:[]).with("RAILS_TEST_HELPER").and_return("a_test_helper")
 
+        expect(rails).to receive(:require).with("a_test_helper")
         rails.test_helper
-        ENV.clear
       end
 
       it "requires rails_helper when using rspec 3.0+" do
