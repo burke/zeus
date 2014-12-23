@@ -16,14 +16,8 @@ end
 
 def fake_suite
   @suite ||= double("TestSuite",
-                  :test_methods => [fake_test_method],
-                  :instance_method => fake_instance_method)
-end
-
-def fake_suite_with_special_characters
-  @suite ||= double("TestSuite",
-                  :test_methods => [fake_special_characters_test_method],
-                  :instance_method => fake_instance_method(fake_special_characters_test_method))
+                  :test_methods => [test_method],
+                  :instance_method => fake_instance_method(test_method))
 end
 
 def fake_test_method

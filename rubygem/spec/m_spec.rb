@@ -3,12 +3,14 @@ require 'fake_mini_test'
 
 module Zeus::M
   describe Runner do
+    let(:test_method) { fake_test_method }
+
+    before(:each) do
+      stub_mini_test_methods
+    end
 
     context "given a test with a question mark" do
-      before(:each) do
-        allow(MiniTest::Unit::TestCase).to receive(:test_suites).and_return([fake_suite_with_special_characters])
-        allow(MiniTest::Unit).to receive(:runner).and_return(fake_runner)
-      end
+      let(:test_method) { fake_special_characters_test_method }
 
       it "escapes the question mark when using line number" do
         argv = ["path/to/file.rb:2"]
@@ -26,15 +28,9 @@ module Zeus::M
         expect(lambda { Runner.new(argv).run }).to exit_with_code(0)
       end
     end
-  end
 
-  describe Runner do
-    before(:each) do
-      stub_mini_test_methods
-    end
-
-    context "no option is given" do
-      it "runs the test without giving any option" do
+    context "given no option" do
+      it "runs the test" do
         argv = ["path/to/file.rb"]
 
         allow(fake_runner).to receive(:run).with([])
@@ -44,7 +40,7 @@ module Zeus::M
     end
 
     context "given a line number" do
-      it "aborts if no test is found" do
+      it "aborts if no test is found on that line number" do
         argv = ["path/to/file.rb:100"]
 
         expect(STDERR).to receive(:write).with(/No tests found on line 100/)
@@ -62,7 +58,7 @@ module Zeus::M
       end
     end
 
-    context "specifying test name" do
+    context "given a specific test name" do
       it "runs the specified tests when using a pattern in --name option" do
         argv = ["path/to/file.rb", "--name", "/#{fake_test_method}/"]
 
