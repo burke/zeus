@@ -6,12 +6,12 @@ module Zeus
 
     context "#test_helper" do
       before(:each) do
-        rails.should_receive(:require).with("minitest/unit")
+        expect(rails).to receive(:require).with("minitest/unit")
       end
 
       it "when ENV['RAILS_TEST_HELPER'] is set helper is loaded from variable" do
         ENV['RAILS_TEST_HELPER'] = "a_test_helper"
-        rails.should_receive(:require).with("a_test_helper")
+        expect(rails).to receive(:require).with("a_test_helper")
 
         rails.test_helper
         ENV.clear
@@ -20,7 +20,7 @@ module Zeus
       it "requires rails_helper when using rspec 3.0+" do
         mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", true)
 
-        rails.should_receive(:require).with("rails_helper")
+        expect(rails).to receive(:require).with("rails_helper")
 
         rails.test_helper
       end
@@ -29,7 +29,7 @@ module Zeus
         mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", true)
 
-        rails.should_receive(:require).with("spec_helper")
+        expect(rails).to receive(:require).with("spec_helper")
 
         rails.test_helper
       end
@@ -39,7 +39,7 @@ module Zeus
         mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", true)
 
-        rails.should_receive(:require).with("minitest_helper")
+        expect(rails).to receive(:require).with("minitest_helper")
 
         rails.test_helper
       end
@@ -49,7 +49,7 @@ module Zeus
         mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
         mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", false)
 
-        rails.should_receive(:require).with("test_helper")
+        expect(rails).to receive(:require).with("test_helper")
 
         rails.test_helper
       end
@@ -57,7 +57,7 @@ module Zeus
 
     context "#gem_is_bundled?" do
       it "returns gem version from Gemfile.lock" do
-        File.stub(:read).and_return("
+        allow(File).to receive(:read).and_return("
 GEM
   remote: https://rubygems.org/
   specs:
@@ -66,7 +66,7 @@ GEM
       rake (>= 0.9.0)
     rake (10.0.4)
 ")
-        gem_is_bundled?('rake').should == '10.0.4'
+        expect(gem_is_bundled?('rake')).to eq '10.0.4'
       end
     end
   end

@@ -10,11 +10,11 @@ RSpec::Matchers.define :exit_with_code do |exp_code|
     end
     actual and actual == exp_code
   end
-  failure_message_for_should do |block|
+  failure_message do |block|
     "expected block to call exit(#{exp_code}) but exit" +
       (actual.nil? ? " not called" : "(#{actual}) was called")
   end
-  failure_message_for_should_not do |block|
+  failure_message_when_negated do |block|
     "expected block not to call exit(#{exp_code})"
   end
   description do
@@ -23,12 +23,12 @@ RSpec::Matchers.define :exit_with_code do |exp_code|
 end
 
 def stub_system_methods
-  Dir.stub!(:glob).and_return(["path/to/file.rb"])
-  Kernel.stub!(:load).and_return
+  allow(Dir).to receive(:glob).and_return(["path/to/file.rb"])
+  allow(Kernel).to receive(:load)
 end
 
 def mock_file_existence(file, result)
-  File.should_receive(:exists?).with(file).and_return(result)
+  expect(File).to receive(:exists?).with(file).and_return(result)
 end
 
 RSpec.configure do |config|
