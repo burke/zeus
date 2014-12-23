@@ -27,7 +27,7 @@ Gem::Specification.new do |gem|
   gem.version       = version
   gem.license       = "MIT"
 
-  gem.add_development_dependency "rspec", '~> 2.12.0'
+  gem.add_development_dependency "rspec", '~> 3.1.0'
   gem.add_development_dependency "rake"
   gem.add_development_dependency "ronn", '>= 0.7.0'
 
