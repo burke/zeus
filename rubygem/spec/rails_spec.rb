@@ -4,69 +4,84 @@ module Zeus
   describe Rails do
     subject(:rails) { Rails.new }
 
-    context "#test_helper" do
+    describe "#test_helper" do
       before(:each) do
-        rails.should_receive(:require).with("minitest/unit")
+        # Zeus::Rails#test_helper will require minitest/unit by default.
+        # We need to catch it first, before setting expectations on
+        # helper_file requires below.
+        expect(rails).to receive(:require).with("minitest/unit")
       end
 
-      it "when ENV['RAILS_TEST_HELPER'] is set helper is loaded from variable" do
-        ENV['RAILS_TEST_HELPER'] = "a_test_helper"
-        rails.should_receive(:require).with("a_test_helper")
+      context "when ENV['RAILS_TEST_HELPER'] is set" do
+        it "loads the test helper file from the environment variable" do
+          helper = "a_test_helper"
+          allow(ENV).to receive(:[]).with("RAILS_TEST_HELPER").and_return(helper)
 
-        rails.test_helper
-        ENV.clear
+          expect(rails).to receive(:require).with(helper)
+          rails.test_helper
+        end
       end
 
-      it "requires rails_helper when using rspec 3.0+" do
-        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", true)
+      context "when using rspec" do
+        context "3.0+" do
+          it "requires rails_helper" do
+            mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", true)
 
-        rails.should_receive(:require).with("rails_helper")
+            expect(rails).to receive(:require).with("rails_helper")
 
-        rails.test_helper
+            rails.test_helper
+          end
+        end
+
+        it "requires spec_helper" do
+          mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
+          mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", true)
+
+          expect(rails).to receive(:require).with("spec_helper")
+
+          rails.test_helper
+        end
       end
 
-      it "when spec_helper exists spec_helper is required" do
-        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
-        mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", true)
+      context "when using minitest" do
+        it "requires minitest_helper" do
+          mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
+          mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
+          mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", true)
 
-        rails.should_receive(:require).with("spec_helper")
+          expect(rails).to receive(:require).with("minitest_helper")
 
-        rails.test_helper
+          rails.test_helper
+        end
       end
 
-      it "when minitest_helper exists minitest_helper is required" do
-        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
-        mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
-        mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", true)
+      context "when there are no rspec or minitest helpers" do
+        it "requires test_helper" do
+          mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
+          mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
+          mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", false)
 
-        rails.should_receive(:require).with("minitest_helper")
+          expect(rails).to receive(:require).with("test_helper")
 
-        rails.test_helper
-      end
-
-      it "when there is no rspec helpers or minitest_helper, test_helper is required" do
-        mock_file_existence(ROOT_PATH + "/spec/rails_helper.rb", false)
-        mock_file_existence(ROOT_PATH + "/spec/spec_helper.rb", false)
-        mock_file_existence(ROOT_PATH + "/test/minitest_helper.rb", false)
-
-        rails.should_receive(:require).with("test_helper")
-
-        rails.test_helper
+          rails.test_helper
+        end
       end
     end
 
-    context "#gem_is_bundled?" do
-      it "returns gem version from Gemfile.lock" do
-        File.stub(:read).and_return("
-GEM
-  remote: https://rubygems.org/
-  specs:
-    exception_notification-rake (0.0.6)
-      exception_notification (~> 3.0.1)
-      rake (>= 0.9.0)
-    rake (10.0.4)
-")
-        gem_is_bundled?('rake').should == '10.0.4'
+    describe "#gem_is_bundled?" do
+      context "for a bundled gem" do
+        it "returns the bundled gem's version" do
+          allow(File).to receive(:read).and_return("
+  GEM
+    remote: https://rubygems.org/
+    specs:
+      exception_notification-rake (0.0.6)
+        exception_notification (~> 3.0.1)
+        rake (>= 0.9.0)
+      rake (10.0.4)
+  ")
+          expect(gem_is_bundled?('rake')).to eq '10.0.4'
+        end
       end
     end
   end
