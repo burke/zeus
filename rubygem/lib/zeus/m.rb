@@ -126,10 +126,8 @@ module Zeus
       def parse
         # With no arguments,
         if @argv.empty?
-          # Just shell out to `rake test`.
-          require 'rake'
-          Rake::Task['test'].invoke
-          exit
+          @files = []
+          add_file("test")
         else
           parse_options! @argv
 
