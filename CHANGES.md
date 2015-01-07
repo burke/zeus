@@ -2,6 +2,8 @@
 
 https://github.com/burke/zeus/compare/v0.15.3...master
 
+* Fix issues invoking `zeus test` without arguments when using RSpec (@sshao)
+
 # 0.15.3
 
 https://github.com/burke/zeus/compare/v0.15.2...v0.15.3
