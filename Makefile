@@ -26,7 +26,7 @@ rubygem-linux/pkg/%: \
 	rubygem/lib/zeus/version.rb \
 	rubygem/build \
 	Gemfile.lock
-	cd rubygem && bundle exec rake
+	cd rubygem && bundle install && bundle exec rake
 
 rubygem/pkg/%: \
 	rubygem/build/fsevents-wrapper \
