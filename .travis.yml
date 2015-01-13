@@ -12,3 +12,5 @@ rvm:
 gemfile: rubygem/Gemfile
 script: make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bundle exec rspec spec
 
+# use new Travis AUFS containers
+sudo: false
