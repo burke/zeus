@@ -1,4 +1,10 @@
 source 'https://rubygems.org'
 
 # Specify your gem's dependencies in zeus.gemspec
-gemspec
+gemspec development_group: :gem_build_tools
+
+gem 'rspec', '~> 3.1'
+
+group :development do
+  gem 'rake' # ok to put here since Travis only runs rspec directly
+end
