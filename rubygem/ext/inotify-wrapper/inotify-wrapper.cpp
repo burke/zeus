@@ -102,6 +102,7 @@ void go()
     if (retval == -1) {
       // perror("select");
     } else if (retval) {
+      if(feof(stdin)) break;
       if (FD_ISSET(0, &rfds))           handleStdin();
       if (FD_ISSET(_inotify_fd, &rfds)) handleInotify();
     }
