@@ -2,7 +2,8 @@
 
 https://github.com/burke/zeus/compare/v0.15.3...master
 
-* Fix issues invoking `zeus test` without arguments when using RSpec (@sshao)
+* Fix issues invoking `zeus test` without arguments when using RSpec ([sshao](https://github.com/sshao))
+* Prevent infinite loop in inotify plugin ([e2](https://github.com/e2))
 
 # 0.15.3
 
