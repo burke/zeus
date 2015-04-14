@@ -174,20 +174,6 @@ module Zeus
     end
 
     def test_helper
-      # don't let minitest setup another exit hook
-      begin
-        require 'minitest/unit'
-        if defined?(Minitest::Runnable)
-          # Minitest 5
-          MiniTest.class_variable_set('@@installed_at_exit', true)
-        elsif defined?(MiniTest)
-          # Old versions of Minitest
-          MiniTest::Unit.class_variable_set("@@installed_at_exit", true)
-        end
-      rescue LoadError
-        # noop
-      end
-
       if ENV['RAILS_TEST_HELPER']
         require ENV['RAILS_TEST_HELPER']
       else
