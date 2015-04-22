@@ -1,20 +1,31 @@
-module MiniTest
-  module Unit
+module Minitest
+  class Runnable
+  end
+end
+
+class MiniTest
+  class Unit
     class TestCase
     end
   end
 end
 
 def stub_mini_test_methods
-  allow(MiniTest::Unit::TestCase).to receive(:test_suites).and_return([fake_suite])
-  allow(MiniTest::Unit).to receive(:runner).and_return(fake_runner)
+  allow(Minitest::Runnable).to receive(:runnables).and_return([fake_mt5_suite])
+  allow(MiniTest::Unit::TestCase).to receive(:test_suite).and_return([fake_mt_old_suite])
 end
 
 def fake_runner
- @runner ||= double("Runner", :run => 0)
+  @runner ||= double("Runner", :run => 0)
 end
 
-def fake_suite
+def fake_mt5_suite
+  @suite ||= double("TestSuite",
+                  :runnable_methods => [test_method],
+                  :instance_method => fake_instance_method(test_method))
+end
+
+def fake_mt_old_suite
   @suite ||= double("TestSuite",
                   :test_methods => [test_method],
                   :instance_method => fake_instance_method(test_method))

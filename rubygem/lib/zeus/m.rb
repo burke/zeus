@@ -195,7 +195,6 @@ module Zeus
         # directly run the tests from here and exit with the status of the tests passing or failing
         case framework
         when :minitest5, :minitest_old
-          require 'minitest/autorun'
           ARGV.replace(test_arguments)
           exit
         when :testunit1, :testunit2
