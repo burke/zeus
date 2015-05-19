@@ -1,4 +1,5 @@
 require 'zeus/rails'
+require 'pry'
 
 RSpec::Matchers.define :exit_with_code do |exp_code|
   actual = nil
