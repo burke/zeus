@@ -131,6 +131,13 @@ module Zeus
       require 'rails/commands/console'
 
       if defined?(Pry)
+        # Adding Rails Console helpers to Pry.
+        if (3..4).include?(::Rails::VERSION::MAJOR)
+          require 'rails/console/app'
+          require 'rails/console/helpers'
+          TOPLEVEL_BINDING.eval('self').extend ::Rails::ConsoleMethods
+        end
+
         Pry.start
       else
         ::Rails::Console.start(::Rails.application)
