@@ -196,15 +196,11 @@ module Zeus
       # then "zeus test/rspec/testrb" without arguments runs the
       # RSpec suite by default.
       if using_rspec?(argv)
-        # disable autorun in case the user left it in spec_helper.rb
-        RSpec::Core::Runner.disable_autorun!
-        argv = ["spec"] if argv.empty?
-        exit RSpec::Core::Runner.run(argv)
-      elsif using_minitest?
-        require 'minitest/autorun'
-        Zeus::M.run(argv)
+        ARGV.replace(argv)
+        RSpec::Core::Runner.invoke
       else
-        # old Test::Unit
+        require 'minitest/autorun' if using_minitest?
+        # Minitest and old Test::Unit
         Zeus::M.run(argv)
       end
     end
@@ -216,7 +212,7 @@ module Zeus
     end
 
     def using_minitest?
-      defined?(MiniTest) || defined?(Minitest)
+      defined?(:MiniTest) || defined?(:Minitest)
     end
 
     SPEC_DIR_REGEXP = %r"(^|/)spec"

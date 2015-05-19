@@ -5,13 +5,6 @@ module Zeus
     subject(:rails) { Rails.new }
 
     describe "#test_helper" do
-      before(:each) do
-        # Zeus::Rails#test_helper will require minitest/unit by default.
-        # We need to catch it first, before setting expectations on
-        # helper_file requires below.
-        expect(rails).to receive(:require).with("minitest/unit")
-      end
-
       context "when ENV['RAILS_TEST_HELPER'] is set" do
         it "loads the test helper file from the environment variable" do
           helper = "a_test_helper"
@@ -81,6 +74,49 @@ module Zeus
       rake (10.0.4)
   ")
           expect(gem_is_bundled?('rake')).to eq '10.0.4'
+        end
+      end
+    end
+
+    describe "#test" do
+      def expect_minitest_autorun
+        # Zeus::Rails#test_helper will require minitest/unit by default.
+        # We need to catch it first, before setting expectations on
+        # helper_file requires below.
+        expect_any_instance_of(Rails).to receive(:require).with("minitest/autorun")
+      end
+
+      context 'minitest' do
+        before do
+          module Zeus::M
+          end
+          expect(Zeus::M).to receive(:run)
+        end
+
+        it "requires autorun when testing with new minitest" do
+          module ::Minitest
+          end
+          expect_minitest_autorun
+
+          rails.test
+        end
+
+        it "requires autorun when testing with old minitest" do
+          expect_minitest_autorun
+
+          rails.test
+        end
+      end
+
+      context 'rspec' do
+        before do
+          class ::RSpec::Core::Runner
+          end
+        end
+
+        it "calls rspec core runner" do
+          expect(RSpec::Core::Runner).to receive(:invoke)
+          rails.test(['test_spec.rb'])
         end
       end
     end
