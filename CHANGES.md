@@ -2,6 +2,9 @@
 
 https://github.com/burke/zeus/compare/v0.15.4...master
 
+* Inject Rails console helpers when using Pry (@leods92)
+* Integrate better with autorun capabilities of test frameworks (Minitest, Rspec) (@latortuga, @blowmage, @zenspider)
+
 # 0.15.4
 
 https://github.com/burke/zeus/compare/v0.15.3...v0.15.4
