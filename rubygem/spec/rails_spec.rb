@@ -61,23 +61,6 @@ module Zeus
       end
     end
 
-    describe "#gem_is_bundled?" do
-      context "for a bundled gem" do
-        it "returns the bundled gem's version" do
-          allow(File).to receive(:read).and_return("
-  GEM
-    remote: https://rubygems.org/
-    specs:
-      exception_notification-rake (0.0.6)
-        exception_notification (~> 3.0.1)
-        rake (>= 0.9.0)
-      rake (10.0.4)
-  ")
-          expect(gem_is_bundled?('rake')).to eq '10.0.4'
-        end
-      end
-    end
-
     describe "#test" do
       def expect_minitest_autorun
         # Zeus::Rails#test_helper will require minitest/unit by default.
