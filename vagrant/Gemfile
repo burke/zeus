@@ -1,0 +1,14 @@
+source 'https://rubygems.org'
+
+# NOTE: Avoid putting development deps in gemspec
+gemspec development_group: :gem_build_tools
+
+gem 'rake', group: :gem_build_tools
+
+group :development do
+  gem "vagrant", git: "https://github.com/mitchellh/vagrant.git"
+end
+
+group :plugins do
+  gem "vagrant-zeus", path: "."
+end
