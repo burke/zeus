@@ -18,14 +18,18 @@ set<string> watched_files;
 
 void log(const char *fmt, ...)
 {
+#ifdef DEBUG
     va_list ap;
     FILE *logfile;
 
     va_start(ap, fmt);
 
-    vfprintf(stderr, fmt, ap);
+    logfile = fopen("/tmp/zeus-debug.log", "a");
+    vfprintf(logfile, fmt, ap);
+    fclose(logfile);
 
     va_end(ap);
+#endif
 }
 
 int start_server(int port)
