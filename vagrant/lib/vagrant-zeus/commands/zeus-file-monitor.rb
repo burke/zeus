@@ -17,11 +17,12 @@ module VagrantPlugins::Zeus
       class FileWatcher
         def initialize(machine)
           @machine = machine
-          @file_monitor = spawn_file_monitor
-          @zeus_connection = spawn_zeus_connection
         end
 
         def run
+          @file_monitor = spawn_file_monitor
+          @zeus_connection = spawn_zeus_connection
+
           modified_files_buf = ''
           watched_files_buf = ''
           ended = false
@@ -46,6 +47,14 @@ module VagrantPlugins::Zeus
                 end
                 watched_files_buf = process_watched_files(watched_files_buf)
               end
+            end
+          end
+        ensure
+          if @file_monitor
+            begin
+              Process.kill("KILL", @file_monitor.pid)
+            rescue => e
+              $stderr.puts(e)
             end
           end
         end
