@@ -6,7 +6,7 @@ gemspec development_group: :gem_build_tools
 gem 'rake', group: :gem_build_tools
 
 group :development do
-  gem "vagrant", git: "https://github.com/mitchellh/vagrant.git"
+  gem "vagrant"
 end
 
 group :plugins do
