@@ -3,8 +3,8 @@
 # This preamble is basically used to deal with bundler/gem_tasks, which loads the gemspec
 # on rake init, even though some prerequisites are not generated until `rake build` is invoked.
 version = begin
-            require File.expand_path('../lib/zeus/version', __FILE__)
-            Zeus::VERSION
+            require File.expand_path('../lib/vagrant-zeus/version', __FILE__)
+            VagrantPlugins::Zeus::VERSION
           rescue LoadError
             "0.0.0"
           end
@@ -14,23 +14,18 @@ files = File.exist?('MANIFEST') ? File.read("MANIFEST").lines.map(&:chomp) : []
 Gem::Specification.new do |gem|
   gem.authors       = ["Burke Libbey"]
   gem.email         = ["burke@libbey.me"]
-  gem.description   = %q{Boot any rails app in under a second}
-  gem.summary       = %q{Zeus is an intelligent preloader for ruby applications. It allows normal development tasks to be run in a fraction of a second.}
+  gem.description   = %q{Vagrant plugin to pass along filesystem events on directories shared with the VM}
+  gem.summary       = %q{This plugin watches for filesystem events on the local filesystem, and sends them over a network socket to Zeus listening from inside the VM.}
   gem.homepage      = "http://zeus.is"
 
   gem.files         = files
   gem.extensions    = [
     "ext/inotify-wrapper/extconf.rb",
-    "ext/file-listener/extconf.rb",
   ]
-  gem.executables   = ['zeus']
+  gem.executables   = []
   gem.test_files    = []
-  gem.name          = "zeus"
+  gem.name          = "vagrant-zeus"
   gem.require_paths = ["lib"]
   gem.version       = version
   gem.license       = "MIT"
-
-  gem.add_runtime_dependency "method_source", ">= 0.6.7"
-
-  gem.add_development_dependency "bundler", '~> 1.6'
 end
