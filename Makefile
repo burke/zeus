@@ -97,4 +97,3 @@ dev_bootstrap: go/zeusversion/zeusversion.go
 	bundle -v || gem install bundler --no-rdoc --no-ri
 	bundle install
 	go get github.com/mitchellh/gox
-	gox -build-toolchain -osarch="linux/amd64" -osarch="darwin/amd64" -osarch="linux/386"
