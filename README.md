@@ -17,11 +17,8 @@ More generally, Zeus is a language-agnostic application checkpointer for non-mul
 * OS X 10.7+ *OR* Linux 2.6.13+
 * Rails 3.x or 4.x
 * Compatible Ruby installation
-  * Ruby 1.9.3+ with backported GC from Ruby 2.0 ([rbenv instructions](https://gist.github.com/1688857), [rvm instructions](https://github.com/skaes/rvm-patchsets))
   * Ruby 2.0+
   * Rubinius
-
-For Ruby 1.9.3+, GC patches are not actually 100% necessary, especially if you have a lot of memory. Feel free to give it a shot first without, but if you're suddenly out of RAM, switching to the GC-patched Ruby will fix it.
 
 **Please note**: Zeus requires your project to be running on a file system that supports FSEvents or inotify. This means no NFS, CIFS, Samba, or VBox/VMWare shared folders.
 
@@ -90,3 +87,8 @@ See also the handy contribution guide at [`contributing.md`](contributing.md).
 ## Rails 2.3 Support
 
 The default plan bundled with zeus only supports Rails 3.x and 4.x. There is a project to provide Rails 2.3 support [here](https://github.com/tyler-smith/zeus-rails23), however it has not been updated in some time.
+
+## Legacy Ruby Versions
+
+Due to official Ruby support lapsing in Feb 2015, Ruby 1.9.3 and below are no longer officially supported. Zeus may work with them but we are not actively supporting them at this time. The last release tested with these versions is [0.15.4](https://github.com/burke/zeus/tree/v0.15.4).
+

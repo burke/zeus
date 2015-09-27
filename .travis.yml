@@ -4,10 +4,9 @@
 language: ruby
 bundler_args: --without development
 rvm:
-  - 1.9.3
-  - 2.0.0
-  - 2.1.6
-  - 2.2.2
+  - 2.0.0-p647
+  - 2.1.7
+  - 2.2.3
   - rbx-2
 gemfile: rubygem/Gemfile
 script: make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bundle exec rspec spec
