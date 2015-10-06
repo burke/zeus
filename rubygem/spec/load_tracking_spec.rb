@@ -13,7 +13,6 @@ describe "Zeus::LoadTracking" do
 
       after { $LOAD_PATH.delete test_dirname }
 
-
       it 'adds full filepath to $untracked_features' do
         Zeus::LoadTracking.add_feature(test_filename)
 
