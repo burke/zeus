@@ -28,5 +28,15 @@ describe "Zeus::LoadTracking" do
         expect($untracked_features).to include(__dir__ + "/load_tracking_spec.rb")
       end
     end
+
+    context '.features_loaded_by' do
+      it 'returns list of new files loaded when block executes' do
+        new_files = Zeus::LoadTracking.features_loaded_by do
+          $untracked_features << "an_untracked_feature.rb"
+        end
+
+        expect(new_files).to eq(["an_untracked_feature.rb"])
+      end
+    end
   end
 end
