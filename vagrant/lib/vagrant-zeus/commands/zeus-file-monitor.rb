@@ -159,7 +159,15 @@ module VagrantPlugins::Zeus
 
       def execute
         with_target_vms(nil, :single_target => true) do |machine|
-          FileWatcher.new(machine, @env).run
+          watcher = FileWatcher.new(machine, @env)
+          while true
+            begin
+              watcher.run
+            rescue => e
+              @env.ui.error(e.message)
+            end
+            sleep 1
+          end
         end
         0
       end
