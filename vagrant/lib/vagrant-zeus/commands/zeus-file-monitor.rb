@@ -21,8 +21,8 @@ module VagrantPlugins::Zeus
         end
 
         def run
-          @file_monitor = spawn_file_monitor
           @zeus_connection = spawn_zeus_connection
+          @file_monitor = spawn_file_monitor
 
           ui.info("Connected to zeus, watching for changes...")
 
