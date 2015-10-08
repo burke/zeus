@@ -56,6 +56,7 @@ module VagrantPlugins::Zeus
           if @file_monitor
             begin
               Process.kill("KILL", @file_monitor.pid)
+              Process.waitpid(@file_monitor.pid)
             rescue => e
               $stderr.puts(e)
             end
