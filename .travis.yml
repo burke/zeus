@@ -9,7 +9,7 @@ rvm:
   - 2.2.3
   - rbx-2
 gemfile: rubygem/Gemfile
-script: make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bundle exec rspec spec
+script: make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bin/rspec spec
 
 # use new Travis AUFS containers
 sudo: false
