@@ -1,7 +1,6 @@
 module Zeus
   class LoadTracking
     class << self
-
       def features_loaded_by(&block)
         old_features = all_features()
         yield
@@ -9,15 +8,18 @@ module Zeus
         return new_features
       end
 
+      # Check the load path first to see if the file getting loaded is already
+      # loaded. Otherwise, add the file to the $untracked_features array which
+      # then gets added to $LOADED_FEATURES array.
       def add_feature(file)
-        path = if File.exist?(File.expand_path(file))
-          File.expand_path(file)
-        else
-          find_in_load_path(file)
+        full_path = File.expand_path(file)
+
+        if find_in_load_path(full_path) || File.exist?(full_path)
+          add_extra_feature(full_path)
         end
-        add_extra_feature(path) if path
       end
 
+      # $LOADED_FEATURES global variable is used internally by Rubygems
       def all_features
         untracked = defined?($untracked_features) ? $untracked_features : []
         $LOADED_FEATURES + untracked
@@ -30,8 +32,8 @@ module Zeus
         $untracked_features << path
       end
 
-      def find_in_load_path(file)
-        $LOAD_PATH.map { |path| "#{path}/#{file}" }.detect{ |file| File.exist? file }
+      def find_in_load_path(file_path)
+        $LOAD_PATH.detect { |path| path == file_path }
       end
     end
   end
