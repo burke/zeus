@@ -1,9 +1,14 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.4...master
+https://github.com/burke/zeus/compare/v0.15.5...master
+
+# 0.15.5
+
+https://github.com/burke/zeus/compare/v0.15.4...v0.15.5
 
 * Inject Rails console helpers when using Pry (@leods92)
 * Integrate better with autorun capabilities of test frameworks (Minitest, Rspec) (@latortuga, @blowmage, @zenspider)
+* Help resolve issues loading improper gem versions by simplifying load tracking and leaning on bundler (@kgrz)
 
 # 0.15.4
 
