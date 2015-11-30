@@ -2,17 +2,15 @@ PACKAGE=github.com/burke/zeus
 VERSION=$(shell cat VERSION)
 GEM=rubygem/pkg/zeus-$(VERSION).gem
 GEM_LINUX=rubygem-linux/pkg/zeus-$(VERSION).gem
-VAGRANT_PLUGIN=vagrant/pkg/vagrant-zeus-$(VERSION).gem
-VAGRANT_PLUGIN_LINUX=vagrant-linux/pkg/vagrant-zeus-$(VERSION).gem
 
 .PHONY: default all clean binaries compileBinaries fmt install
 default: all
 
-all: fmt binaries man/build $(GEM) $(VAGRANT_PLUGIN)
+all: fmt binaries man/build $(GEM)
 
 binaries: build/zeus-linux-386 build/zeus-linux-amd64 build/zeus-darwin-amd64
 
-linux: fmt linuxBinaries man/build $(GEM_LINUX) $(VAGRANT_PLUGIN_LINUX)
+linux: fmt linuxBinaries man/build $(GEM_LINUX)
 
 linuxBinaries: build-linux
 
@@ -27,7 +25,6 @@ rubygem-linux/pkg/%: \
 	rubygem/examples \
 	rubygem/lib/zeus/version.rb \
 	rubygem/build \
-	rubygem/ext \
 	Gemfile.lock
 	cd rubygem && bundle install && bundle exec rake
 
@@ -37,7 +34,6 @@ rubygem/pkg/%: \
 	rubygem/examples \
 	rubygem/lib/zeus/version.rb \
 	rubygem/build \
-	rubygem/ext \
 	Gemfile.lock
 	cd rubygem && bundle exec rake
 
@@ -56,39 +52,6 @@ rubygem/build: binaries
 rubygem/examples: examples
 	rm -rf $@
 	cp -r $< $@
-
-rubygem/ext: \
-    ext/inotify-wrapper/inotify-wrapper.cpp \
-    ext/inotify-wrapper/extconf.rb \
-    ext/file-listener/file-listener.cpp \
-    ext/file-listener/extconf.rb
-	rm -rf $@
-	mkdir -p $@
-	cp -r ext/inotify-wrapper ext/file-listener $@
-
-vagrant/pkg/%: \
-	vagrant/build/fsevents-wrapper \
-	vagrant/lib/vagrant-zeus/version.rb \
-	vagrant/ext \
-	Gemfile.lock
-	cd vagrant && bundle install && bundle exec rake
-
-vagrant-linux/pkg/%: \
-	vagrant/lib/vagrant-zeus/version.rb \
-	vagrant/ext \
-	Gemfile.lock
-	cd vagrant && bundle install && bundle exec rake
-
-vagrant/build/fsevents-wrapper: ext/fsevents/build/Release/fsevents-wrapper
-	mkdir -p $(@D)
-	cp $< $@
-
-vagrant/ext: \
-    ext/inotify-wrapper/inotify-wrapper.cpp \
-    ext/inotify-wrapper/extconf.rb
-	rm -rf $@
-	mkdir -p $@
-	cp -r ext/inotify-wrapper $@
 
 ext/fsevents/build/Release/fsevents-wrapper:
 	cd ext/fsevents && xcodebuild
@@ -113,9 +76,6 @@ go/zeusversion/zeusversion.go:
 rubygem/lib/zeus/version.rb:
 	mkdir -p $(@D)
 	@echo 'module Zeus\n  VERSION = "$(VERSION)"\nend' > $@
-vagrant/lib/vagrant-zeus/version.rb:
-	mkdir -p $(@D)
-	@echo 'module VagrantPlugins\n  module Zeus\n    VERSION = "$(VERSION)"\n  end\nend' > $@
 
 
 install: $(GEM)
@@ -126,8 +86,7 @@ Gemfile.lock: Gemfile
 
 clean:
 	rm -rf ext/fsevents/build man/build go/zeusversion build
-	rm -rf rubygem/{man,build,pkg,examples,ext,lib/zeus/version.rb,MANIFEST}
-	rm -rf vagrant/{build,pkg,ext,lib/vagrant-zeus/version.rb,MANIFEST}
+	rm -rf rubygem/{man,build,pkg,examples,lib/zeus/version.rb,ext/fsevents-wrapper,MANIFEST}
 
 
 
