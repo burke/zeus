@@ -18,7 +18,7 @@ fmt:
 	find . -name '*.go' | xargs -t -I@ go fmt @
 
 man/build: Gemfile.lock
-	cd man && bundle exec rake
+	cd man && ../bin/rake
 
 rubygem-linux/pkg/%: \
 	rubygem/man \
@@ -26,7 +26,7 @@ rubygem-linux/pkg/%: \
 	rubygem/lib/zeus/version.rb \
 	rubygem/build \
 	Gemfile.lock
-	cd rubygem && bundle install && bundle exec rake
+	cd rubygem && bundle install && bin/rake
 
 rubygem/pkg/%: \
 	rubygem/build/fsevents-wrapper \
@@ -35,7 +35,7 @@ rubygem/pkg/%: \
 	rubygem/lib/zeus/version.rb \
 	rubygem/build \
 	Gemfile.lock
-	cd rubygem && bundle exec rake
+	cd rubygem && bin/rake
 
 rubygem/build/fsevents-wrapper: ext/fsevents/build/Release/fsevents-wrapper
 	mkdir -p $(@D)

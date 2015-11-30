@@ -5,7 +5,7 @@
 version = begin
             require File.expand_path('../lib/zeus/version', __FILE__)
             Zeus::VERSION
-          rescue LoadError
+          rescue LoadError, NameError
             "0.0.0"
           end
 
