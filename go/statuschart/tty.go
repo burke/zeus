@@ -20,7 +20,7 @@ const (
 func ttyStart(tree *processtree.ProcessTree, done, quit chan bool) {
 	go func() {
 		scw := &StringChannelWriter{make(chan string, 10)}
-		slog.DefaultLogger = slog.NewShinyLogger(scw, scw)
+		slog.SetDefaultLogger(slog.NewShinyLogger(scw, scw))
 
 		termios, err := ttyutils.NoEcho(uintptr(os.Stdout.Fd()))
 		if err != nil {

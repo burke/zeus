@@ -43,30 +43,55 @@ const (
 	reset       = "\x1b[0m"
 )
 
-var DefaultLogger *ShinyLogger = NewShinyLogger(os.Stdout, os.Stderr)
-var TraceLogger *log.Logger = nil
+var dlm sync.RWMutex
+var defaultLogger *ShinyLogger = NewShinyLogger(os.Stdout, os.Stderr)
+var traceLogger *log.Logger = nil
 
-func Suppress()                           { DefaultLogger.Suppress() }
-func DisableColor()                       { DefaultLogger.DisableColor() }
-func Colorized(msg string) (printed bool) { return DefaultLogger.Colorized(msg) }
-func Error(err error) bool                { return DefaultLogger.Error(err) }
-func FatalError(err error)                { DefaultLogger.FatalError(err) }
-func FatalErrorString(msg string)         { DefaultLogger.FatalErrorString(msg) }
-func ErrorString(msg string) bool         { return DefaultLogger.ErrorString(msg) }
-func Red(msg string) bool                 { return DefaultLogger.Red(msg) }
-func Green(msg string) bool               { return DefaultLogger.Green(msg) }
-func Brightgreen(msg string) bool         { return DefaultLogger.Brightgreen(msg) }
-func Yellow(msg string) bool              { return DefaultLogger.Yellow(msg) }
-func Blue(msg string) bool                { return DefaultLogger.Blue(msg) }
-func Magenta(msg string) bool             { return DefaultLogger.Magenta(msg) }
+func DefaultLogger() *ShinyLogger {
+	dlm.RLock()
+	defer dlm.RUnlock()
+	return defaultLogger
+}
+
+func SetDefaultLogger(sl *ShinyLogger) {
+	dlm.Lock()
+	defaultLogger = sl
+	dlm.Unlock()
+}
+
+func TraceLogger() *log.Logger {
+	dlm.RLock()
+	defer dlm.RUnlock()
+	return traceLogger
+}
+
+func SetTraceLogger(sl *log.Logger) {
+	dlm.Lock()
+	traceLogger = sl
+	dlm.Unlock()
+}
+
+func Suppress()                           { DefaultLogger().Suppress() }
+func DisableColor()                       { DefaultLogger().DisableColor() }
+func Colorized(msg string) (printed bool) { return DefaultLogger().Colorized(msg) }
+func Error(err error) bool                { return DefaultLogger().Error(err) }
+func FatalError(err error)                { DefaultLogger().FatalError(err) }
+func FatalErrorString(msg string)         { DefaultLogger().FatalErrorString(msg) }
+func ErrorString(msg string) bool         { return DefaultLogger().ErrorString(msg) }
+func Red(msg string) bool                 { return DefaultLogger().Red(msg) }
+func Green(msg string) bool               { return DefaultLogger().Green(msg) }
+func Brightgreen(msg string) bool         { return DefaultLogger().Brightgreen(msg) }
+func Yellow(msg string) bool              { return DefaultLogger().Yellow(msg) }
+func Blue(msg string) bool                { return DefaultLogger().Blue(msg) }
+func Magenta(msg string) bool             { return DefaultLogger().Magenta(msg) }
 
 func TraceEnabled() bool {
-	return TraceLogger != nil
+	return TraceLogger() != nil
 }
 
 func Trace(format string, v ...interface{}) bool {
 	if TraceEnabled() {
-		TraceLogger.Printf(format, v...)
+		TraceLogger().Printf(format, v...)
 		return true
 	}
 	return false
@@ -168,7 +193,7 @@ func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool, printNe
 	if !l.suppressOutput {
 		msg = l.formatColors(msg)
 
-		if l == DefaultLogger {
+		if l == DefaultLogger() {
 			callDepth += 1 // this was called through a proxy method
 		}
 		if isError {

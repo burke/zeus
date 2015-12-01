@@ -29,7 +29,7 @@ func main() {
 		case "--log":
 			tracefile, err := os.OpenFile(Args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 			if err == nil {
-				slog.TraceLogger = slog.NewTraceLogger(tracefile)
+				slog.SetTraceLogger(slog.NewTraceLogger(tracefile))
 				Args = Args[1:]
 			} else {
 				fmt.Printf("Could not open trace file %s\n", Args[1])
