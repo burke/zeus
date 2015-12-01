@@ -59,20 +59,27 @@ func start(filesChanged chan string, done, quit chan bool) {
 	}
 }
 
-func executablePath() string {
-	switch runtime.GOOS {
-	case "darwin":
-		return path.Join(path.Dir(os.Args[0]), "fsevents-wrapper")
-	case "linux":
+func executablePath() []string {
+	port := os.Getenv("ZEUS_NETWORK_FILE_MONITOR_PORT")
+	if len(port) > 0 {
 		gemRoot := path.Dir(path.Dir(os.Args[0]))
-		return path.Join(gemRoot, "ext/inotify-wrapper/inotify-wrapper")
+		return []string{path.Join(gemRoot, "ext/file-listener/file-listener"), port}
+	} else {
+		switch runtime.GOOS {
+		case "darwin":
+			return []string{path.Join(path.Dir(os.Args[0]), "fsevents-wrapper")}
+		case "linux":
+			gemRoot := path.Dir(path.Dir(os.Args[0]))
+			return []string{path.Join(gemRoot, "ext/inotify-wrapper/inotify-wrapper")}
+		}
 	}
 	terminate("Unsupported OS")
-	return ""
+	return []string{}
 }
 
 func startWrapper(filesChanged chan string) *exec.Cmd {
-	cmd := exec.Command(executablePath())
+	path := executablePath()
+	cmd := exec.Command(path[0], path[1:]...)
 	var err error
 	if watcherIn, err = cmd.StdinPipe(); err != nil {
 		terminate(err.Error())

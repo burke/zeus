@@ -17,5 +17,5 @@ test/version_tmp
 tmp
 lib/zeus/version.rb
 MANIFEST
-ext/fsevents-wrapper/fsevents-wrapper
+ext
 examples/*
