@@ -34,7 +34,7 @@ module VagrantPlugins::Zeus
                 begin
                   modified_files_buf += @file_monitor.readpartial(4096)
                 rescue EOFError
-                  puts "lost connection to the file monitor process, exiting!"
+                  puts "[#{Time.now.strftime('%H:%M:%S')}] lost connection to the file monitor process, exiting!"
                   ended = true
                 end
                 modified_files_buf = process_modified_files(modified_files_buf)
@@ -42,7 +42,7 @@ module VagrantPlugins::Zeus
                 begin
                   watched_files_buf += @zeus_connection.readpartial(4096)
                 rescue EOFError
-                  puts "lost connection to the zeus socket, exiting!"
+                  puts "[#{Time.now.strftime('%H:%M:%S')}] lost connection to the zeus socket, exiting!"
                   ended = true
                 end
                 watched_files_buf = process_watched_files(watched_files_buf)
