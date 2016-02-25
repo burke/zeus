@@ -171,6 +171,10 @@ module Zeus
             exit
           end
 
+          opts.on '--reporter REPORTER', 'Configure the reporter' do |reporter|
+            @reporter = reporter
+          end
+
           opts.on '-l', '--line LINE', Integer, 'Line number for file.' do |line|
             @line = line
           end
@@ -191,6 +195,18 @@ module Zeus
         generate_tests_to_run
 
         test_arguments = build_test_arguments
+
+        if @reporter
+          begin
+            require 'minitest/reporters'
+            klass_name = @reporter.capitalize + 'Reporter'
+            Minitest::Reporters.use! Minitest::Reporters.const_get(klass_name).new
+          rescue LoadError
+            puts "Requiring `minitest/reporters` failed. Continuing..."
+          rescue NameError
+            puts "Loading reporter #{@reporter} failed. Continuing..."
+          end
+        end
 
         # directly run the tests from here and exit with the status of the tests passing or failing
         case framework
