@@ -199,8 +199,7 @@ module Zeus
         if @reporter
           begin
             require 'minitest/reporters'
-            klass_name = @reporter.capitalize + 'Reporter'
-            Minitest::Reporters.use! Minitest::Reporters.const_get(klass_name).new
+            Minitest::Reporters.use! Minitest::Reporters.const_get(@reporter, false).new
           rescue LoadError
             puts "Requiring `minitest/reporters` failed. Continuing..."
           rescue NameError
