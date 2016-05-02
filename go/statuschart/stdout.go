@@ -1,8 +1,9 @@
 package statuschart
 
 import (
-	"github.com/burke/zeus/go/processtree"
 	"strings"
+
+	"github.com/burke/zeus/go/processtree"
 )
 
 func stdoutStart(tree *processtree.ProcessTree, done, quit chan bool) {

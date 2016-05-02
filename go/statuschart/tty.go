@@ -2,12 +2,14 @@ package statuschart
 
 import (
 	"fmt"
-	"github.com/burke/ttyutils"
-	slog "github.com/burke/zeus/go/shinylog"
 	"strings"
 
-	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/ttyutils"
+	slog "github.com/burke/zeus/go/shinylog"
+
 	"os"
+
+	"github.com/burke/zeus/go/processtree"
 )
 
 const (
