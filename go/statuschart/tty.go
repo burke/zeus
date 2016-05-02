@@ -101,7 +101,7 @@ func (s *StatusChart) lengthOfOutput() int {
 
 func (s *StatusChart) drawCommands() {
 	for _, command := range s.Commands {
-		state := command.Parent.State
+		state := command.Parent.State()
 
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string
@@ -125,7 +125,7 @@ func (s *StatusChart) drawCommands() {
 }
 
 func (s *StatusChart) drawSubtree(node *processtree.SlaveNode, myIndentation, childIndentation string) {
-	printStateInfo(myIndentation, node.Name, node.State, false, true)
+	printStateInfo(myIndentation, node.Name, node.State(), false, true)
 
 	for i, slave := range node.Slaves {
 		if i == len(node.Slaves)-1 {
