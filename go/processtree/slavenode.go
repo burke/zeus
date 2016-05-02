@@ -39,9 +39,8 @@ type SlaveNode struct {
 	parentReadiness     chan bool            // size 256 (TODO: rename me)
 	childBootRequests   chan *SlaveNode      // size 1
 
-	L           sync.Mutex
-	State       string
-	stateChange *sync.Cond
+	L     sync.Mutex
+	State string
 
 	event chan bool
 }
@@ -76,8 +75,6 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode, moni
 	s.Name = identifier
 	s.Parent = parent
 	s.fileMonitor = monitor
-	var mutex sync.Mutex
-	s.stateChange = sync.NewCond(&mutex)
 	tree.SlavesByName[identifier] = &s
 	return &s
 }
@@ -139,7 +136,7 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 	nextState := SWaiting
 	for {
 		s.L.Lock()
-		s.changeState(nextState)
+		s.State = nextState
 		s.L.Unlock()
 		monitor.tree.StateChanged <- true
 		switch nextState {
@@ -343,14 +340,6 @@ func (s *SlaveNode) bootQueuedCommandsAndSlaves() {
 		s.bootSlave(slave)
 	}
 	s.L.Unlock()
-}
-
-// This should only be called while holding a lock on s.L.
-func (s *SlaveNode) changeState(newState string) {
-	s.stateChange.L.Lock()
-	s.State = newState
-	s.stateChange.Broadcast()
-	s.stateChange.L.Unlock()
 }
 
 func (s *SlaveNode) ForceKill() {
