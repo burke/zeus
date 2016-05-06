@@ -49,6 +49,10 @@ func CreateSpawnCommandMessage(identifier string) string {
 	return "C:" + identifier
 }
 
+func CreateStartBootCommandMessage() string {
+	return "B:"
+}
+
 func ParseClientCommandRequestMessage(msg string) (int, int, string, error) {
 	parts := strings.SplitN(msg, ":", 4)
 	if parts[0] != "T" {
