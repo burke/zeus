@@ -44,6 +44,7 @@ module Kernel
   def load(file, *a)
     Kernel.load(file, *a)
   end
+  private :load
 
   class << self
     alias_method :__load_without_zeus, :load
