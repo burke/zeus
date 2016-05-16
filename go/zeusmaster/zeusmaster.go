@@ -20,11 +20,7 @@ import (
 // Leaving out SIGPIPE as that is a signal the master receives if a client process is killed.
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
-func Run() {
-	os.Exit(doRun())
-}
-
-func doRun() int {
+func Run() int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server v" + zeusversion.VERSION)
 
 	zerror.Init()

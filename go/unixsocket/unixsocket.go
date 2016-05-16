@@ -80,6 +80,13 @@ func init() {
 	}
 }
 
+// SetZeusSockName sets the socket name used for zeus clients.
+// It is primarily exposed for testing purpose and is not safe to
+// modify after Zeus has started.
+func SetZeusSockName(n string) {
+	sockName = n
+}
+
 func ZeusSockName() string {
 	return sockName
 }

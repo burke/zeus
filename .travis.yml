@@ -1,15 +1,16 @@
-# Not using to test compilation of go component of project because it requires
-# xcodebuild which is not available in the ubuntu environment travis-ci
-# provides.
-language: ruby
-bundler_args: --without development
-rvm:
-  - 2.0.0-p647
-  - 2.1.7
-  - 2.2.3
-  - rbx-2
-gemfile: rubygem/Gemfile
-script: make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bin/rspec spec
-
-# use new Travis AUFS containers
-sudo: false
+language: go
+go:
+  - 1.5
+env:
+  - USE_RUBY=2.0.0-p647
+  - USE_RUBY=2.1.7
+  - USE_RUBY=2.2.3
+before_install:
+  - rvm use $USE_RUBY --install --fuzzy
+install:
+  - make dev_bootstrap
+  - make rubygem/lib/zeus/version.rb
+script:
+  - make test-go
+  - make build-linux
+  - make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bin/rspec spec

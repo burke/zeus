@@ -2,8 +2,18 @@ PACKAGE=github.com/burke/zeus
 VERSION=$(shell cat VERSION)
 GEM=rubygem/pkg/zeus-$(VERSION).gem
 GEM_LINUX=rubygem-linux/pkg/zeus-$(VERSION).gem
+GEMPATH=$(realpath rubygem)
 VAGRANT_PLUGIN=vagrant/pkg/vagrant-zeus-$(VERSION).gem
 VAGRANT_PLUGIN_LINUX=vagrant-linux/pkg/vagrant-zeus-$(VERSION).gem
+
+CXX=g++
+CXXFLAGS=-O3 -g -Wall
+
+ifeq ($(shell uname -s),Darwin)
+	TEST_LISTENER_DEP=ext/fsevents/build/Release/fsevents-wrapper
+else
+	TEST_LISTENER_DEP=ext/inotify-wrapper/inotify-wrapper
+endif
 
 .PHONY: default all clean binaries compileBinaries fmt install
 default: all
@@ -18,6 +28,9 @@ linuxBinaries: build-linux
 
 fmt:
 	find . -name '*.go' | xargs -t -I@ go fmt @
+
+test-go: go/zeusversion/zeusversion.go $(TEST_LISTENER_DEP)
+	ZEUS_LISTENER_BINARY=$(realpath $(TEST_LISTENER_DEP)) ZEUS_TEST_GEMPATH=$(GEMPATH) go test ./...
 
 man/build: Gemfile.lock
 	cd man && ../bin/rake
@@ -39,7 +52,7 @@ rubygem/pkg/%: \
 	rubygem/build \
 	rubygem/ext \
 	Gemfile.lock
-	cd rubygem && bin/rake
+	cd rubygem && bundle install && bin/rake
 
 rubygem/build/fsevents-wrapper: ext/fsevents/build/Release/fsevents-wrapper
 	mkdir -p $(@D)
@@ -92,6 +105,14 @@ vagrant/ext: \
 
 ext/fsevents/build/Release/fsevents-wrapper:
 	cd ext/fsevents && xcodebuild
+
+# This compilation is only used for testing under linux and is
+# not packaged into the final gem.
+ext/inotify-wrapper/inotify-wrapper: ext/inotify-wrapper/inotify-wrapper.o
+	$(CXX) $(CXXFLAGS) $< -o $@
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 build/zeus-%: go/zeusversion/zeusversion.go compileBinaries
 	@:
