@@ -61,10 +61,16 @@ func start(filesChanged chan string, done, quit chan bool) {
 
 func executablePath() []string {
 	port := os.Getenv("ZEUS_NETWORK_FILE_MONITOR_PORT")
+	binary := os.Getenv("ZEUS_LISTENER_BINARY")
+
 	if len(port) > 0 {
+		if binary == "" {
+			binary = "ext/file-listener/file-listener"
+		}
+
 		gemRoot := path.Dir(path.Dir(os.Args[0]))
-		return []string{path.Join(gemRoot, "ext/file-listener/file-listener"), port}
-	} else {
+		return []string{path.Join(gemRoot, binary), port}
+	} else if binary == "" {
 		switch runtime.GOOS {
 		case "darwin":
 			return []string{path.Join(path.Dir(os.Args[0]), "fsevents-wrapper")}
@@ -72,7 +78,10 @@ func executablePath() []string {
 			gemRoot := path.Dir(path.Dir(os.Args[0]))
 			return []string{path.Join(gemRoot, "ext/inotify-wrapper/inotify-wrapper")}
 		}
+	} else {
+		return []string{binary}
 	}
+
 	terminate("Unsupported OS")
 	return []string{}
 }

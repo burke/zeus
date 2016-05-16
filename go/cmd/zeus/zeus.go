@@ -8,13 +8,14 @@ import (
 	"strings"
 	"syscall"
 
+	"time"
+
 	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/restarter"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/zeusclient"
 	"github.com/burke/zeus/go/zeusmaster"
 	"github.com/burke/zeus/go/zeusversion"
-	"time"
 )
 
 var color bool = true
@@ -74,7 +75,7 @@ func main() {
 	} else if Args[0] == "version" {
 		printVersion()
 	} else if Args[0] == "start" {
-		zeusmaster.Run()
+		os.Exit(zeusmaster.Run())
 	} else if Args[0] == "init" {
 		zeusInit()
 	} else if Args[0] == "commands" {
@@ -83,8 +84,7 @@ func main() {
 		tree := config.BuildProcessTree()
 		for _, name := range tree.AllCommandsAndAliases() {
 			if Args[0] == name {
-				zeusclient.Run()
-				return
+				os.Exit(zeusclient.Run())
 			}
 		}
 
