@@ -53,7 +53,6 @@ class CustomPlan < Zeus::Plan
   end
 
   command :boot do
-    redirect_log('boot')
     require_relative 'srv'
   end
 
@@ -218,13 +217,9 @@ func TestZeusBoots(t *testing.T) {
 		}
 	}
 
-	// TODO: It appears the filewatcher takes some time to initialize
-	// so we need to wait for it to propagate before changing things.
-	// Even then there appears to be a bad enough race somewhere that
-	// we get flaky tests if we change more than one file.
-	time.Sleep(1 * time.Second)
+	time.Sleep(400 * time.Millisecond)
 
-	for _, f := range []string{"code.rb" /*, "data.yaml"*/} {
+	for _, f := range []string{"code.rb", "data.yaml"} {
 		from := filepath.Join(dir, fmt.Sprintf("other-%s", f))
 		to := filepath.Join(dir, f)
 		if err := os.Rename(from, to); err != nil {
@@ -233,7 +228,7 @@ func TestZeusBoots(t *testing.T) {
 	}
 
 	expects = map[string]string{
-		// "data": "Hi",
+		"data": "Hi",
 		"code": "there!",
 	}
 
@@ -254,7 +249,7 @@ func readAndCompare(conn *net.UnixConn, want string) error {
 	buf := make([]byte, 128)
 
 	// File system events can take a long time to propagate
-	conn.SetDeadline(time.Now().Add(3 * time.Second))
+	conn.SetDeadline(time.Now().Add(2 * time.Second))
 
 	if _, _, err := conn.ReadFrom(buf); err != nil {
 		return err

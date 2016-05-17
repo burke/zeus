@@ -21,7 +21,7 @@ func Error(err string) {
 	println(err)
 }
 
-func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
+func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
@@ -60,6 +60,8 @@ func StartSlaveMonitor(tree *ProcessTree, done chan bool) chan bool {
 				return
 			case fd := <-registeringFds:
 				go monitor.slaveDidBeginRegistration(fd)
+			case files := <-fileChanges:
+				tree.RestartNodesWithFeatures(files)
 			}
 		}
 	}()

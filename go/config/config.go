@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/processtree"
 	"github.com/burke/zeus/go/zerror"
 )
@@ -21,7 +22,7 @@ type config struct {
 	Items   map[string]string
 }
 
-func BuildProcessTree() *processtree.ProcessTree {
+func BuildProcessTree(monitor filemonitor.FileMonitor) *processtree.ProcessTree {
 	conf := parseConfig()
 	tree := &processtree.ProcessTree{}
 	tree.SlavesByName = make(map[string]*processtree.SlaveNode)
@@ -33,21 +34,26 @@ func BuildProcessTree() *processtree.ProcessTree {
 	if !ok {
 		zerror.ErrorConfigFileInvalidFormat()
 	}
-	iteratePlan(tree, plan, nil)
+	iteratePlan(tree, plan, monitor, nil)
 
 	return tree
 }
 
-func iteratePlan(tree *processtree.ProcessTree, plan map[string]interface{}, parent *processtree.SlaveNode) {
+func iteratePlan(
+	tree *processtree.ProcessTree,
+	plan map[string]interface{},
+	monitor filemonitor.FileMonitor,
+	parent *processtree.SlaveNode,
+) {
 	for name, v := range plan {
 		if subPlan, ok := v.(map[string]interface{}); ok {
-			newNode := tree.NewSlaveNode(name, parent)
+			newNode := tree.NewSlaveNode(name, parent, monitor)
 			if parent == nil {
 				tree.Root = newNode
 			} else {
 				parent.Slaves = append(parent.Slaves, newNode)
 			}
-			iteratePlan(tree, subPlan, newNode)
+			iteratePlan(tree, subPlan, monitor, newNode)
 		} else {
 			var newNode *processtree.CommandNode
 			if aliases, ok := v.([]interface{}); ok {

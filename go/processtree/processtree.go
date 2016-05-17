@@ -67,15 +67,15 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 
 var restartMutex sync.Mutex
 
-func (tree *ProcessTree) RestartNodesWithFeatures(files map[string]bool) {
+func (tree *ProcessTree) RestartNodesWithFeatures(files []string) {
 	restartMutex.Lock()
 	defer restartMutex.Unlock()
 	tree.Root.restartNodesWithFeatures(tree, files)
 }
 
 // Serialized: restartMutex is always held when this is called.
-func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files map[string]bool) {
-	for file, _ := range files {
+func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files []string) {
+	for _, file := range files {
 		if node.Features[file] {
 			node.RequestRestart()
 			return
