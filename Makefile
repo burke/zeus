@@ -128,13 +128,13 @@ compileLinuxBinaries:
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
-go/zeusversion/zeusversion.go:
+go/zeusversion/zeusversion.go: VERSION
 	mkdir -p $(@D)
 	@echo 'package zeusversion\n\nconst VERSION string = "$(VERSION)"' > $@
-rubygem/lib/zeus/version.rb:
+rubygem/lib/zeus/version.rb: VERSION
 	mkdir -p $(@D)
 	@echo 'module Zeus\n  VERSION = "$(VERSION)"\nend' > $@
-vagrant/lib/vagrant-zeus/version.rb:
+vagrant/lib/vagrant-zeus/version.rb: VERSION
 	mkdir -p $(@D)
 	@echo 'module VagrantPlugins\n  module Zeus\n    VERSION = "$(VERSION)"\n  end\nend' > $@
 
