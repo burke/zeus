@@ -149,10 +149,6 @@ func enableTracing() {
 }
 
 func TestZeusBoots(t *testing.T) {
-	if os.Getenv("ZEUS_LISTENER_BINARY") == "" {
-		t.Fatal("Missing ZEUS_LISTENER_BINARY env var")
-	}
-
 	dir, err := ioutil.TempDir("", "zeus_test")
 	if err != nil {
 		t.Fatal(err)

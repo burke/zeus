@@ -4,7 +4,6 @@
 .bundle
 .config
 .yardoc
-build/*
 Gemfile.lock
 InstalledFiles
 _yardoc
@@ -25,7 +24,7 @@ rubygem/build/*
 vagrant/build/*
 go/zeusversion/zeusversion.go
 .DS_Store
-ext/fsevents/build/*
+vagrant/ext/fsevents/build/*
 .idea/
 xcuserdata/*
 
