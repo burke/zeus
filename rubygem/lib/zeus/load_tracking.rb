@@ -2,10 +2,32 @@ module Zeus
   class LoadTracking
     class << self
       def features_loaded_by(&block)
-        old_features = all_features()
-        yield
-        new_features = all_features() - old_features
-        return new_features
+        old_features = all_features
+
+        # Catch exceptions so we can determine the features
+        # that were being loaded at the time of the exception.
+        err_features = []
+        begin
+          yield
+        rescue SyntaxError => err
+          # SyntaxErrors are a bit weird in that the file containing
+          # the error is not in the backtrace, only the error message.
+          match = /\A([^:]+):\d+: syntax error/.match(err.message)
+          err_features << match[1] if match
+        rescue Exception => err
+          # Just capture this to add to the err_features list
+        end
+
+        if err && err.backtrace
+          err_features += err.backtrace.map { |b| b.split(':').first }
+                             .select { |f| f.start_with?('/') }
+                             .take_while { |f| f != __FILE__ }
+        end
+
+        new_features = all_features + err_features - old_features
+        new_features.uniq!
+
+        [new_features, err]
       end
 
       # Check the load path first to see if the file getting loaded is already
@@ -38,6 +60,7 @@ module Zeus
     end
   end
 end
+
 
 module Kernel
 

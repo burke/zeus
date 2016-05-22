@@ -1,11 +1,36 @@
-require 'spec_helper'
+require 'zeus/rails'
 require 'fake_mini_test'
 
 module Zeus::M
   describe Runner do
     let(:test_method) { fake_test_method }
 
+    matcher :exit_with_code do |exp_code|
+      actual = nil
+      match do |block|
+        begin
+          block.call
+        rescue SystemExit => e
+          actual = e.status
+        end
+        actual and actual == exp_code
+      end
+      failure_message do |_block|
+        "expected block to call exit(#{exp_code}) but exit" +
+          (actual.nil? ? " not called" : "(#{actual}) was called")
+      end
+      failure_message_when_negated do |_block|
+        "expected block not to call exit(#{exp_code})"
+      end
+      description do
+        "expect block to call exit(#{exp_code})"
+      end
+    end
+
     before(:each) do
+      allow(Dir).to receive(:glob).and_return(["path/to/file.rb"])
+      allow(Kernel).to receive(:load)
+
       stub_mini_test_methods
     end
 

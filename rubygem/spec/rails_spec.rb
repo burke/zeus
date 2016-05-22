@@ -1,8 +1,12 @@
-require 'spec_helper'
+require 'zeus/rails'
 
 module Zeus
   describe Rails do
     subject(:rails) { Rails.new }
+
+    def mock_file_existence(file, result)
+      expect(File).to receive(:exists?).with(file).and_return(result)
+    end
 
     describe "#test_helper" do
       context "when ENV['RAILS_TEST_HELPER'] is set" do
