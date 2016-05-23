@@ -21,7 +21,7 @@ linux: fmt linuxBinaries man/build $(GEM_LINUX) $(VAGRANT_PLUGIN_LINUX)
 linuxBinaries: build-linux
 
 fmt:
-	find . -name '*.go' | xargs -t -I@ go fmt @
+	govendor fmt +local
 
 test-go: go/zeusversion/zeusversion.go
 	ZEUS_TEST_GEMPATH=$(GEMPATH) GO15VENDOREXPERIMENT=1 govendor test +local
