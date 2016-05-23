@@ -15,13 +15,16 @@ module VagrantPlugins::Zeus
       end
 
       class FileWatcher
-        def initialize(machine)
+        def initialize(machine, env)
           @machine = machine
+          @env = env
         end
 
         def run
-          @file_monitor = spawn_file_monitor
           @zeus_connection = spawn_zeus_connection
+          @file_monitor = spawn_file_monitor
+
+          ui.info("Connected to zeus, watching for changes...")
 
           modified_files_buf = ''
           watched_files_buf = ''
@@ -34,7 +37,7 @@ module VagrantPlugins::Zeus
                 begin
                   modified_files_buf += @file_monitor.readpartial(4096)
                 rescue EOFError
-                  puts "lost connection to the file monitor process, exiting!"
+                  ui.error("Lost connection to the file monitor process, exiting!")
                   ended = true
                 end
                 modified_files_buf = process_modified_files(modified_files_buf)
@@ -42,7 +45,7 @@ module VagrantPlugins::Zeus
                 begin
                   watched_files_buf += @zeus_connection.readpartial(4096)
                 rescue EOFError
-                  puts "lost connection to the zeus socket, exiting!"
+                  ui.error("Lost connection to the zeus socket, exiting!")
                   ended = true
                 end
                 watched_files_buf = process_watched_files(watched_files_buf)
@@ -53,6 +56,7 @@ module VagrantPlugins::Zeus
           if @file_monitor
             begin
               Process.kill("KILL", @file_monitor.pid)
+              Process.waitpid(@file_monitor.pid)
             rescue => e
               $stderr.puts(e)
             end
@@ -148,11 +152,23 @@ module VagrantPlugins::Zeus
           end
           paths.sort_by { |host, guest| host.length }.reverse
         end
+
+        def ui
+          @env.ui
+        end
       end
 
       def execute
         with_target_vms(nil, :single_target => true) do |machine|
-          FileWatcher.new(machine).run
+          watcher = FileWatcher.new(machine, @env)
+          while true
+            begin
+              watcher.run
+            rescue => e
+              @env.ui.error(e.message)
+            end
+            sleep 1
+          end
         end
         0
       end
