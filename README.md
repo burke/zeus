@@ -1,5 +1,5 @@
 # Zeus
-[![Build Status](https://travis-ci.org/burke/zeus.png?branch=master)](https://travis-ci.org/burke/zeus)
+[![Build Status](https://travis-ci.org/burke/zeus.svg?branch=master)](https://travis-ci.org/burke/zeus)
 
 Zeus preloads your Rails app so that your normal development tasks such as `console`, `server`, `generate`, and specs/tests take **less than one second**.
 
