@@ -30,7 +30,7 @@ fmt:
 	find . -name '*.go' | xargs -t -I@ go fmt @
 
 test-go: go/zeusversion/zeusversion.go $(TEST_LISTENER_DEP)
-	ZEUS_LISTENER_BINARY=$(realpath $(TEST_LISTENER_DEP)) ZEUS_TEST_GEMPATH=$(GEMPATH) go test ./...
+	ZEUS_LISTENER_BINARY=$(realpath $(TEST_LISTENER_DEP)) ZEUS_TEST_GEMPATH=$(GEMPATH) GO15VENDOREXPERIMENT=1 govendor test +local
 
 man/build: Gemfile.lock
 	cd man && ../bin/rake
@@ -117,14 +117,14 @@ ext/inotify-wrapper/inotify-wrapper: ext/inotify-wrapper/inotify-wrapper.o
 build/zeus-%: go/zeusversion/zeusversion.go compileBinaries
 	@:
 compileBinaries:
-	gox -osarch="linux/386 linux/amd64 darwin/amd64" \
+	GO15VENDOREXPERIMENT=1 gox -osarch="linux/386 linux/amd64 darwin/amd64" \
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
 build-linux: go/zeusversion/zeusversion.go compileLinuxBinaries
 	@:
 compileLinuxBinaries:
-	gox -osarch="linux/386 linux/amd64" \
+	GO15VENDOREXPERIMENT=1 gox -osarch="linux/386 linux/amd64" \
 		-output="build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
@@ -155,7 +155,6 @@ clean:
 
 .PHONY: dev_bootstrap
 dev_bootstrap: go/zeusversion/zeusversion.go
-	go get ./...
 	bundle -v || gem install bundler --no-rdoc --no-ri
 	bundle install
-	go get github.com/mitchellh/gox
+	go get github.com/mitchellh/gox github.com/kardianos/govendor
