@@ -11,11 +11,12 @@ import (
 	"syscall"
 
 	"fmt"
+	"runtime"
+
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
-	"runtime"
 )
 
 type SlaveNode struct {
@@ -27,6 +28,7 @@ type SlaveNode struct {
 	Slaves                []*SlaveNode
 	Commands              []*CommandNode
 	Features              map[string]bool
+	fileMonitor           filemonitor.FileMonitor
 	featureHandlerRunning bool
 
 	hasSuccessfullyBooted bool
@@ -62,7 +64,7 @@ const (
 	SCrashed  = "C"
 )
 
-func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *SlaveNode {
+func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode, monitor filemonitor.FileMonitor) *SlaveNode {
 	s := SlaveNode{}
 	s.needsRestart = make(chan bool, 1)
 	s.commandBootRequests = make(chan *CommandRequest, 256)
@@ -73,6 +75,7 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode) *Sla
 	s.event = make(chan bool, 1)
 	s.Name = identifier
 	s.Parent = parent
+	s.fileMonitor = monitor
 	var mutex sync.Mutex
 	s.stateChange = sync.NewCond(&mutex)
 	tree.SlavesByName[identifier] = &s
@@ -418,7 +421,7 @@ func (s *SlaveNode) handleMessages() {
 
 func (s *SlaveNode) handleFeatureMessage(msg string) {
 	s.Features[msg] = true
-	filemonitor.AddFile(msg)
+	s.fileMonitor.Add(msg)
 }
 
 func (s *SlaveNode) trace(format string, args ...interface{}) {

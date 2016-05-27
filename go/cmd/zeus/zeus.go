@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/burke/zeus/go/config"
-	"github.com/burke/zeus/go/restarter"
+	"github.com/burke/zeus/go/filemonitor"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/zeusclient"
 	"github.com/burke/zeus/go/zeusmaster"
@@ -43,7 +43,7 @@ func main() {
 					execManPage("zeus")
 				}
 				Args = Args[1:]
-				restarter.FileChangeWindow = delay
+				filemonitor.FileChangeDelay = delay
 			} else {
 				execManPage("zeus")
 			}
@@ -81,7 +81,7 @@ func main() {
 	} else if Args[0] == "commands" {
 		zeusCommands()
 	} else {
-		tree := config.BuildProcessTree()
+		tree := config.BuildProcessTree(nil)
 		for _, name := range tree.AllCommandsAndAliases() {
 			if Args[0] == name {
 				os.Exit(zeusclient.Run())
@@ -150,7 +150,7 @@ func zeusInit() {
 }
 
 func zeusCommands() {
-	tree := config.BuildProcessTree()
+	tree := config.BuildProcessTree(nil)
 	for _, command := range tree.Commands {
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string

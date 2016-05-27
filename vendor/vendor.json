@@ -9,10 +9,28 @@
 			"revisionTime": "2012-12-05T23:31:21Z"
 		},
 		{
+			"checksumSHA1": "izWnjg9a1oBPY4UBMi2REorBm68=",
+			"path": "github.com/fsnotify/fsevents",
+			"revision": "8b9e69e6c151001d0eb8a7cf37583265dfc6d6e4",
+			"revisionTime": "2016-05-19T18:46:26Z"
+		},
+		{
+			"checksumSHA1": "LtBBfn+Uw7/gaB2tVsrLRBTprdo=",
+			"path": "github.com/fsnotify/fsnotify",
+			"revision": "30411dbcefb7a1da7e84f75530ad3abe4011b4f8",
+			"revisionTime": "2016-04-12T13:37:56Z"
+		},
+		{
 			"checksumSHA1": "P29nLcVx4WzwhEDgDTCN76rS5WI=",
 			"path": "github.com/kr/pty",
 			"revision": "f7ee69f31298ecbe5d2b349c711e2547a617d398",
 			"revisionTime": "2015-10-07T23:04:24Z"
+		},
+		{
+			"checksumSHA1": "oBKY8LJtCoSvmYA4ADFDY02A8NY=",
+			"path": "golang.org/x/sys/unix",
+			"revision": "d4feaf1a7e61e1d9e79e6c4e76c6349e9cab0a03",
+			"revisionTime": "2016-05-16T12:31:02Z"
 		}
 	],
 	"rootPath": "github.com/burke/zeus"
