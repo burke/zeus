@@ -1,8 +1,9 @@
 package statuschart
 
 import (
-	"github.com/burke/zeus/go/processtree"
 	"strings"
+
+	"github.com/burke/zeus/go/processtree"
 )
 
 func stdoutStart(tree *processtree.ProcessTree, done, quit chan bool) {
@@ -35,7 +36,7 @@ func collectCommands(commands []*processtree.CommandNode, desiredState string) [
 	desiredCommands := make([]*processtree.CommandNode, 0)
 
 	for _, command := range commands {
-		if command.Parent.State == desiredState {
+		if command.Parent.State() == desiredState {
 			desiredCommands = append(desiredCommands, command)
 		}
 	}
@@ -76,7 +77,7 @@ func (s *StatusChart) logCommands() {
 
 func (s *StatusChart) logSubtree(node *processtree.SlaveNode) {
 	log := theChart.directLogger
-	printStateInfo("", node.Name, node.State, true, false)
+	printStateInfo("", node.Name, node.State(), true, false)
 
 	if len(node.Slaves) > 0 {
 		log.ColorizedSansNl("{reset}(")

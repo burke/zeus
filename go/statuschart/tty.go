@@ -2,12 +2,14 @@ package statuschart
 
 import (
 	"fmt"
-	"github.com/burke/ttyutils"
-	slog "github.com/burke/zeus/go/shinylog"
 	"strings"
 
-	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/ttyutils"
+	slog "github.com/burke/zeus/go/shinylog"
+
 	"os"
+
+	"github.com/burke/zeus/go/processtree"
 )
 
 const (
@@ -101,7 +103,7 @@ func (s *StatusChart) lengthOfOutput() int {
 
 func (s *StatusChart) drawCommands() {
 	for _, command := range s.Commands {
-		state := command.Parent.State
+		state := command.Parent.State()
 
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string
@@ -125,7 +127,7 @@ func (s *StatusChart) drawCommands() {
 }
 
 func (s *StatusChart) drawSubtree(node *processtree.SlaveNode, myIndentation, childIndentation string) {
-	printStateInfo(myIndentation, node.Name, node.State, false, true)
+	printStateInfo(myIndentation, node.Name, node.State(), false, true)
 
 	for i, slave := range node.Slaves {
 		if i == len(node.Slaves)-1 {

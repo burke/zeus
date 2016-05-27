@@ -39,9 +39,8 @@ type SlaveNode struct {
 	parentReadiness     chan bool            // size 256 (TODO: rename me)
 	childBootRequests   chan *SlaveNode      // size 1
 
-	L           sync.Mutex
-	State       string
-	stateChange *sync.Cond
+	L     sync.Mutex
+	state string
 
 	event chan bool
 }
@@ -76,8 +75,6 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode, moni
 	s.Name = identifier
 	s.Parent = parent
 	s.fileMonitor = monitor
-	var mutex sync.Mutex
-	s.stateChange = sync.NewCond(&mutex)
 	tree.SlavesByName[identifier] = &s
 	return &s
 }
@@ -90,15 +87,17 @@ func (s *SlaveNode) RequestRestart() {
 }
 
 func (s *SlaveNode) requestRestart(asChild bool) {
-	s.L.Lock()
-	if s.State == SBooting || s.State == SReady || s.State == SCrashed || s.State == SWaiting {
-		if len(s.needsRestart) == 0 {
-			s.needsRestart <- asChild
+	state := s.State()
+	if state == SBooting || state == SReady || state == SCrashed || state == SWaiting {
+		// Enqueue the restart if there isn't already one in the channel
+		select {
+		case s.needsRestart <- asChild:
+		default:
 		}
 	}
-	s.L.Unlock()
 	for _, slave := range s.Slaves {
-		if slave.State == SBooting || slave.State == SReady || slave.State == SCrashed {
+		state := slave.State()
+		if state == SBooting || state == SReady || state == SCrashed {
 			slave.requestRestart(true)
 		}
 	}
@@ -124,7 +123,7 @@ func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock, featur
 	s.featurePipe = file
 	s.Pid = pid
 	s.socket = usock
-	if s.State == SUnbooted {
+	if s.state == SUnbooted {
 		s.event <- true
 	} else {
 		if pid > 0 {
@@ -139,7 +138,7 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 	nextState := SWaiting
 	for {
 		s.L.Lock()
-		s.changeState(nextState)
+		s.state = nextState
 		s.L.Unlock()
 		monitor.tree.StateChanged <- true
 		switch nextState {
@@ -157,6 +156,13 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 			slog.FatalErrorString("Unrecognized state: " + nextState)
 		}
 	}
+}
+
+func (s *SlaveNode) State() string {
+	s.L.Lock()
+	defer s.L.Unlock()
+
+	return s.state
 }
 
 // These "doXState" functions are called when a SlaveNode enters a state. They are expected
@@ -255,7 +261,7 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 // In this way, we always serve queued fork requests before killing the process.
 func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 	s.L.Lock()
-	if s.State == SReady && !s.featureHandlerRunning {
+	if s.state == SReady && !s.featureHandlerRunning {
 		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
 		s.trace("entered state SReady")
@@ -310,7 +316,7 @@ func (s *SlaveNode) bootSlave(slave *SlaveNode) {
 // command dies super early, the entire slave pretty well deadlocks.
 // TODO: review this.
 func (s *SlaveNode) bootCommand(request *CommandRequest) {
-	if s.State == SCrashed {
+	if s.state == SCrashed {
 		request.Retchan <- &CommandReply{SCrashed, nil}
 		return
 	}
@@ -329,7 +335,7 @@ func (s *SlaveNode) bootCommand(request *CommandRequest) {
 	}
 	fileName := strconv.Itoa(rand.Int())
 	commandFile := os.NewFile(uintptr(commandFD), fileName)
-	request.Retchan <- &CommandReply{s.State, commandFile}
+	request.Retchan <- &CommandReply{s.state, commandFile}
 }
 
 func (s *SlaveNode) bootQueuedCommandsAndSlaves() {
@@ -343,14 +349,6 @@ func (s *SlaveNode) bootQueuedCommandsAndSlaves() {
 		s.bootSlave(slave)
 	}
 	s.L.Unlock()
-}
-
-// This should only be called while holding a lock on s.L.
-func (s *SlaveNode) changeState(newState string) {
-	s.stateChange.L.Lock()
-	s.State = newState
-	s.stateChange.Broadcast()
-	s.stateChange.L.Unlock()
 }
 
 func (s *SlaveNode) ForceKill() {
@@ -391,12 +389,12 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 	} else {
 		s.L.Lock()
 		defer s.L.Unlock()
-		if s.State == SUnbooted {
+		if s.state == SUnbooted {
 			s.trace("root process exited with error. Sending it to crashed state. Message was: %s; output: %s", msg, output)
 			s.Error = fmt.Sprintf("Zeus root process (%s) died with message %s:\n%s", s.Name, msg, output)
 			s.event <- true
 		} else {
-			s.trace("Unexpected state for root process to be in at this time: %s", s.State)
+			s.trace("Unexpected state for root process to be in at this time: %s", s.state)
 		}
 	}
 }
