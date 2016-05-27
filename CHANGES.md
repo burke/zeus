@@ -1,6 +1,13 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.5...master
+https://github.com/burke/zeus/compare/v0.15.6...master
+
+# 0.15.6
+
+https://github.com/burke/zeus/compare/v0.15.5...v0.15.6
+
+* Better output and error recovery for Vagrant plugin gem
+* Fixed zeus gem monkey patch that made `Kernel#load` public
 
 # 0.15.5
 
