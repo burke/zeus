@@ -64,13 +64,7 @@ module Zeus
           local.send_io(feature_pipe_r)
           feature_pipe_r.close
 
-          # Now we run the action and report its success/fail status to the master.
-          features = Zeus::LoadTracking.features_loaded_by {
-            run_action(local, identifier, feature_pipe_w)
-          }
-
-          # the master wants to know about the files that running the action caused us to load.
-          Thread.new { notify_features(feature_pipe_w, features) }
+          run_action(local, identifier, feature_pipe_w)
 
           # We are now 'connected'. From this point, we may receive requests to fork.
           children = Set.new
@@ -189,20 +183,25 @@ module Zeus
     end
 
     def run_action(socket, identifier, feature_pipe_w)
+      # Now we run the action and report its success/fail status to the master.
       loaded = false
-      begin
+      features, err = Zeus::LoadTracking.features_loaded_by do
         plan.after_fork unless identifier == :boot
         plan.send(identifier)
         loaded = true
         socket.write "R:OK\0"
-      rescue Exception => e
-        report_error_to_master(socket, e)
+      end
 
-        # Report any setup-time failures back to the Zeus master:
-        unless loaded
-          notify_features(feature_pipe_w, Zeus::LoadTracking.all_features)
-        end
+      # the master wants to know about the files that running the
+      # action caused us to load. If we received an error, report them
+      # syncronously and along with the error. Otherwise, report them
+      # in a new thread and start listening for commands.
+      if err
+        report_error_to_master(socket, err)
+        notify_features(feature_pipe_w, features) unless loaded
         feature_pipe_w.close
+      else
+        Thread.new { notify_features(feature_pipe_w, features) }
       end
     end
   end
