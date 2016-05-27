@@ -1,6 +1,16 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.6...master
+https://github.com/burke/zeus/compare/v0.15.7...master
+
+# 0.15.7
+
+https://github.com/burke/zeus/compare/v0.15.6...v0.15.7
+
+* Replace file change monitoring with native Go code. This means the
+  zeus Gem no longer requires native extensions and file monitoring is
+  much faster and more reliable.
+* Track files from exceptions during Zeus actions in Ruby.
+* Fix a thread safety in SlaveNode state access.
 
 # 0.15.6
 
