@@ -11,11 +11,12 @@ import (
 	"syscall"
 
 	"fmt"
+	"runtime"
+
 	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
-	"runtime"
 )
 
 type SlaveNode struct {
@@ -208,22 +209,33 @@ func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBoot
 // specific to this slave. When we receive a message about the success or
 // failure of this operation, we transition to either crashed or ready.
 func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
-	// The slave will execute its action and respond with a status...
-	// Note we don't hold the mutex while waiting for the action to execute.
-	msg, err := s.socket.ReadMessage()
+	// Acknowledge that we've transitioned to the booting state and
+	// are ready to receive feature information. Otherwise there's a
+	// race whereby the Slave process could start loading code that is
+	// then changed before we transition to the booting state such that
+	// we'll ignore the changes.
+	msg := messages.CreateStartBootCommandMessage()
+	_, err := s.socket.WriteMessage(msg)
 	if err != nil {
 		slog.Error(err)
-	}
-	s.trace("in booting state")
-	s.L.Lock()
-	defer s.L.Unlock()
+	} else {
+		// The slave will execute its action and respond with a status...
+		// Note we don't hold the mutex while waiting for the action to execute.
+		msg, err := s.socket.ReadMessage()
+		if err != nil {
+			slog.Error(err)
+		}
+		s.trace("in booting state")
+		s.L.Lock()
+		defer s.L.Unlock()
 
-	msg, err = messages.ParseActionResponseMessage(msg)
-	if err != nil {
-		slog.ErrorString("[" + s.Name + "] " + err.Error())
-	}
-	if msg == "OK" {
-		return SReady
+		msg, err = messages.ParseActionResponseMessage(msg)
+		if err != nil {
+			slog.ErrorString("[" + s.Name + "] " + err.Error())
+		}
+		if msg == "OK" {
+			return SReady
+		}
 	}
 
 	// Drain the process's feature messages, if we have any, so

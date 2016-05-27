@@ -64,14 +64,6 @@ module Zeus
           local.send_io(feature_pipe_r)
           feature_pipe_r.close
 
-          # Now we run the action and report its success/fail status to the master.
-          features = Zeus::LoadTracking.features_loaded_by {
-            run_action(local, identifier, feature_pipe_w)
-          }
-
-          # the master wants to know about the files that running the action caused us to load.
-          Thread.new { notify_features(feature_pipe_w, features) }
-
           # We are now 'connected'. From this point, we may receive requests to fork.
           children = Set.new
           while true
@@ -88,16 +80,31 @@ module Zeus
             messages.split("\0").each do |new_identifier|
               new_identifier =~ /^(.):(.*)/
               code, ident = $1, $2
-              pid = fork
-              if pid
-                # We're in the parent. Record the child:
-                children << pid
-              elsif code == "S"
-                # Child, supposed to start another step:
-                throw(:boot_step, ident.to_sym)
+
+              if code == "B"
+                # Once the master acknowledges that it has
+                # transitioned to the booting state, run the action
+                # and report its success/fail status.
+                features = Zeus::LoadTracking.features_loaded_by {
+                  run_action(local, identifier, feature_pipe_w)
+                }
+
+                # the master wants to know about the files that running the action caused us to load.
+                Thread.new { notify_features(feature_pipe_w, features) }
               else
-                # Child, supposed to run a command:
-                return [ident.to_sym, local]
+                pid = fork
+                if pid
+                  # We're in the parent. Record the child:
+                  children << pid
+                elsif code == "S"
+                  # Child, supposed to start another step:
+                  throw(:boot_step, ident.to_sym)
+                elsif code == "C"
+                  # Child, supposed to run a command:
+                  return [ident.to_sym, local]
+                else
+                  raise "Received unknown code `#{code}` from Zeus"
+                end
               end
             end
           end
