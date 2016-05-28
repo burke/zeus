@@ -9,6 +9,7 @@ require 'zeus/rails'
 
 class CucumberPlan < Zeus::Rails         
   def cucumber_environment
+    ::Rails.env = ENV['RAILS_ENV'] = 'test'
     require 'cucumber/rspec/disable_option_parser'
     require 'cucumber/cli/main'
     @cucumber_runtime = Cucumber::Runtime.new
