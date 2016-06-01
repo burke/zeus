@@ -102,6 +102,7 @@ func (f *fsEventsMonitor) handleAdd() {
 		}
 
 		for _, file := range allFiles {
+			watched[file] = true
 			f.stream.Paths = append(f.stream.Paths, file)
 		}
 
