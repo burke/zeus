@@ -52,13 +52,18 @@ module Zeus
     end
 
     def boot_steps(identifier)
+      # We need to use a mutex to serialize writes to the feature_pipe.
+      # We don't need to syncronize any code before `run_action` though
+      # because nothing else should be running.
+      @feature_mutex = Mutex.new
+
       while true
         boot_step = catch(:boot_step) do
           $0 = "zeus slave: #{identifier}"
 
           setup_dummy_tty!
           master = setup_master_socket!
-          feature_pipe_r, feature_pipe_w = IO.pipe
+          feature_pipe_r, @feature_pipe = IO.pipe
 
           # I need to give the master a way to talk to me exclusively
           local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
@@ -69,7 +74,7 @@ module Zeus
           local.send_io(feature_pipe_r)
           feature_pipe_r.close
 
-          run_action(local, identifier, feature_pipe_w)
+          run_action(local, identifier)
 
           # We are now 'connected'. From this point, we may receive requests to fork.
           children = Set.new
@@ -97,16 +102,34 @@ module Zeus
               elsif code == "S"
                 # Child, supposed to start another step:
                 @parent_pid = forked_from
+
+                @feature_pipe.close
+                @feature_pipe = nil
+
                 throw(:boot_step, ident.to_sym)
               else
                 # Child, supposed to run a command:
                 @parent_pid = forked_from
+
+                @feature_pipe.close
+                @feature_pipe = nil
+
                 return [ident.to_sym, local]
               end
             end
           end
         end
         identifier = boot_step
+      end
+    end
+
+    def notify_features(features)
+      # Commands don't reload so they don't have a feature pipe
+      return unless @feature_pipe
+      @feature_mutex.synchronize do
+        features.each do |t|
+          @feature_pipe.puts(t)
+        end
       end
     end
 
@@ -176,12 +199,6 @@ module Zeus
       }
     end
 
-    def notify_features(pipe, features)
-      features.each do |t|
-        pipe.puts t
-      end
-    end
-
     def report_error_to_master(local, error)
       str = "R:"
       str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
@@ -192,7 +209,7 @@ module Zeus
       local.write str
     end
 
-    def run_action(socket, identifier, feature_pipe_w)
+    def run_action(socket, identifier)
       # Now we run the action and report its success/fail status to the master.
       features, err = Zeus::LoadTracking.features_loaded_by do
         plan.after_fork unless identifier == :boot
@@ -204,8 +221,8 @@ module Zeus
         # We need to do this before reporting the error to the master
         # otherwise it will kill us before we can report features.
         begin
-          notify_features(feature_pipe_w, features)
-          feature_pipe_w.close
+          notify_features(features)
+          @feature_pipe.close
         ensure
           report_error_to_master(socket, err)
         end
@@ -213,7 +230,7 @@ module Zeus
         # If we booted successfully, report features in a new thread
         # so we can immediately begin listening for commands.
         socket.write "R:OK\0"
-        Thread.new { notify_features(feature_pipe_w, features) }
+        Thread.new { notify_features(features) }
       end
     end
   end
