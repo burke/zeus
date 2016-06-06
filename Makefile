@@ -9,7 +9,7 @@ VAGRANT_PLUGIN_LINUX=vagrant-linux/pkg/vagrant-zeus-$(VERSION).gem
 CXX=g++
 CXXFLAGS=-O3 -g -Wall
 
-.PHONY: default all clean binaries compileBinaries fmt install
+.PHONY: default all clean binaries compileBinaries fmt test test-go test-rubygem install dev_bootstrap
 default: all
 
 all: fmt binaries man/build $(GEM) $(VAGRANT_PLUGIN)
@@ -23,8 +23,13 @@ linuxBinaries: build-linux
 fmt:
 	govendor fmt +local
 
+test: test-go test-rubygem
+
 test-go: go/zeusversion/zeusversion.go
 	ZEUS_TEST_GEMPATH=$(GEMPATH) GO15VENDOREXPERIMENT=1 govendor test +local
+
+test-rubygem: rubygem/lib/zeus/version.rb
+	cd rubygem && bin/rspec
 
 man/build: Gemfile.lock
 	cd man && ../bin/rake
@@ -33,7 +38,7 @@ rubygem-linux/pkg/%: \
 	rubygem/man \
 	rubygem/examples \
 	rubygem/lib/zeus/version.rb \
-	rubygem/build \
+	rubygem-linux/build \
 	Gemfile.lock
 	cd rubygem && bundle install && bin/rake
 
@@ -50,6 +55,10 @@ rubygem/man: man/build
 	cp -R $< $@
 
 rubygem/build: binaries
+	mkdir -p $@
+	cp -R build/zeus-* $@
+
+rubygem-linux/build: linuxBinaries
 	mkdir -p $@
 	cp -R build/zeus-* $@
 
@@ -113,10 +122,6 @@ clean:
 	rm -rf rubygem/{man,build,pkg,examples,lib/zeus/version.rb,MANIFEST}
 	rm -rf vagrant/{build,pkg,lib/vagrant-zeus/version.rb,MANIFEST}
 
-
-
-
-.PHONY: dev_bootstrap
 dev_bootstrap: go/zeusversion/zeusversion.go
 	bundle -v || gem install bundler --no-rdoc --no-ri
 	bundle install
