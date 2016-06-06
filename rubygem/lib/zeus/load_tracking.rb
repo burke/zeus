@@ -1,8 +1,15 @@
 module Zeus
   class LoadTracking
     class << self
-      def features_loaded_by(&block)
-        old_features = all_features
+      def add_feature(file)
+        full_path = File.expand_path(file)
+        return unless File.exist?(full_path) && @feature_pipe
+        notify_features([full_path])
+      end
+
+      # Internal: This should only be called by Zeus code
+      def track_features_loaded_by
+        old_features = $LOADED_FEATURES.dup
 
         # Catch exceptions so we can determine the features
         # that were being loaded at the time of the exception.
@@ -14,37 +21,47 @@ module Zeus
           # the error is not in the backtrace, only the error message.
           match = /\A([^:]+):\d+: syntax error/.match(err.message)
           err_features << match[1] if match
-        rescue Exception => err
-          # Just capture this to add to the err_features list
+          raise
+        rescue ScriptError => err
+          raise
+        rescue => err
+          raise
+        ensure
+          if err && err.backtrace
+            err_features += err.backtrace.map { |b| b.split(':').first }
+                           .select { |f| f.start_with?('/') }
+                           .take_while { |f| f != __FILE__ }
+          end
+
+          notify_features(Set.new($LOADED_FEATURES) + err_features - old_features)
         end
-
-        if err && err.backtrace
-          err_features += err.backtrace.map { |b| b.split(':').first }
-                             .select { |f| f.start_with?('/') }
-                             .take_while { |f| f != __FILE__ }
-        end
-
-        new_features = all_features + err_features - old_features
-        new_features.uniq!
-
-        [new_features, err]
       end
 
-      # Check the load path first to see if the file getting loaded is already
-      # loaded. Otherwise, add the file to the $untracked_features array which
-      # then gets added to $LOADED_FEATURES array.
-      def add_feature(file)
-        full_path = File.expand_path(file)
-        return unless File.exist?(full_path)
-
-        $untracked_features ||= []
-        $untracked_features << full_path
+      # Internal: This should only be called by Zeus code
+      def set_feature_pipe(feature_pipe)
+        @feature_mutex = Mutex.new
+        @feature_pipe = feature_pipe
       end
 
-      # $LOADED_FEATURES global variable is used internally by Rubygems
-      def all_features
-        untracked = defined?($untracked_features) ? $untracked_features : []
-        $LOADED_FEATURES + untracked
+      # Internal: This should only be called by Zeus code
+      def clear_feature_pipe
+        @feature_pipe.close
+        @feature_pipe = nil
+        @feature_mutex = nil
+      end
+
+      private
+
+      def notify_features(features)
+        unless @feature_pipe
+          raise "Attempted to report features to Zeus when not running as part of a Zeus process"
+        end
+
+        @feature_mutex.synchronize do
+          features.each do |t|
+            @feature_pipe.puts(t)
+          end
+        end
       end
     end
   end

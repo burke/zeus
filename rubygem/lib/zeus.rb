@@ -69,7 +69,9 @@ module Zeus
           local.send_io(feature_pipe_r)
           feature_pipe_r.close
 
-          run_action(local, identifier, feature_pipe_w)
+          Zeus::LoadTracking.set_feature_pipe(feature_pipe_w)
+
+          run_action(local, identifier)
 
           # We are now 'connected'. From this point, we may receive requests to fork.
           children = Set.new
@@ -97,10 +99,16 @@ module Zeus
               elsif code == "S"
                 # Child, supposed to start another step:
                 @parent_pid = forked_from
+
+                Zeus::LoadTracking.clear_feature_pipe
+
                 throw(:boot_step, ident.to_sym)
               else
                 # Child, supposed to run a command:
                 @parent_pid = forked_from
+
+                Zeus::LoadTracking.clear_feature_pipe
+
                 return [ident.to_sym, local]
               end
             end
@@ -176,12 +184,6 @@ module Zeus
       }
     end
 
-    def notify_features(pipe, features)
-      features.each do |t|
-        pipe.puts t
-      end
-    end
-
     def report_error_to_master(local, error)
       str = "R:"
       str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
@@ -192,28 +194,18 @@ module Zeus
       local.write str
     end
 
-    def run_action(socket, identifier, feature_pipe_w)
+    def run_action(socket, identifier)
       # Now we run the action and report its success/fail status to the master.
-      features, err = Zeus::LoadTracking.features_loaded_by do
-        plan.after_fork unless identifier == :boot
-        plan.send(identifier)
-      end
-
-      if err
-        # If we received an error, report features to the master syncronously.
-        # We need to do this before reporting the error to the master
-        # otherwise it will kill us before we can report features.
-        begin
-          notify_features(feature_pipe_w, features)
-          feature_pipe_w.close
-        ensure
-          report_error_to_master(socket, err)
+      begin
+        Zeus::LoadTracking.track_features_loaded_by do
+          plan.after_fork unless identifier == :boot
+          plan.send(identifier)
         end
-      else
-        # If we booted successfully, report features in a new thread
-        # so we can immediately begin listening for commands.
+
         socket.write "R:OK\0"
-        Thread.new { notify_features(feature_pipe_w, features) }
+      rescue => err
+        report_error_to_master(socket, err)
+        raise
       end
     end
   end

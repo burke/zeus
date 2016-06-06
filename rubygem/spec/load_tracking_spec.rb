@@ -6,55 +6,53 @@ describe "Zeus::LoadTracking" do
 
   class MyError < StandardError; end
 
+  def expect_to_load(expect_features, expect_err=NilClass)
+    buf = StringIO.new
+    Zeus::LoadTracking.set_feature_pipe(buf)
+
+    begin
+      Zeus::LoadTracking.track_features_loaded_by do
+        yield
+      end
+    rescue ScriptError => err
+    rescue => err
+    end
+
+    expect(err).to be_instance_of(expect_err)
+    expect(buf.string.strip.split("\n").sort).to eq(expect_features.sort)
+  end
+
+  def expand_asset_path(path)
+    File.join(__dir__, 'assets', path)
+  end
+
   describe '.add_feature' do
-    context 'already in load path' do
-      before do
-        # add the dir path of the tempfile to LOAD_PATH
-        $LOAD_PATH  << test_dirname
-      end
+    it 'tracks full filepath' do
+      relative_path = Pathname.new(test_filename).relative_path_from(Pathname.new(Dir.pwd)).to_s
 
-      after { $LOAD_PATH.delete test_dirname }
-
-      it 'adds full filepath to $untracked_features' do
-        Zeus::LoadTracking.add_feature(test_filename)
-
-        expect($untracked_features).to include(__dir__ + "/load_tracking_spec.rb")
+      expect_to_load([test_filename]) do
+        Zeus::LoadTracking.add_feature(relative_path)
       end
     end
 
-    context 'not in load path' do
-      it 'adds full filepath to $untracked_features' do
-        Zeus::LoadTracking.add_feature(test_filename)
+    it 'tracks loads' do
+      target = expand_asset_path('load.rb')
 
-        expect($untracked_features).to include(__dir__ + "/load_tracking_spec.rb")
+      # The first `load` in Travis also pulls enc/trans/single_byte.so from the
+      # Ruby VM for some reason. Loading twice is harmless since this file is empty.
+      load(target)
+
+      expect_to_load([target]) do
+        load(target)
       end
     end
 
-    context '.features_loaded_by' do
-      it 'returns list of new files loaded when block executes' do
-        new_files, = Zeus::LoadTracking.features_loaded_by do
-          $untracked_features << "an_untracked_feature.rb"
-        end
-
-        expect(new_files).to eq(["an_untracked_feature.rb"])
-      end
+    it 'does not error outside a tracking block without Zeus configured' do
+      Zeus::LoadTracking.add_feature(test_filename)
     end
   end
 
-  describe '.features_loaded_by' do
-    def expect_to_load(expect_features, expect_err=NilClass)
-      new_files, err = Zeus::LoadTracking.features_loaded_by do
-        yield
-      end
-
-      expect(new_files.sort).to eq(expect_features.sort)
-      expect(err).to be_instance_of(expect_err)
-    end
-
-    def expand_asset_path(path)
-      File.join(__dir__, 'assets', path)
-    end
-
+  describe '.track_features_loaded_by' do
     context 'loading valid code' do
       it 'tracks successful require_relative' do
         expect_to_load([expand_asset_path('require_relative.rb')]) do
@@ -67,35 +65,23 @@ describe "Zeus::LoadTracking" do
           require expand_asset_path('require')
         end
       end
-
-      it 'tracks loads' do
-        expect_to_load([expand_asset_path('load.rb')]) do
-          load expand_asset_path('load.rb')
-        end
-      end
     end
 
     context 'loading invalid code' do
       it 'tracks requires that raise a SyntaxError' do
-        expect_to_load([expand_asset_path('invalid_syntax.rb')], SyntaxError) do
+        expect_to_load([test_filename, expand_asset_path('invalid_syntax.rb')], SyntaxError) do
           require expand_asset_path('invalid_syntax')
         end
       end
 
       it 'tracks requires that raise a RuntimeError' do
-        expect_to_load([expand_asset_path('runtime_error.rb')], RuntimeError) do
+        expect_to_load([test_filename, expand_asset_path('runtime_error.rb')], RuntimeError) do
           require expand_asset_path('runtime_error')
         end
       end
 
-      it 'tracks requires that exit' do
-        expect_to_load([expand_asset_path('exit.rb')], SystemExit) do
-          require expand_asset_path('exit')
-        end
-      end
-
       it 'tracks requires that throw in a method call' do
-        expect_to_load([expand_asset_path('raise.rb')], MyError) do
+        expect_to_load([test_filename, expand_asset_path('raise.rb')], MyError) do
           require expand_asset_path('raise')
           raise_it(MyError)
         end
