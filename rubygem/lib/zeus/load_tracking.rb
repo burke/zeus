@@ -3,6 +3,7 @@ module Zeus
     class << self
       def features_loaded_by(&block)
         old_features = all_features
+        @tracking_features = true
 
         # Catch exceptions so we can determine the features
         # that were being loaded at the time of the exception.
@@ -24,6 +25,7 @@ module Zeus
                              .take_while { |f| f != __FILE__ }
         end
 
+        @tracking_features = false
         new_features = all_features + err_features - old_features
         new_features.uniq!
 
@@ -50,8 +52,12 @@ module Zeus
       private
 
       def add_extra_feature(path)
-        $untracked_features ||= []
-        $untracked_features << path
+        if @tracking_features
+          $untracked_features ||= []
+          $untracked_features << path
+        else
+          Zeus.notify_features([path])
+        end
       end
 
       def find_in_load_path(file_path)
