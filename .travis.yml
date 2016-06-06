@@ -10,10 +10,5 @@ env:
   - USE_RUBY=2.2.3
 before_install:
   - rvm use $USE_RUBY --install --fuzzy
-install:
-  - make dev_bootstrap
-  - make rubygem/lib/zeus/version.rb
 script:
-  - RAILS_ENV="" make test-go
-  - make build-linux
-  - make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bin/rspec spec
+  - RAILS_ENV="" make
