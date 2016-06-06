@@ -25,26 +25,22 @@ module Zeus
         end
 
         new_features = all_features + err_features - old_features
-        new_features.uniq!
 
         [new_features, err]
       end
 
-      # Check the load path first to see if the file getting loaded is already
-      # loaded. Otherwise, add the file to the $untracked_features array which
-      # then gets added to $LOADED_FEATURES array.
       def add_feature(file)
-        full_path = File.expand_path(file)
-        return unless File.exist?(full_path)
+        add_features([file])
+      end
 
-        $untracked_features ||= []
-        $untracked_features << full_path
+      def add_features(files)
+        files = files.map { |f| File.expand_path(f) }.select { |f| File.exist?(f) }
+        Zeus.notify_features(files)
       end
 
       # $LOADED_FEATURES global variable is used internally by Rubygems
       def all_features
-        untracked = defined?($untracked_features) ? $untracked_features : []
-        $LOADED_FEATURES + untracked
+        Set.new($LOADED_FEATURES.dup)
       end
     end
   end
