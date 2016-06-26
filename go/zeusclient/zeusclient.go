@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/burke/ttyutils"
-	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
@@ -26,7 +25,7 @@ const (
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
-func Run() int {
+func Run(args []string) int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
 		println("As a safety precaution to protect you from nuking your development database,")
@@ -75,9 +74,9 @@ func Run() int {
 	}
 	usock := unixsocket.New(conn)
 
-	msg := messages.CreateCommandAndArgumentsMessage(config.Args, os.Getpid())
+	msg := messages.CreateCommandAndArgumentsMessage(args, os.Getpid())
 	usock.WriteMessage(msg)
-	err = sendCommandLineArguments(usock, config.Args)
+	err = sendCommandLineArguments(usock, args)
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1

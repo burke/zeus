@@ -19,76 +19,78 @@ import (
 )
 
 var color bool = true
-var Args = os.Args[1:]
 
 func main() {
-	for Args = os.Args[1:]; Args != nil && len(Args) > 0 && Args[0][0] == '-'; Args = Args[1:] {
-		switch Args[0] {
+	args := os.Args[1:]
+	configFile := "zeus.json"
+	fileChangeDelay := filemonitor.DefaultFileChangeDelay
+
+	for ; args != nil && len(args) > 0 && args[0][0] == '-'; args = args[1:] {
+		switch args[0] {
 		case "--no-color":
 			color = false
 			slog.DisableColor()
 		case "--log":
-			tracefile, err := os.OpenFile(Args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+			tracefile, err := os.OpenFile(args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 			if err == nil {
 				slog.SetTraceLogger(slog.NewTraceLogger(tracefile))
-				Args = Args[1:]
+				args = args[1:]
 			} else {
-				fmt.Printf("Could not open trace file %s\n", Args[1])
+				fmt.Printf("Could not open trace file %s\n", args[1])
 				return
 			}
 		case "--file-change-delay":
-			if len(Args) > 1 {
-				delay, err := time.ParseDuration(Args[1])
+			if len(args) > 1 {
+				delay, err := time.ParseDuration(args[1])
 				if err != nil {
 					execManPage("zeus")
 				}
-				Args = Args[1:]
-				filemonitor.FileChangeDelay = delay
+				args = args[1:]
+				fileChangeDelay = delay
 			} else {
 				execManPage("zeus")
 			}
 		case "--config":
-			_, err := os.Stat(Args[1])
+			_, err := os.Stat(args[1])
 			if err != nil {
-				fmt.Printf("Config file doesn't exist: %s (%e)\n", Args[1], err)
+				fmt.Printf("Config file doesn't exist: %s (%e)\n", args[1], err)
 				return
 			}
-			config.ConfigFile = Args[1]
-			Args = Args[1:]
+			configFile = args[1]
+			args = args[1:]
 		case "--version":
 			printVersion()
 			return
 		}
 	}
-	if len(Args) == 0 {
+	if len(args) == 0 {
 		execManPage("zeus")
+		return
 	}
 
-	// Don't confuse the master by sending *full* args to it; just those that are
-	// not zeus-specific.
-	config.Args = Args
-
-	if generalHelpRequested(Args) {
+	if generalHelpRequested(args) {
 		execManPage("zeus")
-	} else if Args[0] == "help" {
-		commandSpecificHelp(Args)
-	} else if Args[0] == "version" {
+	} else if args[0] == "help" {
+		commandSpecificHelp(args)
+	} else if args[0] == "version" {
 		printVersion()
-	} else if Args[0] == "start" {
-		os.Exit(zeusmaster.Run())
-	} else if Args[0] == "init" {
+	} else if args[0] == "start" {
+		os.Exit(zeusmaster.Run(configFile, fileChangeDelay))
+	} else if args[0] == "init" {
 		zeusInit()
-	} else if Args[0] == "commands" {
-		zeusCommands()
+	} else if args[0] == "commands" {
+		zeusCommands(configFile)
 	} else {
-		tree := config.BuildProcessTree(nil)
+		tree := config.BuildProcessTree(configFile, nil)
 		for _, name := range tree.AllCommandsAndAliases() {
-			if Args[0] == name {
-				os.Exit(zeusclient.Run())
+			if args[0] == name {
+				// Don't confuse the master by sending *full* args to
+				// it; just those that are not zeus-specific.
+				os.Exit(zeusclient.Run(args))
 			}
 		}
 
-		commandNotFound(Args[0])
+		commandNotFound(args[0])
 	}
 }
 
@@ -149,8 +151,8 @@ func zeusInit() {
 	copyFile(planPath, "custom_plan.rb")
 }
 
-func zeusCommands() {
-	tree := config.BuildProcessTree(nil)
+func zeusCommands(configFile string) {
+	tree := config.BuildProcessTree(configFile, nil)
 	for _, command := range tree.Commands {
 		alia := strings.Join(command.Aliases, ", ")
 		var aliasPart string

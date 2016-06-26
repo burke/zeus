@@ -2,7 +2,11 @@
 
 package filemonitor
 
-import "github.com/fsnotify/fsnotify"
+import (
+	"time"
+
+	"github.com/fsnotify/fsnotify"
+)
 
 type fsnotifyMonitor struct {
 	gatheringMonitor
@@ -11,7 +15,7 @@ type fsnotifyMonitor struct {
 
 const flagsWorthReloadingFor = fsnotify.Write | fsnotify.Remove | fsnotify.Rename
 
-func NewFileMonitor() (FileMonitor, error) {
+func NewFileMonitor(fileChangeDelay time.Duration) (FileMonitor, error) {
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		return nil, err
@@ -20,6 +24,7 @@ func NewFileMonitor() (FileMonitor, error) {
 	f := fsnotifyMonitor{
 		watcher: watcher,
 	}
+	f.fileChangeDelay = fileChangeDelay
 	f.changes = make(chan string)
 
 	go f.serveListeners()

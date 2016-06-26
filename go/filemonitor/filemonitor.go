@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-var FileChangeDelay = 300 * time.Millisecond
+const DefaultFileChangeDelay = 300 * time.Millisecond
 
 type FileMonitor interface {
 	Listen() <-chan []string
@@ -30,7 +30,8 @@ func (f *fileMonitor) Listen() <-chan []string {
 
 type gatheringMonitor struct {
 	fileMonitor
-	changes chan string
+	changes         chan string
+	fileChangeDelay time.Duration
 }
 
 // Create the changes channel and serve debounced changes to listeners.
@@ -58,7 +59,7 @@ func (f *gatheringMonitor) serveListeners() {
 
 			collected[change] = true
 			if deadline == never {
-				deadline = time.After(FileChangeDelay)
+				deadline = time.After(f.fileChangeDelay)
 			}
 		case <-deadline:
 			list := make([]string, 0, len(collected))
