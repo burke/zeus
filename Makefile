@@ -93,7 +93,7 @@ compileLinuxBinaries:
 
 go/zeusversion/zeusversion.go: VERSION
 	mkdir -p $(@D)
-	@echo 'package zeusversion\n\nconst VERSION string = "$(VERSION)"' > $@
+	@echo 'package zeusversion\n\nconst VERSION string = "$(VERSION)$(GO_VERSION_SUFFIX)"' > $@
 rubygem/lib/zeus/version.rb: VERSION
 	mkdir -p $(@D)
 	@echo 'module Zeus\n  VERSION = "$(VERSION)"\nend' > $@
