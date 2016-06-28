@@ -31,8 +31,8 @@ type SlaveNode struct {
 	hasSuccessfullyBooted bool
 
 	needsRestart        chan bool
-	slaveBootRequests   chan *SlaveNode
 	commandBootRequests chan *CommandRequest
+	slaveBootRequests   chan *SlaveNode
 
 	L        sync.Mutex
 	features map[string]bool
@@ -106,7 +106,7 @@ func (s *SlaveNode) ReportBootEvent() bool {
 	}
 }
 
-func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock, featurePipeFd int) {
+func (s *SlaveNode) SlaveWasInitialized(pid, parentPid int, usock *unixsocket.Usock, featurePipeFd int) {
 	file := os.NewFile(uintptr(featurePipeFd), "featurepipe")
 
 	s.L.Lock()
@@ -114,13 +114,13 @@ func (s *SlaveNode) SlaveWasInitialized(pid int, usock *unixsocket.Usock, featur
 		if pid > 0 {
 			syscall.Kill(pid, syscall.SIGKILL)
 		}
-		slog.ErrorString(fmt.Sprintf("Unexpected process %d for slave %q was killed", pid, s.Name))
+		slog.ErrorString(fmt.Sprintf("Unexpected process %d with parent %d for slave %q was killed", pid, parentPid, s.Name))
 	} else {
 		s.wipe()
 		s.pid = pid
 		s.socket = usock
 		go s.handleMessages(file)
-		s.trace("initialized slave %s with pid %d", s.Name, pid)
+		s.trace("initialized slave %s with pid %d from parent %d", s.Name, pid, parentPid)
 	}
 	s.L.Unlock()
 }
@@ -235,14 +235,7 @@ func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 	for {
 		select {
 		case <-s.needsRestart:
-			s.L.Lock()
-			s.ForceKill()
-			s.wipe()
-			s.L.Unlock()
-
-			for _, slave := range s.Slaves {
-				slave.RequestRestart()
-			}
+			s.doRestart()
 			return SUnbooted
 		case slave := <-s.slaveBootRequests:
 			s.bootSlave(slave)
@@ -259,10 +252,7 @@ func (s *SlaveNode) doCrashedState() string { // -> SUnbooted
 	for {
 		select {
 		case <-s.needsRestart:
-			s.L.Lock()
-			s.ForceKill()
-			s.wipe()
-			s.L.Unlock()
+			s.doRestart()
 			return SUnbooted
 		case slave := <-s.slaveBootRequests:
 			slave.L.Lock()
@@ -275,6 +265,28 @@ func (s *SlaveNode) doCrashedState() string { // -> SUnbooted
 			request.Retchan <- &CommandReply{SCrashed, nil}
 			s.L.Unlock()
 		}
+	}
+}
+
+func (s *SlaveNode) doRestart() {
+	s.L.Lock()
+	s.ForceKill()
+	s.wipe()
+	s.L.Unlock()
+
+	// Drain and ignore any enqueued slave boot requests since
+	// we're going to make them all restart again anyway.
+	drained := false
+	for !drained {
+		select {
+		case <-s.slaveBootRequests:
+		default:
+			drained = true
+		}
+	}
+
+	for _, slave := range s.Slaves {
+		slave.RequestRestart()
 	}
 }
 
