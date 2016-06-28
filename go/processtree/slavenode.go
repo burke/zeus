@@ -27,7 +27,6 @@ type SlaveNode struct {
 	Error                 string
 	Slaves                []*SlaveNode
 	Commands              []*CommandNode
-	Features              map[string]bool
 	fileMonitor           filemonitor.FileMonitor
 	featureHandlerRunning bool
 
@@ -39,8 +38,10 @@ type SlaveNode struct {
 	parentReadiness     chan bool            // size 256 (TODO: rename me)
 	childBootRequests   chan *SlaveNode      // size 1
 
-	L     sync.Mutex
-	state string
+	L        sync.Mutex
+	features map[string]bool
+	featureL sync.Mutex
+	state    string
 
 	event chan bool
 }
@@ -70,7 +71,7 @@ func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode, moni
 	s.slaveBootRequests = make(chan *SlaveNode, 256)
 	s.parentReadiness = make(chan bool, 1)
 	s.childBootRequests = make(chan *SlaveNode, 256)
-	s.Features = make(map[string]bool)
+	s.features = make(map[string]bool)
 	s.event = make(chan bool, 1)
 	s.Name = identifier
 	s.Parent = parent
@@ -165,6 +166,12 @@ func (s *SlaveNode) State() string {
 	return s.state
 }
 
+func (s *SlaveNode) HasFeature(file string) bool {
+	s.featureL.Lock()
+	defer s.featureL.Unlock()
+	return s.features[file]
+}
+
 // These "doXState" functions are called when a SlaveNode enters a state. They are expected
 // to continue to execute until
 
@@ -238,7 +245,7 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	// Drain the process's feature messages, if we have any, so
 	// that reloads happen when any load-time problems get fixed:
 	s.L.Unlock()
-	s.handleMessages()
+	s.handleMessages(s.featurePipe)
 	s.L.Lock()
 
 	// Clean up:
@@ -265,7 +272,7 @@ func (s *SlaveNode) doCrashedOrReadyState() string { // -> SWaiting
 		s.hasSuccessfullyBooted = true
 		s.featureHandlerRunning = true
 		s.trace("entered state SReady")
-		go s.handleMessages()
+		go s.handleMessages(s.featurePipe)
 	}
 	s.L.Unlock()
 
@@ -402,24 +409,19 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 // We want to make this the single interface point with the socket.
 // we want to republish unneeded messages to channels so other modules
 //can pick them up. (notably, clienthandler.)
-func (s *SlaveNode) handleMessages() {
-	reader := bufio.NewReader(s.featurePipe)
+func (s *SlaveNode) handleMessages(featurePipe *os.File) {
+	reader := bufio.NewReader(featurePipe)
 	for {
 		if msg, err := reader.ReadString('\n'); err != nil {
-			s.L.Lock()
-			s.featureHandlerRunning = false
-			s.L.Unlock()
 			return
 		} else {
 			msg = strings.TrimRight(msg, "\n")
-			s.handleFeatureMessage(msg)
+			s.featureL.Lock()
+			s.features[msg] = true
+			s.featureL.Unlock()
+			s.fileMonitor.Add(msg)
 		}
 	}
-}
-
-func (s *SlaveNode) handleFeatureMessage(msg string) {
-	s.Features[msg] = true
-	s.fileMonitor.Add(msg)
 }
 
 func (s *SlaveNode) trace(format string, args ...interface{}) {
