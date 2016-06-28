@@ -43,8 +43,6 @@ func ttyStart(tree *processtree.ProcessTree, done, quit chan bool) {
 				theChart.extraOutput += output
 				theChart.L.Unlock()
 				theChart.draw()
-			case <-tree.StateChanged:
-				theChart.draw()
 			case <-theChart.update:
 				theChart.draw()
 			}
