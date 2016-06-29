@@ -14,7 +14,7 @@ func stdoutStart(tree *processtree.ProcessTree, done, quit chan bool) {
 				done <- true
 				return
 				// TODO: Maybe handle SCW Write requests?
-			case <-tree.StateChanged:
+			case <-theChart.update:
 				theChart.logChanges()
 			}
 		}

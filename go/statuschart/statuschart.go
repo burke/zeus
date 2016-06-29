@@ -1,12 +1,16 @@
 package statuschart
 
 import (
+	"os"
+	"sync"
+	"time"
+
 	"github.com/burke/ttyutils"
 	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
-	"os"
-	"sync"
 )
+
+const updateDebounceInterval = 1 * time.Millisecond
 
 type StatusChart struct {
 	RootSlave *processtree.SlaveNode
@@ -34,7 +38,7 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	theChart.RootSlave = tree.Root
 	theChart.numberOfSlaves = len(tree.SlavesByName)
 	theChart.Commands = tree.Commands
-	theChart.update = make(chan bool, 10)
+	theChart.update = make(chan bool)
 	theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
 	theChart.terminalSupported = ttyutils.IsTerminal(os.Stdout.Fd())
 
@@ -43,7 +47,26 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	} else {
 		stdoutStart(tree, done, quit)
 	}
+
+	go theChart.watchUpdates(tree.StateChanged)
+
 	return quit
+}
+
+func (s *StatusChart) watchUpdates(updates <-chan bool) {
+	// Debounce state updates
+	for <-updates {
+		reported := false
+		timeout := time.After(updateDebounceInterval)
+		for !reported {
+			select {
+			case <-updates:
+			case <-timeout:
+				s.update <- true
+				reported = true
+			}
+		}
+	}
 }
 
 func stateSuffix(state string) string {
