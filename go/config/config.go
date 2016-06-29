@@ -12,18 +12,14 @@ import (
 	"github.com/burke/zeus/go/zerror"
 )
 
-var Args = os.Args[1:]
-
-var ConfigFile string = "zeus.json"
-
 type config struct {
 	Command string
 	Plan    interface{}
 	Items   map[string]string
 }
 
-func BuildProcessTree(monitor filemonitor.FileMonitor) *processtree.ProcessTree {
-	conf := parseConfig()
+func BuildProcessTree(configFile string, monitor filemonitor.FileMonitor) *processtree.ProcessTree {
+	conf := parseConfig(configFile)
 	tree := &processtree.ProcessTree{}
 	tree.SlavesByName = make(map[string]*processtree.SlaveNode)
 	tree.StateChanged = make(chan bool, 16)
@@ -92,10 +88,10 @@ func readConfigFileOrDefault(configFile string) ([]byte, error) {
 	return contents, err
 }
 
-func parseConfig() (c config) {
+func parseConfig(configFile string) (c config) {
 	var conf config
 
-	contents, err := readConfigFileOrDefault(ConfigFile)
+	contents, err := readConfigFileOrDefault(configFile)
 	if err != nil {
 		zerror.ErrorConfigFileInvalidJson()
 	}

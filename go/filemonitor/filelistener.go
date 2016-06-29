@@ -19,12 +19,13 @@ type fileListener struct {
 	wg sync.WaitGroup
 }
 
-func NewFileListener(ln net.Listener) FileMonitor {
+func NewFileListener(fileChangeDelay time.Duration, ln net.Listener) FileMonitor {
 	fl := fileListener{
 		netListener: ln,
 		connections: make(map[net.Conn]chan string),
 		stop:        make(chan struct{}),
 	}
+	fl.fileChangeDelay = fileChangeDelay
 	fl.changes = make(chan string)
 
 	go fl.serveListeners()

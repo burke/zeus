@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/burke/zeus/go/clienthandler"
 	"github.com/burke/zeus/go/config"
@@ -24,17 +25,17 @@ const listenerPortVar = "ZEUS_NETWORK_FILE_MONITOR_PORT"
 // Leaving out SIGPIPE as that is a signal the master receives if a client process is killed.
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
-func Run() int {
+func Run(configFile string, fileChangeDelay time.Duration) int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server v" + zeusversion.VERSION)
 
 	zerror.Init()
 
-	monitor, err := buildFileMonitor()
+	monitor, err := buildFileMonitor(fileChangeDelay)
 	if err != nil {
 		return 2
 	}
 
-	var tree = config.BuildProcessTree(monitor)
+	var tree = config.BuildProcessTree(configFile, monitor)
 
 	done := make(chan bool)
 
@@ -67,7 +68,7 @@ func exit(quit, done chan bool) {
 	<-done
 }
 
-func buildFileMonitor() (filemonitor.FileMonitor, error) {
+func buildFileMonitor(fileChangeDelay time.Duration) (filemonitor.FileMonitor, error) {
 	if portStr := os.Getenv(listenerPortVar); portStr != "" {
 		port, err := strconv.Atoi(portStr)
 		if err != nil {
@@ -82,10 +83,10 @@ func buildFileMonitor() (filemonitor.FileMonitor, error) {
 			return nil, err
 		}
 
-		return filemonitor.NewFileListener(ln), nil
+		return filemonitor.NewFileListener(fileChangeDelay, ln), nil
 	}
 
-	monitor, err := filemonitor.NewFileMonitor()
+	monitor, err := filemonitor.NewFileMonitor(fileChangeDelay)
 	if err != nil {
 		return nil, err
 	}

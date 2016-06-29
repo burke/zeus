@@ -47,7 +47,7 @@ func TestFileMonitor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fm, err := filemonitor.NewFileMonitor()
+	fm, err := filemonitor.NewFileMonitor(filemonitor.DefaultFileChangeDelay)
 	if err != nil {
 		t.Fatal(err)
 	}

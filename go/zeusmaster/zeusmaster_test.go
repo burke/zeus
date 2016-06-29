@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/burke/zeus/go/config"
+	"github.com/burke/zeus/go/filemonitor"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 	"github.com/burke/zeus/go/zeusmaster"
@@ -159,7 +159,6 @@ func TestZeusBoots(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	config.ConfigFile = filepath.Join(dir, "zeus.json")
 	unixsocket.SetZeusSockName(filepath.Join(dir, ".zeus.sock"))
 
 	connections := map[string]*net.UnixConn{
@@ -196,7 +195,7 @@ func TestZeusBoots(t *testing.T) {
 	enableTracing()
 	zexit := make(chan int)
 	go func() {
-		zexit <- zeusmaster.Run()
+		zexit <- zeusmaster.Run(filepath.Join(dir, "zeus.json"), filemonitor.DefaultFileChangeDelay)
 	}()
 
 	expects := map[string]string{

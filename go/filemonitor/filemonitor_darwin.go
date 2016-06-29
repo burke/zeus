@@ -2,7 +2,11 @@
 
 package filemonitor
 
-import "github.com/fsnotify/fsevents"
+import (
+	"time"
+
+	"github.com/fsnotify/fsevents"
+)
 
 const flagsWorthReloadingFor = fsevents.ItemRemoved | fsevents.ItemModified | fsevents.ItemRenamed
 
@@ -13,11 +17,11 @@ type fsEventsMonitor struct {
 	stop   chan struct{}
 }
 
-func NewFileMonitor() (FileMonitor, error) {
+func NewFileMonitor(fileChangeDelay time.Duration) (FileMonitor, error) {
 	f := fsEventsMonitor{
 		stream: &fsevents.EventStream{
 			Paths:   []string{},
-			Latency: FileChangeDelay,
+			Latency: fileChangeDelay,
 			Flags:   fsevents.FileEvents,
 			EventID: fsevents.EventIDSinceNow,
 		},
