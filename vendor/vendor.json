@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "dtEdpOSac112PT/mVhmLCLvx8qw=",
+			"checksumSHA1": "5v3x3BKBkAmo3/uoPqmbAh9JcqY=",
 			"path": "github.com/burke/ttyutils",
-			"revision": "70f0d73eb47f7033f514f7f8f5138152fe1088fc",
-			"revisionTime": "2012-12-05T23:31:21Z"
+			"revision": "f774f3b064b75dce5afff2f51f78d3463efe2d91",
+			"revisionTime": "2016-06-30T17:04:51Z"
 		},
 		{
 			"checksumSHA1": "izWnjg9a1oBPY4UBMi2REorBm68=",
