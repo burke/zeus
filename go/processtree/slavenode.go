@@ -77,10 +77,12 @@ func (s *SlaveNode) RequestRestart() {
 	s.L.Lock()
 	defer s.L.Unlock()
 
-	// If this slave is currently waiting on process to boot,
-	// unhang it. If it isn't, the error will get wiped anyway.
-	s.Error = "Received restart request while booting"
-	s.ReportBootEvent()
+	// If this slave is currently waiting on a process to boot,
+	// unhang it and force it to transition to the crashed state
+	// where it will wait for restart messages.
+	if s.ReportBootEvent() {
+		s.Error = "Received restart request while booting"
+	}
 
 	// Enqueue the restart if there isn't already one in the channel
 	select {
@@ -134,12 +136,16 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 		monitor.tree.StateChanged <- true
 		switch nextState {
 		case SUnbooted:
+			s.trace("entering state SUnbooted")
 			nextState = s.doUnbootedState(monitor)
 		case SBooting:
+			s.trace("entering state SBooting")
 			nextState = s.doBootingState()
 		case SReady:
+			s.trace("entering state SReady")
 			nextState = s.doReadyState()
 		case SCrashed:
+			s.trace("entering state SCrashed")
 			nextState = s.doCrashedState()
 		default:
 			slog.FatalErrorString("Unrecognized state: " + nextState)
@@ -168,7 +174,6 @@ func (s *SlaveNode) HasFeature(file string) bool {
 // parent process to spawn a process for us and hear back from the
 // SlaveMonitor.
 func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBooting, SCrashed}
-	s.trace("in unbooted state")
 	if s.Parent == nil {
 		s.L.Lock()
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
@@ -203,7 +208,7 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	if err != nil {
 		slog.Error(err)
 	}
-	s.trace("in booting state")
+	s.trace("received action message")
 	s.L.Lock()
 	defer s.L.Unlock()
 
@@ -230,7 +235,15 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 // the process and transitions to SUnbooted.
 func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 	s.hasSuccessfullyBooted = true
-	s.trace("entered state SReady")
+
+	// If we have a queued restart, service that rather than booting
+	// slaves or commands on potentially stale code.
+	select {
+	case <-s.needsRestart:
+		s.doRestart()
+		return SUnbooted
+	default:
+	}
 
 	for {
 		select {
@@ -249,6 +262,15 @@ func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 // a process to propogate to the user and all slave nodes. We will
 // continue propogating the error until we receive a request to restart.
 func (s *SlaveNode) doCrashedState() string { // -> SUnbooted
+	// If we have a queued restart, service that rather than booting
+	// slaves or commands on potentially stale code.
+	select {
+	case <-s.needsRestart:
+		s.doRestart()
+		return SUnbooted
+	default:
+	}
+
 	for {
 		select {
 		case <-s.needsRestart:
