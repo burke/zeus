@@ -1,6 +1,7 @@
 package zeusclient
 
 import (
+	"io"
 	"net"
 	"os"
 	"os/signal"
@@ -25,7 +26,7 @@ const (
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
-func Run(args []string) int {
+func Run(args []string, input io.Reader, output *os.File) int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
 		println("As a safety precaution to protect you from nuking your development database,")
@@ -33,7 +34,7 @@ func Run(args []string) int {
 		return 1
 	}
 
-	isTerminal := ttyutils.IsTerminal(os.Stdout.Fd())
+	isTerminal := ttyutils.IsTerminal(output.Fd())
 
 	var master, slave *os.File
 	var err error
@@ -50,16 +51,16 @@ func Run(args []string) int {
 	defer master.Close()
 	var oldState *ttyutils.Termios
 	if isTerminal {
-		oldState, err = ttyutils.MakeTerminalRaw(os.Stdout.Fd())
+		oldState, err = ttyutils.MakeTerminalRaw(output.Fd())
 		if err != nil {
 			slog.ErrorString(err.Error() + "\r")
 			return 1
 		}
-		defer ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
+		defer ttyutils.RestoreTerminalState(output.Fd(), oldState)
 	}
 
 	// should this happen if we're running over a pipe? I think maybe not?
-	ttyutils.MirrorWinsize(os.Stdout, master)
+	ttyutils.MirrorWinsize(output, master)
 
 	addr, err := net.ResolveUnixAddr("unixgram", unixsocket.ZeusSockName())
 	if err != nil {
@@ -114,10 +115,10 @@ func Run(args []string) int {
 				if sig == syscall.SIGCONT {
 					syscall.Kill(commandPid, syscall.SIGCONT)
 				} else if sig == syscall.SIGWINCH {
-					ttyutils.MirrorWinsize(os.Stdout, master)
+					ttyutils.MirrorWinsize(output, master)
 					syscall.Kill(commandPid, syscall.SIGWINCH)
 				} else { // member of terminatingSignals
-					ttyutils.RestoreTerminalState(os.Stdout.Fd(), oldState)
+					ttyutils.RestoreTerminalState(output.Fd(), oldState)
 					print("\r")
 					syscall.Kill(commandPid, sig.(syscall.Signal))
 					os.Exit(1)
@@ -140,18 +141,21 @@ func Run(args []string) int {
 		for {
 			buf := make([]byte, 1024)
 			n, err := master.Read(buf)
-			if err != nil {
+
+			if err == nil || (err == io.EOF && n > 0) {
+				output.Write(buf[:n])
+			} else {
 				eof <- true
 				break
 			}
-			os.Stdout.Write(buf[:n])
+
 		}
 	}()
 
 	go func() {
 		buf := make([]byte, 8192)
 		for {
-			n, err := os.Stdin.Read(buf)
+			n, err := input.Read(buf)
 			if err != nil {
 				eof <- true
 				break

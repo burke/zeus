@@ -11,6 +11,6 @@ install:
   - make dev_bootstrap
   - make rubygem/lib/zeus/version.rb
 script:
-  - make test-go
+  - RAILS_ENV="" make test-go
   - make build-linux
   - make rubygem/lib/zeus/version.rb && cd rubygem && bundle install --without development && bin/rspec spec

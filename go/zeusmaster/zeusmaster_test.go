@@ -3,6 +3,7 @@ package zeusmaster_test
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/burke/zeus/go/filemonitor"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+	"github.com/burke/zeus/go/zeusclient"
 	"github.com/burke/zeus/go/zeusmaster"
 )
 
@@ -29,7 +31,7 @@ var testFiles = map[string]string{
       "code": {
         "code_srv": {}
       },
-      "cmd_srv": []
+      "cmd": []
     }
   }
 }
@@ -41,7 +43,6 @@ require 'zeus'
 class CustomPlan < Zeus::Plan
   def self.command(name, &block)
     define_method(name) do
-      redirect_log(name)
       begin
         self.instance_eval(&block)
       rescue => e
@@ -66,9 +67,8 @@ class CustomPlan < Zeus::Plan
     require_relative 'code'
   end
 
-  command :cmd_srv do
-    redirect_log('cmd_srv')
-    serve('cmd.sock')
+  command :cmd do
+    puts "bijagua"
   end
 
   command :data_srv do
@@ -185,6 +185,7 @@ func TestZeusBoots(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	defer me.Signal(os.Interrupt)
 
 	if err := os.Chdir(dir); err != nil {
 		t.Fatal(err)
@@ -233,6 +234,32 @@ func TestZeusBoots(t *testing.T) {
 		}
 	}
 
+	readCloser := make(chan struct{})
+	defer func() { close(readCloser) }()
+
+	cmdReader, cmdWriter, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cexit := make(chan int, 1)
+	go func() {
+		cexit <- zeusclient.Run([]string{"cmd"}, hangingReader{readCloser}, cmdWriter)
+		time.Sleep(100 * time.Millisecond)
+		cmdWriter.Close()
+	}()
+
+	have, err := ioutil.ReadAll(cmdReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "bijagua\n"; string(have) != want {
+		t.Errorf("expected %q, got %q", want, have)
+	}
+	if code := <-cexit; code != 0 {
+		t.Errorf("cmd exited with %d", code)
+	}
+
 	// The zeusmaster catches the interrupt and exits gracefully
 	me.Signal(os.Interrupt)
 	if code := <-zexit; code != 0 {
@@ -254,4 +281,13 @@ func readAndCompare(conn *net.UnixConn, want string) error {
 	}
 
 	return nil
+}
+
+type hangingReader struct {
+	close chan struct{}
+}
+
+func (r hangingReader) Read([]byte) (int, error) {
+	<-r.close
+	return 0, io.EOF
 }
