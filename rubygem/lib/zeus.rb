@@ -5,9 +5,9 @@ require 'json'
 require 'pty'
 require 'set'
 
-require 'zeus/load_tracking'
-require 'zeus/plan'
-require 'zeus/version'
+require_relative 'zeus/load_tracking'
+require_relative 'zeus/plan'
+require_relative 'zeus/version'
 
 module Zeus
   class << self

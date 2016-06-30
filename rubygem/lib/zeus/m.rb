@@ -3,8 +3,8 @@
 # we need to load all dependencies up front, because bundler will
 # remove us from the load path soon.
 require "rubygems"
-require "zeus/m/test_collection"
-require "zeus/m/test_method"
+require_relative "m/test_collection"
+require_relative "m/test_method"
 
 # the Gemfile may specify a version of method_source, but we also want to require it here.
 # To avoid possible "you've activated X; gemfile specifies Y" errors, we actually scan
