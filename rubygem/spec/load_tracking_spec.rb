@@ -1,10 +1,14 @@
-require 'zeus/load_tracking'
+require 'zeus'
 
 describe "Zeus::LoadTracking" do
   let(:test_filename) { __FILE__ }
   let(:test_dirname)  { File.dirname(test_filename) }
 
   class MyError < StandardError; end
+
+  after do
+    $untracked_features = []
+  end
 
   describe '.add_feature' do
     context 'already in load path' do
@@ -15,28 +19,28 @@ describe "Zeus::LoadTracking" do
 
       after { $LOAD_PATH.delete test_dirname }
 
-      it 'adds full filepath to $untracked_features' do
-        Zeus::LoadTracking.add_feature(test_filename)
+      it 'tracks full filepath' do
+        features, err = Zeus::LoadTracking.features_loaded_by do
+          Zeus::LoadTracking.add_feature(test_filename)
+        end
 
-        expect($untracked_features).to include(__dir__ + "/load_tracking_spec.rb")
+        expect(err).to be_nil
+        expect(features).to eq([__dir__ + "/load_tracking_spec.rb"])
+      end
+
+      it 'does not error outside a tracking block without Zeus configured' do
+        Zeus::LoadTracking.add_feature(test_filename)
       end
     end
 
     context 'not in load path' do
-      it 'adds full filepath to $untracked_features' do
-        Zeus::LoadTracking.add_feature(test_filename)
-
-        expect($untracked_features).to include(__dir__ + "/load_tracking_spec.rb")
-      end
-    end
-
-    context '.features_loaded_by' do
-      it 'returns list of new files loaded when block executes' do
-        new_files, = Zeus::LoadTracking.features_loaded_by do
-          $untracked_features << "an_untracked_feature.rb"
+      it 'tracks full filepath' do
+        features, err = Zeus::LoadTracking.features_loaded_by do
+          Zeus::LoadTracking.add_feature(test_filename)
         end
 
-        expect(new_files).to eq(["an_untracked_feature.rb"])
+        expect(err).to be_nil
+        expect(features).to eq([__dir__ + "/load_tracking_spec.rb"])
       end
     end
   end
@@ -77,25 +81,25 @@ describe "Zeus::LoadTracking" do
 
     context 'loading invalid code' do
       it 'tracks requires that raise a SyntaxError' do
-        expect_to_load([expand_asset_path('invalid_syntax.rb')], SyntaxError) do
+        expect_to_load([test_filename, expand_asset_path('invalid_syntax.rb')], SyntaxError) do
           require expand_asset_path('invalid_syntax')
         end
       end
 
       it 'tracks requires that raise a RuntimeError' do
-        expect_to_load([expand_asset_path('runtime_error.rb')], RuntimeError) do
+        expect_to_load([test_filename, expand_asset_path('runtime_error.rb')], RuntimeError) do
           require expand_asset_path('runtime_error')
         end
       end
 
       it 'tracks requires that exit' do
-        expect_to_load([expand_asset_path('exit.rb')], SystemExit) do
+        expect_to_load([test_filename, expand_asset_path('exit.rb')], SystemExit) do
           require expand_asset_path('exit')
         end
       end
 
       it 'tracks requires that throw in a method call' do
-        expect_to_load([expand_asset_path('raise.rb')], MyError) do
+        expect_to_load([test_filename, expand_asset_path('raise.rb')], MyError) do
           require expand_asset_path('raise')
           raise_it(MyError)
         end
