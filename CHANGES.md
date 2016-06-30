@@ -1,6 +1,14 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.7...master
+https://github.com/burke/zeus/compare/v0.15.9...master
+
+# 0.15.9
+
+https://github.com/burke/zeus/compare/v0.15.8...v0.15.9
+
+* Fix critical bug in status output that prevents booting in some environments.
+  https://github.com/burke/zeus/issues/567
+* Debounce status chart updates to avoid duplicate lines
 
 # 0.15.8
 
