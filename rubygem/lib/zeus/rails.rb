@@ -14,9 +14,9 @@ ENV_PATH  = File.expand_path('config/environment',  RAILS_PATH)
 BOOT_PATH = File.expand_path('config/boot',  RAILS_PATH)
 APP_PATH  = File.expand_path('config/application',  RAILS_PATH) unless defined? APP_PATH
 
-require 'zeus'
+require_relative '../zeus'
 require 'method_source'
-require 'zeus/m'
+require_relative 'm'
 
 module Zeus
   class Rails < Plan
