@@ -88,7 +88,7 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 	if err != nil {
 		slog.Error(err)
 	}
-	pid, identifier, err := messages.ParsePidMessage(msg)
+	pid, parentPid, identifier, err := messages.ParsePidMessage(msg)
 
 	// And the last step before executing its action, the slave sends us a pipe it will later use to
 	// send us all the features it's loaded.
@@ -102,5 +102,5 @@ func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
 		Error("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
 	}
 
-	slaveNode.SlaveWasInitialized(pid, slaveUsock, featurePipeFd)
+	slaveNode.SlaveWasInitialized(pid, parentPid, slaveUsock, featurePipeFd)
 }

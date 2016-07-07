@@ -108,8 +108,6 @@ func printStateInfo(indentation, identifier, state string, verbose, printNewline
 	case processtree.SReady:
 		// no status suffix, as that's the optimal state
 		log.ColorizedSansNl(indentation + "{green}" + identifier + suffix + "\033[K" + newline)
-	case processtree.SWaiting:
-		fallthrough
 	default:
 		log.ColorizedSansNl(indentation + "{yellow}" + identifier + suffix + "\033[K" + newline)
 	}

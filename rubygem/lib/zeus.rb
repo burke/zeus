@@ -60,7 +60,7 @@ module Zeus
           master.send_io(remote)
 
           # Now I need to tell the master about my PID and ID
-          local.write "P:#{Process.pid}:#{identifier}\0"
+          local.write "P:#{Process.pid}:#{@parent_pid || 0}:#{identifier}\0"
           local.send_io(feature_pipe_r)
           feature_pipe_r.close
 
@@ -82,15 +82,20 @@ module Zeus
             messages.split("\0").each do |new_identifier|
               new_identifier =~ /^(.):(.*)/
               code, ident = $1, $2
+
+              forked_from = Process.pid
+
               pid = fork
               if pid
                 # We're in the parent. Record the child:
                 children << pid
               elsif code == "S"
                 # Child, supposed to start another step:
+                @parent_pid = forked_from
                 throw(:boot_step, ident.to_sym)
               else
                 # Child, supposed to run a command:
+                @parent_pid = forked_from
                 return [ident.to_sym, local]
               end
             end
@@ -126,7 +131,7 @@ module Zeus
 
         plan.after_fork
         client_terminal = local.recv_io
-        local.write "P:#{Process.pid}:\0"
+        local.write "P:#{Process.pid}:#{@parent_pid}:\0"
         local.close
 
         $stdin.reopen(client_terminal)

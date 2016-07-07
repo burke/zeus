@@ -204,7 +204,7 @@ func receivePidFromCommand(commandUsock *unixsocket.Usock, err error) (int, erro
 	if err != nil {
 		return -1, err
 	}
-	intPid, _, _ := messages.ParsePidMessage(msg)
+	intPid, _, _, _ := messages.ParsePidMessage(msg)
 
 	return intPid, err
 }

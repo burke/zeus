@@ -76,7 +76,7 @@ func (tree *ProcessTree) RestartNodesWithFeatures(files []string) {
 // Serialized: restartMutex is always held when this is called.
 func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files []string) {
 	for _, file := range files {
-		if node.Features[file] {
+		if node.HasFeature(file) {
 			node.RequestRestart()
 			return
 		}

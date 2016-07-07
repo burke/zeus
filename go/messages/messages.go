@@ -6,19 +6,24 @@ import (
 	"strings"
 )
 
-func ParsePidMessage(msg string) (int, string, error) {
-	parts := strings.SplitN(msg, ":", 3)
+func ParsePidMessage(msg string) (int, int, string, error) {
+	parts := strings.SplitN(msg, ":", 4)
 	if parts[0] != "P" {
-		return -1, "", errors.New("Wrong message type! Expected PidMessage, got: " + msg)
+		return -1, -1, "", errors.New("Wrong message type! Expected PidMessage, got: " + msg)
 	}
 
-	identifier := parts[2]
+	identifier := parts[3]
 	pid, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return -1, "", err
+		return -1, -1, "", err
 	}
 
-	return pid, identifier, nil
+	parent, err := strconv.Atoi(parts[2])
+	if err != nil {
+		return -1, -1, "", err
+	}
+
+	return pid, parent, identifier, nil
 }
 
 func CreateCommandAndArgumentsMessage(args []string, pid int) string {
