@@ -189,23 +189,25 @@ module Zeus
 
     def run_action(socket, identifier, feature_pipe_w)
       # Now we run the action and report its success/fail status to the master.
-      loaded = false
       features, err = Zeus::LoadTracking.features_loaded_by do
         plan.after_fork unless identifier == :boot
         plan.send(identifier)
-        loaded = true
-        socket.write "R:OK\0"
       end
 
-      # the master wants to know about the files that running the
-      # action caused us to load. If we received an error, report them
-      # syncronously and along with the error. Otherwise, report them
-      # in a new thread and start listening for commands.
       if err
-        report_error_to_master(socket, err)
-        notify_features(feature_pipe_w, features) unless loaded
-        feature_pipe_w.close
+        # If we received an error, report features to the master syncronously.
+        # We need to do this before reporting the error to the master
+        # otherwise it will kill us before we can report features.
+        begin
+          notify_features(feature_pipe_w, features)
+          feature_pipe_w.close
+        ensure
+          report_error_to_master(socket, err)
+        end
       else
+        # If we booted successfully, report features in a new thread
+        # so we can immediately begin listening for commands.
+        socket.write "R:OK\0"
         Thread.new { notify_features(feature_pipe_w, features) }
       end
     end
