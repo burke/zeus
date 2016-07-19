@@ -1,6 +1,9 @@
 language: go
 go:
   - 1.5
+os:
+  - linux
+  - osx
 env:
   - USE_RUBY=2.0.0-p647
   - USE_RUBY=2.1.7
