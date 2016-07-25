@@ -1,8 +1,3 @@
-# Load proper Gemfile.lock and activate all the gems. If there's a conflict
-# between a gem version that has already been loaded and the one specified in
-# the Gemfile.lock, raise an error.
-require 'bundler/setup'
-
 def find_rails_path(root_path)
   paths = %w(spec/dummy test/dummy .)
   paths.find { |path| File.exists?(File.expand_path(path, root_path)) }
@@ -15,7 +10,16 @@ BOOT_PATH = File.expand_path('config/boot',  RAILS_PATH)
 APP_PATH  = File.expand_path('config/application',  RAILS_PATH) unless defined? APP_PATH
 
 require 'zeus'
-require 'method_source'
+
+def gem_is_bundled?(gem)
+  gemfile_lock_contents = File.read(ROOT_PATH + "/Gemfile.lock")
+  gemfile_lock_contents.scan(/^\s*#{gem} \(([^=~><]+?)\)/).flatten.first
+end
+
+if version = gem_is_bundled?('method_source')
+  gem 'method_source', version
+end
+
 require 'zeus/m'
 
 module Zeus
@@ -27,6 +31,9 @@ module Zeus
     end
 
     def _monkeypatch_rake
+      if version = gem_is_bundled?('rake')
+        gem 'rake', version
+      end
       require 'rake/testtask'
       Rake::TestTask.class_eval {
 
