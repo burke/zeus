@@ -1,6 +1,13 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.9...master
+https://github.com/burke/zeus/compare/v0.15.10...master
+
+# 0.15.10
+
+https://github.com/burke/zeus/compare/v0.15.9...v0.15.10
+
+* Revert changes that required Zeus to be in the Gemfile (Reverts #530 to fix #570).
+* Substantially rework the Zeus state machine to avoid race conditions that cause hangs.
 
 # 0.15.9
 
