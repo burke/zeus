@@ -35,27 +35,16 @@ module Zeus
       # then gets added to $LOADED_FEATURES array.
       def add_feature(file)
         full_path = File.expand_path(file)
+        return unless File.exist?(full_path)
 
-        if find_in_load_path(full_path) || File.exist?(full_path)
-          add_extra_feature(full_path)
-        end
+        $untracked_features ||= []
+        $untracked_features << full_path
       end
 
       # $LOADED_FEATURES global variable is used internally by Rubygems
       def all_features
         untracked = defined?($untracked_features) ? $untracked_features : []
         $LOADED_FEATURES + untracked
-      end
-
-      private
-
-      def add_extra_feature(path)
-        $untracked_features ||= []
-        $untracked_features << path
-      end
-
-      def find_in_load_path(file_path)
-        $LOAD_PATH.detect { |path| path == file_path }
       end
     end
   end
