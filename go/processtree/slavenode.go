@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"fmt"
 	"runtime"
@@ -17,6 +18,10 @@ import (
 	"github.com/burke/zeus/go/messages"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
+)
+
+const (
+	forceKillTimeout = time.Second
 )
 
 type SlaveNode struct {
@@ -113,9 +118,7 @@ func (s *SlaveNode) SlaveWasInitialized(pid, parentPid int, usock *unixsocket.Us
 
 	s.L.Lock()
 	if !s.ReportBootEvent() {
-		if pid > 0 {
-			syscall.Kill(pid, syscall.SIGKILL)
-		}
+		s.forceKillPid(pid)
 		slog.ErrorString(fmt.Sprintf("Unexpected process %d with parent %d for slave %q was killed", pid, parentPid, s.Name))
 	} else {
 		s.wipe()
@@ -354,9 +357,7 @@ func (s *SlaveNode) bootCommand(request *CommandRequest) {
 
 func (s *SlaveNode) ForceKill() {
 	// note that we don't try to lock the mutex.
-	if s.pid > 0 {
-		syscall.Kill(s.pid, syscall.SIGKILL)
-	}
+	s.forceKillPid(s.pid)
 }
 
 func (s *SlaveNode) wipe() {
@@ -413,6 +414,47 @@ func (s *SlaveNode) handleMessages(featurePipe *os.File) {
 			s.featureL.Unlock()
 			s.fileMonitor.Add(msg)
 		}
+	}
+}
+
+func (s *SlaveNode) forceKillPid(pid int) error {
+	if pid <= 0 {
+		return nil
+	}
+
+	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
+		err = fmt.Errorf("Error killing pid %q: %v", pid, err)
+		s.trace(err.Error())
+		return err
+	}
+
+	exited := make(chan error)
+	go func() {
+		for {
+			if err := syscall.Kill(pid, syscall.Signal(0)); err != nil {
+				exited <- nil
+				return
+			}
+
+			// Since the process is not our direct child, we can't use wait
+			// and are forced to poll for completion. We know this won't loop
+			// forever because the timeout below will SIGKILL the process
+			// which guarantees that it'll go away and we'll get an ESRCH.
+			time.Sleep(time.Millisecond)
+		}
+	}()
+
+	select {
+	case err := <-exited:
+		if err != nil && err != syscall.ESRCH {
+			err = fmt.Errorf("Error sending signal to pid %q: %v", pid, err)
+			s.trace(err.Error())
+			return err
+		}
+		return nil
+	case <-time.After(forceKillTimeout):
+		syscall.Kill(pid, syscall.SIGKILL)
+		return nil
 	}
 }
 
