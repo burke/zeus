@@ -9,7 +9,7 @@ import (
 )
 
 type fsnotifyMonitor struct {
-	gatheringMonitor
+	fileMonitor
 	watcher *fsnotify.Watcher
 }
 

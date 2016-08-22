@@ -11,7 +11,7 @@ import (
 )
 
 type fileListener struct {
-	gatheringMonitor
+	fileMonitor
 	netListener net.Listener
 	connections map[net.Conn]chan string
 	stop        chan struct{}
