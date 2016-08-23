@@ -119,7 +119,7 @@ func (s *SlaveNode) SlaveWasInitialized(pid, parentPid int, usock *unixsocket.Us
 	s.L.Lock()
 	if !s.ReportBootEvent() {
 		s.forceKillPid(pid)
-		slog.ErrorString(fmt.Sprintf("Unexpected process %d with parent %d for slave %q was killed", pid, parentPid, s.Name))
+		s.trace("Unexpected process %d with parent %d for slave %q was killed", pid, parentPid, s.Name)
 	} else {
 		s.wipe()
 		s.pid = pid
