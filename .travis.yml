@@ -1,6 +1,6 @@
 language: go
 go:
-  - 1.5
+  - 1.7
 os:
   - linux
   - osx
@@ -8,6 +8,15 @@ env:
   - USE_RUBY=2.0.0-p647
   - USE_RUBY=2.1.7
   - USE_RUBY=2.2.3
+# OS X builds are slow and heavily rate limited. Ruby should behave similarly
+# across platforms so we sacrifice testing multiple Ruby versions in favor of
+# faster build times.
+matrix:
+  exclude:
+    - os: osx
+      env: USE_RUBY=2.0.0-p647
+    - os: osx
+      env: USE_RUBY=2.1.7
 before_install:
   - rvm use $USE_RUBY --install --fuzzy
 script:
