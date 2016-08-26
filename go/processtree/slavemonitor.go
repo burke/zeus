@@ -61,7 +61,9 @@ func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan
 			case fd := <-registeringFds:
 				go monitor.slaveDidBeginRegistration(fd)
 			case files := <-fileChanges:
-				tree.RestartNodesWithFeatures(files)
+				if len(files) > 0 {
+					tree.RestartNodesWithFeatures(files)
+				}
 			}
 		}
 	}()

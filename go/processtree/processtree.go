@@ -70,6 +70,7 @@ var restartMutex sync.Mutex
 func (tree *ProcessTree) RestartNodesWithFeatures(files []string) {
 	restartMutex.Lock()
 	defer restartMutex.Unlock()
+	tree.Root.trace("%d files changed, beginning with %q", len(files), files[0])
 	tree.Root.restartNodesWithFeatures(tree, files)
 }
 
@@ -77,6 +78,7 @@ func (tree *ProcessTree) RestartNodesWithFeatures(files []string) {
 func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files []string) {
 	for _, file := range files {
 		if node.HasFeature(file) {
+			node.trace("restarting for %q", file)
 			node.RequestRestart()
 			return
 		}
