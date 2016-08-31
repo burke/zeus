@@ -35,16 +35,31 @@ func Run(configFile string, fileChangeDelay time.Duration) int {
 		return 2
 	}
 
-	var tree = config.BuildProcessTree(configFile, monitor)
+	tree := processtree.NewProcessTree(monitor)
+	if err := config.BuildProcessTree(configFile, tree); err != nil {
+		slog.Error(err)
+		return 1
+	}
 
-	done := make(chan bool)
+	updates := make(chan processtree.State)
 
-	defer exit(processtree.StartSlaveMonitor(tree, monitor.Listen(), done), done)
-	defer exit(clienthandler.Start(tree, done), done)
+	chartStopped := statuschart.Start(os.Stdout, updates)
+	defer func() { <-chartStopped }()
+
+	tree.Run(updates)
+	defer tree.Stop()
+
+	// TODO: Switch clienthandler to using a testable interface with Start and Stop
+	clientDone := make(chan bool)
+	clientQuit := clienthandler.Start(tree, clientDone)
+	defer func() {
+		close(clientQuit)
+		<-clientDone
+	}()
+
 	defer monitor.Close()
 	defer slog.Suppress()
 	defer zerror.PrintFinalOutput()
-	defer exit(statuschart.Start(tree, done), done)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, terminatingSignals...)

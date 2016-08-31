@@ -34,87 +34,76 @@ module Zeus
       STDOUT.reopen(dummy_tty)
     end
 
-    def setup_master_socket!
-      return master_socket if master_socket
-
-      fd = ENV['ZEUS_MASTER_FD'].to_i
-      self.master_socket = UNIXSocket.for_fd(fd)
-    end
-
     def go(identifier=:boot)
-      # Thanks to the magic of fork, this following line will return
-      # many times: Every time the parent step receives a request to
-      # run a command.
-      if run_command = boot_steps(identifier)
-        ident, local = run_command
-        return command(ident, local)
+      fd = ENV['ZEUS_MASTER_FD'].to_i
+      sock = UNIXSocket.for_fd(fd)
+
+      while true
+        # This only returns after forking a child with a new
+        # identifier and socket.
+        identifier, sock = run_node(identifier, sock)
       end
     end
 
-    def boot_steps(identifier)
+    def run_node(identifier, parent_sock)
+      $0 = "zeus slave: #{identifier}"
+
+      setup_dummy_tty!
+
+      # I need to give the master a way to talk to me exclusively
+      local, remote = UNIXSocket.pair(:DGRAM)
+      parent_sock.send_io(remote)
+      remote.close
+      parent_sock.close
+
+      # Now I need to tell the master about my PID and ID
+      local.write "P:#{Process.pid}:#{@parent_pid || 0}:#{identifier}\0"
+
+      feature_pipe_r, feature_pipe_w = IO.pipe
+      local.send_io(feature_pipe_r)
+      feature_pipe_r.close
+      Zeus::LoadTracking.set_feature_pipe(feature_pipe_w)
+
+      run_action(local, identifier)
+
+      # We are now 'connected'. From this point, we may receive requests to fork.
+      children = Set.new
       while true
-        boot_step = catch(:boot_step) do
-          $0 = "zeus slave: #{identifier}"
+        messages = local.recv(2**16)
 
-          setup_dummy_tty!
-          master = setup_master_socket!
-          feature_pipe_r, feature_pipe_w = IO.pipe
+        # Reap any child runners or slaves that might have exited in
+        # the meantime. Note that reaping them like this can leave <=1
+        # zombie process per slave around while the slave waits for a
+        # new command.
+        children.each do |pid|
+          children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)
+        end
 
-          # I need to give the master a way to talk to me exclusively
-          local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
-          master.send_io(remote)
+        messages.split("\0").each do |new_identifier|
+          new_identifier =~ /^(.):(.*)/
+          code, ident = $1, $2
 
-          # Now I need to tell the master about my PID and ID
-          local.write "P:#{Process.pid}:#{@parent_pid || 0}:#{identifier}\0"
-          local.send_io(feature_pipe_r)
-          feature_pipe_r.close
+          forked_from = Process.pid
 
-          Zeus::LoadTracking.set_feature_pipe(feature_pipe_w)
+          pid = fork
+          if pid
+            # We're in the parent. Record the child:
+            children << pid
+          elsif code == "S"
+            # Child, supposed to start another step:
+            @parent_pid = forked_from
 
-          run_action(local, identifier)
+            Zeus::LoadTracking.clear_feature_pipe
 
-          # We are now 'connected'. From this point, we may receive requests to fork.
-          children = Set.new
-          while true
-            messages = local.recv(2**16)
+            return [ident.to_sym, local]
+          else
+            # Child, supposed to run a command:
+            @parent_pid = forked_from
 
-            # Reap any child runners or slaves that might have exited in
-            # the meantime. Note that reaping them like this can leave <=1
-            # zombie process per slave around while the slave waits for a
-            # new command.
-            children.each do |pid|
-              children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)
-            end
-
-            messages.split("\0").each do |new_identifier|
-              new_identifier =~ /^(.):(.*)/
-              code, ident = $1, $2
-
-              forked_from = Process.pid
-
-              pid = fork
-              if pid
-                # We're in the parent. Record the child:
-                children << pid
-              elsif code == "S"
-                # Child, supposed to start another step:
-                @parent_pid = forked_from
-
-                Zeus::LoadTracking.clear_feature_pipe
-
-                throw(:boot_step, ident.to_sym)
-              else
-                # Child, supposed to run a command:
-                @parent_pid = forked_from
-
-                Zeus::LoadTracking.clear_feature_pipe
-
-                return [ident.to_sym, local]
-              end
-            end
+            Zeus::LoadTracking.clear_feature_pipe
+            command(ident.to_sym, local)
           end
         end
-        identifier = boot_step
       end
     end
 

@@ -81,17 +81,41 @@ func main() {
 	} else if args[0] == "commands" {
 		zeusCommands(configFile)
 	} else {
-		tree := config.BuildProcessTree(configFile, nil)
-		for _, name := range tree.AllCommandsAndAliases() {
-			if args[0] == name {
-				// Don't confuse the master by sending *full* args to
-				// it; just those that are not zeus-specific.
-				os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout))
-			}
+		exists, err := commandExists(configFile, args[0])
+		if err != nil {
+			fmt.Printf("%s%s%s", red(), err, reset())
+			os.Exit(1)
+		}
+		if !exists {
+			commandNotFound(args[0])
+			os.Exit(1)
 		}
 
-		commandNotFound(args[0])
+		// Don't confuse the master by sending *full* args to
+		// it; just those that are not zeus-specific.
+		os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout))
 	}
+}
+
+func commandExists(configFile, name string) (bool, error) {
+	cmds, err := config.AllCommandsAndAliases(configFile)
+	if err != nil {
+		return false, err
+	}
+
+	if _, ok := cmds[name]; ok {
+		return true, nil
+	}
+
+	for _, aliases := range cmds {
+		for _, alias := range aliases {
+			if name == alias {
+				return true, nil
+			}
+		}
+	}
+
+	return false, nil
 }
 
 func execManPage(page string) {
@@ -152,19 +176,24 @@ func zeusInit() {
 }
 
 func zeusCommands(configFile string) {
-	tree := config.BuildProcessTree(configFile, nil)
-	for _, command := range tree.Commands {
-		alia := strings.Join(command.Aliases, ", ")
+	cmds, err := config.AllCommandsAndAliases(configFile)
+	if err != nil {
+		fmt.Printf("%s%s%s", red(), err, reset())
+		os.Exit(1)
+	}
+
+	for name, aliases := range cmds {
+		alia := strings.Join(aliases, ", ")
 		var aliasPart string
 		if len(alia) > 0 {
 			aliasPart = " (alias: " + alia + ")"
 		}
-		println("zeus " + command.Name + aliasPart)
+		fmt.Println("zeus " + name + aliasPart)
 	}
 }
 
 func commandNotFound(command string) {
-	println(red() + "Could not find command \"" + command + "\"." + reset())
+	fmt.Println(red() + "Could not find command \"" + command + "\"." + reset())
 }
 
 func commandSpecificHelp(args []string) {
@@ -173,7 +202,7 @@ func commandSpecificHelp(args []string) {
 	} else if args[1] == "init" {
 		execManPage("zeus-init")
 	} else {
-		println(red() + "Command-level help is not yet fully implemented." + reset())
+		fmt.Println(red() + "Command-level help is not yet fully implemented." + reset())
 	}
 }
 
@@ -190,5 +219,5 @@ func generalHelpRequested(args []string) bool {
 }
 
 func printVersion() {
-	println("Zeus version " + zeusversion.VERSION)
+	fmt.Println("Zeus version " + zeusversion.VERSION)
 }

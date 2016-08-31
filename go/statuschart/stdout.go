@@ -4,91 +4,92 @@ import (
 	"strings"
 
 	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/zeus/go/processtree/node"
+	slog "github.com/burke/zeus/go/shinylog"
 )
 
-func stdoutStart(tree *processtree.ProcessTree, done, quit chan bool) {
-	go func() {
-		for {
-			select {
-			case <-quit:
-				done <- true
-				return
-				// TODO: Maybe handle SCW Write requests?
-			case <-theChart.update:
-				theChart.logChanges()
-			}
-		}
-	}()
+type stdoutChart struct {
+	log *slog.ShinyLogger
 }
 
-func (s *StatusChart) logChanges() {
-	s.L.Lock()
-	defer s.L.Unlock()
-	log := theChart.directLogger
-
-	log.ColorizedSansNl("{reset}Status: ")
-	s.logSubtree(s.RootSlave)
-	log.Colorized("{reset}")
-	s.logCommands()
+func (s *stdoutChart) Update(state processtree.State) {
+	s.log.ColorizedSansNl("{reset}Status: ")
+	for _, root := range state.RootNodes {
+		s.logSubtree(state, root)
+	}
+	s.log.Colorized("{reset}")
+	s.logCommands(state)
 }
 
-func collectCommands(commands []*processtree.CommandNode, desiredState string) []*processtree.CommandNode {
-	desiredCommands := make([]*processtree.CommandNode, 0)
+func (s *stdoutChart) Stop() error {
+	return nil
+}
 
-	for _, command := range commands {
-		if command.Parent.State() == desiredState {
-			desiredCommands = append(desiredCommands, command)
+func collectCommands(state processtree.State, desiredNodeState node.State) []string {
+	var commands []string
+
+	for cmd, parent := range state.Commands {
+		if state.NodeState[parent] == desiredNodeState {
+			commands = append(commands, cmd)
 		}
 	}
-	return desiredCommands
+
+	return commands
 }
 
-func (s *StatusChart) logCommands() {
-	log := theChart.directLogger
+func (s *stdoutChart) logCommands(state processtree.State) {
+	commandAliases := collectCommandAliases(state)
+	runningCommands := collectCommands(state, node.SReady)
+	crashedCommands := collectCommands(state, node.SCrashed)
 
-	runningCommands := collectCommands(s.Commands, processtree.SReady)
-	crashedCommands := collectCommands(s.Commands, processtree.SCrashed)
 	if len(runningCommands) > 0 {
-		log.ColorizedSansNl("Available commands: ")
-		for i, command := range runningCommands {
-			if i > 0 {
-				log.ColorizedSansNl("{reset}, ")
+		s.log.ColorizedSansNl("Available commands: ")
+		first := true
+		for _, cmd := range runningCommands {
+			if !first {
+				s.log.ColorizedSansNl("{reset}, ")
 			}
-			log.ColorizedSansNl("{green}" + command.Name)
-			if len(command.Aliases) > 0 {
-				log.ColorizedSansNl("{reset}(aliases: {green}" + strings.Join(command.Aliases, ",{green}") +
+			first = false
+
+			s.log.ColorizedSansNl("{green}" + cmd)
+			aliases := commandAliases[cmd]
+			if len(aliases) > 0 {
+				s.log.ColorizedSansNl("{reset}(aliases: {green}" + strings.Join(aliases, ",{green}") +
 					"{reset})")
 			}
 		}
-		log.Colorized("{reset}")
+		s.log.Colorized("{reset}")
 	}
 
 	if len(crashedCommands) > 0 {
-		log.ColorizedSansNl("Crashed commands ({yellow}run to see backtrace{reset}): ")
-		for i, command := range crashedCommands {
-			if i > 0 {
-				log.ColorizedSansNl("{reset}, ")
+		s.log.ColorizedSansNl("Crashed commands ({yellow}run to see backtrace{reset}): ")
+		first := true
+		for _, cmd := range crashedCommands {
+			if !first {
+				s.log.ColorizedSansNl("{reset}, ")
 			}
-			log.ColorizedSansNl("{red}" + command.Name)
+			first = false
+
+			s.log.ColorizedSansNl("{red}" + cmd)
 		}
-		log.Colorized("{reset}")
+		s.log.Colorized("{reset}")
 	}
 }
 
-func (s *StatusChart) logSubtree(node *processtree.SlaveNode) {
-	log := theChart.directLogger
-	printStateInfo("", node.Name, node.State(), true, false)
+func (s *stdoutChart) logSubtree(state processtree.State, name string) {
+	printStateInfo(s.log, "", name, state.NodeState[name], true, false)
 
-	if len(node.Slaves) > 0 {
-		log.ColorizedSansNl("{reset}(")
+	children := state.NodeTree[name]
+	if len(children) == 0 {
+		return
 	}
-	for i, slave := range node.Slaves {
-		if i != 0 {
-			log.ColorizedSansNl("{reset}, ")
+
+	s.log.ColorizedSansNl("{reset}(")
+	for i, child := range children {
+		if i > 0 {
+			s.log.ColorizedSansNl("{reset}, ")
 		}
-		s.logSubtree(slave)
+		s.logSubtree(state, child)
 	}
-	if len(node.Slaves) > 0 {
-		log.ColorizedSansNl("{reset})")
-	}
+	s.log.ColorizedSansNl("{reset})")
 }

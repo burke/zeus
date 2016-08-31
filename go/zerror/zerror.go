@@ -8,6 +8,7 @@ import (
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
+// TODO: This whole package is awful and needs to burn
 var finalOutput []func()
 
 func Init() {
@@ -56,12 +57,6 @@ func ErrorConfigCommandCrashed(output string) {
 // in the json-related errors..
 func ErrorConfigFileInvalidJson() {
 	if slog.Red("The config file {yellow}zeus.json{red} contains invalid JSON and could not be parsed.") {
-		os.Exit(1)
-	}
-}
-
-func ErrorConfigFileInvalidFormat() {
-	if slog.Red("The config file {yellow}zeus.json{red} is not in the correct format.") {
 		os.Exit(1)
 	}
 }
