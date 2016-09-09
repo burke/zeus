@@ -5,8 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -44,8 +46,8 @@ func NewFromFile(f *os.File) (*Usock, error) {
 	return New(unixConn), nil
 }
 
-func (u *Usock) Close() {
-	u.reader.Conn.Close()
+func (u *Usock) Close() error {
+	return u.reader.Conn.Close()
 }
 
 func (u *Usock) ReadMessage() (s string, err error) {
@@ -77,6 +79,22 @@ func (u *Usock) ReadFD() (int, error) {
 	defer u.Unlock()
 
 	return u.reader.ReadFD()
+}
+
+func (u *Usock) ReadSocket() (*Usock, error) {
+	fd, err := u.ReadFD()
+	if err != nil {
+		return nil, err
+	}
+	fileName := strconv.Itoa(rand.Int())
+	file := os.NewFile(uintptr(fd), fileName)
+
+	sock, err := NewFromFile(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return sock, nil
 }
 
 func (u *Usock) WriteFD(fd int) error {

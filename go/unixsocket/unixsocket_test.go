@@ -37,6 +37,36 @@ func TestMessagesAndFDs(t *testing.T) {
 	expectFD(t, b, tempFile.Fd())
 }
 
+func TestReadSocket(t *testing.T) {
+	a, b := makeUsockPair(t)
+
+	c, d, err := Socketpair(syscall.SOCK_DGRAM)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	sendFD(t, a, d.Fd())
+	sock, err := b.ReadSocket()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := c.Write([]byte("foo\000")); err != nil {
+		t.Fatal(err)
+	}
+	if err := c.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	msg, err := sock.ReadMessage()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if msg != "foo" {
+		t.Errorf("expected 'foo', got %q", msg)
+	}
+}
+
 func makeUsockPair(t *testing.T) (sockA, sockB *Usock) {
 	a, b, err := Socketpair(syscall.SOCK_STREAM)
 	if err != nil {

@@ -12,7 +12,6 @@ import (
 	"github.com/burke/zeus/go/clienthandler"
 	"github.com/burke/zeus/go/config"
 	"github.com/burke/zeus/go/filemonitor"
-	"github.com/burke/zeus/go/processtree"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/statuschart"
 	"github.com/burke/zeus/go/zerror"
@@ -39,7 +38,7 @@ func Run(configFile string, fileChangeDelay time.Duration) int {
 
 	done := make(chan bool)
 
-	defer exit(processtree.StartSlaveMonitor(tree, monitor.Listen(), done), done)
+	defer exit(tree.Start(monitor.Listen(), done), done)
 	defer exit(clienthandler.Start(tree, done), done)
 	defer monitor.Close()
 	defer slog.Suppress()
