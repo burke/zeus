@@ -8,7 +8,3 @@ gem 'rake', group: :gem_build_tools
 group :development do
   gem "vagrant"
 end
-
-group :plugins do
-  gem "vagrant-zeus", path: "."
-end
