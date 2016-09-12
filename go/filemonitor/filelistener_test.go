@@ -25,7 +25,7 @@ func TestFileListener(t *testing.T) {
 	}
 
 	slog.SetTraceLogger(slog.NewTraceLogger(os.Stderr))
-	fl := filemonitor.NewFileListener(fileChangeDelay, ln)
+	fl := filemonitor.NewFileListener(filemonitor.DefaultFileChangeDelay, ln)
 	defer fl.Close()
 
 	// We should be able to add a file without connecting anything
