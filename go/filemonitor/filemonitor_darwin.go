@@ -20,10 +20,8 @@ type fsEventsMonitor struct {
 func NewFileMonitor(fileChangeDelay time.Duration) (FileMonitor, error) {
 	f := fsEventsMonitor{
 		stream: &fsevents.EventStream{
-			Paths: []string{},
-			// We want debouncing rather than throttling so we need to handle
-			// aggregating events ourselves
-			Latency: 0,
+			Paths:   []string{},
+			Latency: fileChangeDelay,
 			Flags:   fsevents.FileEvents,
 			EventID: fsevents.EventIDSinceNow,
 		},
@@ -32,10 +30,7 @@ func NewFileMonitor(fileChangeDelay time.Duration) (FileMonitor, error) {
 		add:  make(chan string, 5000),
 		stop: make(chan struct{}),
 	}
-	f.fileChangeDelay = fileChangeDelay
-	f.changes = make(chan string)
 
-	go f.serveListeners()
 	go f.handleAdd()
 
 	return &f, nil
@@ -62,15 +57,23 @@ func (f *fsEventsMonitor) watch() {
 	for {
 		select {
 		case events := <-f.stream.Events:
+			paths := make([]string, 0, len(events))
 			for _, event := range events {
 				if (event.Flags & (fsevents.ItemIsFile | flagsWorthReloadingFor)) == 0 {
 					continue
 				}
 
-				f.changes <- event.Path
+				paths = append(paths, event.Path)
+			}
+
+			if len(paths) == 0 {
+				continue
+			}
+
+			for _, l := range f.listeners {
+				l <- paths
 			}
 		case <-f.stop:
-			close(f.changes)
 			return
 		}
 	}

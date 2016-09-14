@@ -14,10 +14,8 @@ type FileMonitor interface {
 }
 
 type fileMonitor struct {
-	listeners       []chan []string
-	listenerMutex   sync.Mutex
-	changes         chan string
-	fileChangeDelay time.Duration
+	listeners     []chan []string
+	listenerMutex sync.Mutex
 }
 
 func (f *fileMonitor) Listen() <-chan []string {
@@ -30,11 +28,17 @@ func (f *fileMonitor) Listen() <-chan []string {
 	return c
 }
 
+type gatheringMonitor struct {
+	fileMonitor
+	changes         chan string
+	fileChangeDelay time.Duration
+}
+
 // Create the changes channel and serve debounced changes to listeners.
 // The changes channel must be created before this is started.
 // Closing the changes channel causes this to close all listener
 // channels and return.
-func (f *fileMonitor) serveListeners() {
+func (f *gatheringMonitor) serveListeners() {
 	never := make(<-chan time.Time)
 	deadline := never
 
@@ -54,7 +58,9 @@ func (f *fileMonitor) serveListeners() {
 			}
 
 			collected[change] = true
-			deadline = time.After(f.fileChangeDelay)
+			if deadline == never {
+				deadline = time.After(f.fileChangeDelay)
+			}
 		case <-deadline:
 			list := make([]string, 0, len(collected))
 			for f := range collected {

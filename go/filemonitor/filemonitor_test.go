@@ -14,9 +14,6 @@ import (
 	"github.com/burke/zeus/go/filemonitor"
 )
 
-// Setting a long delay here makes tests slow but improves reliability in Travis CI
-const fileChangeDelay = 500 * time.Millisecond
-
 func writeTestFiles(dir string) ([]string, error) {
 	files := make([]string, 3)
 
@@ -50,7 +47,7 @@ func TestFileMonitor(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fm, err := filemonitor.NewFileMonitor(fileChangeDelay)
+	fm, err := filemonitor.NewFileMonitor(filemonitor.DefaultFileChangeDelay)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,23 +85,6 @@ func TestFileMonitor(t *testing.T) {
 	if err := expectChanges(changeCh, watched); err != nil {
 		t.Fatal(err)
 	}
-
-	// Debouncing waits until no changes have occurred during the debounce
-	// interval before reporting the change.
-	for _, v := range [][]byte{{'1'}, {'2'}, {'3'}, {'4'}, {'5'}} {
-		if err := ioutil.WriteFile(files[0], v, 0); err != nil {
-			t.Fatal(err)
-		}
-		time.Sleep(fileChangeDelay / 3)
-	}
-
-	if err := expectChanges(changeCh, files[0:1]); err != nil {
-		t.Fatal(err)
-	}
-
-	if changes := awaitChanges(changeCh); changes != nil {
-		t.Fatalf("should not have any remaining changes, got %v", changes)
-	}
 }
 
 func expectChanges(changeCh <-chan []string, expect []string) error {
@@ -114,25 +94,16 @@ func expectChanges(changeCh <-chan []string, expect []string) error {
 	sort.StringSlice(expectSorted).Sort()
 	expect = expectSorted
 
-	changes := awaitChanges(changeCh)
-	if changes == nil {
+	select {
+	case changes := <-changeCh:
+		sort.StringSlice(changes).Sort()
+
+		if !reflect.DeepEqual(changes, expect) {
+			return fmt.Errorf("expected changes in %v, got %v", expect, changes)
+		}
+	case <-time.After(time.Second):
 		return errors.New("Timeout waiting for change notification")
 	}
 
-	sort.StringSlice(changes).Sort()
-
-	if !reflect.DeepEqual(changes, expect) {
-		return fmt.Errorf("expected changes in %v, got %v", expect, changes)
-	}
-
 	return nil
-}
-
-func awaitChanges(changeCh <-chan []string) []string {
-	select {
-	case changes := <-changeCh:
-		return changes
-	case <-time.After(4 * fileChangeDelay):
-		return nil
-	}
 }
