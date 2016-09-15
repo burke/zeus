@@ -3,13 +3,14 @@ package config
 import (
 	"bufio"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path"
+	"strings"
 
-	"github.com/burke/zeus/go/filemonitor"
 	"github.com/burke/zeus/go/processtree"
-	"github.com/burke/zeus/go/zerror"
 )
 
 type config struct {
@@ -18,54 +19,104 @@ type config struct {
 	Items   map[string]string
 }
 
-func BuildProcessTree(configFile string, monitor filemonitor.FileMonitor) *processtree.ProcessTree {
-	conf := parseConfig(configFile)
-	tree := &processtree.ProcessTree{}
-	tree.SlavesByName = make(map[string]*processtree.SlaveNode)
-	tree.StateChanged = make(chan bool, 16)
-
-	tree.ExecCommand = conf.Command
-
-	plan, ok := conf.Plan.(map[string]interface{})
-	if !ok {
-		zerror.ErrorConfigFileInvalidFormat()
+func BuildProcessTree(configFile string, tree processtree.ProcessTree) error {
+	plan, cmd, err := loadConfig(configFile)
+	if err != nil {
+		return err
 	}
-	iteratePlan(tree, plan, monitor, nil)
 
-	return tree
+	for name, v := range plan {
+		subPlan, ok := v.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("expected root node %s in plan to map to an object, got %v", name, v)
+		}
+
+		tree.AddRootNode(name, cmd)
+		if err := iteratePlan(tree, subPlan, name); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-func iteratePlan(
-	tree *processtree.ProcessTree,
-	plan map[string]interface{},
-	monitor filemonitor.FileMonitor,
-	parent *processtree.SlaveNode,
-) {
+func AllCommandsAndAliases(configFile string) (map[string][]string, error) {
+	plan, _, err := loadConfig(configFile)
+	if err != nil {
+		return nil, err
+	}
+
+	cmds := make(map[string][]string)
+	if err := planCommandsAndAliases(plan, cmds); err != nil {
+		return nil, err
+	}
+
+	return cmds, nil
+}
+
+func planCommandsAndAliases(plan map[string]interface{}, cmds map[string][]string) error {
 	for name, v := range plan {
 		if subPlan, ok := v.(map[string]interface{}); ok {
-			newNode := tree.NewSlaveNode(name, parent, monitor)
-			if parent == nil {
-				tree.Root = newNode
-			} else {
-				parent.Slaves = append(parent.Slaves, newNode)
-			}
-			iteratePlan(tree, subPlan, monitor, newNode)
+			planCommandsAndAliases(subPlan, cmds)
 		} else {
-			var newNode *processtree.CommandNode
 			if aliases, ok := v.([]interface{}); ok {
 				strs := make([]string, len(aliases))
 				for i, alias := range aliases {
 					strs[i] = alias.(string)
 				}
-				newNode = tree.NewCommandNode(name, strs, parent)
+				cmds[name] = strs
 			} else if v == nil {
-				newNode = tree.NewCommandNode(name, nil, parent)
+				cmds[name] = []string{}
 			} else {
-				zerror.ErrorConfigFileInvalidFormat()
+				return fmt.Errorf("Expected command %q to have no value or be a list of aliases, got: %v", name, v)
 			}
-			parent.Commands = append(parent.Commands, newNode)
 		}
 	}
+
+	return nil
+}
+
+func loadConfig(configFile string) (map[string]interface{}, []string, error) {
+	conf, err := parseConfig(configFile)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	plan, ok := conf.Plan.(map[string]interface{})
+	if !ok {
+		return nil, nil, errors.New("The config file must contain a `plan` key with an object value")
+	}
+
+	cmd := strings.Split(conf.Command, " ")
+
+	return plan, cmd, nil
+}
+
+func iteratePlan(
+	tree processtree.ProcessTree,
+	plan map[string]interface{},
+	parent string,
+) error {
+	for name, v := range plan {
+		if subPlan, ok := v.(map[string]interface{}); ok {
+			tree.AddChildNode(name, parent)
+			iteratePlan(tree, subPlan, name)
+		} else {
+			if aliases, ok := v.([]interface{}); ok {
+				strs := make([]string, len(aliases))
+				for i, alias := range aliases {
+					strs[i] = alias.(string)
+				}
+				tree.AddCommand(name, parent, strs)
+			} else if v == nil {
+				tree.AddCommand(name, parent, nil)
+			} else {
+				return fmt.Errorf("Expected command %q to have no value or be a list of aliases, got: %v", name, v)
+			}
+		}
+	}
+
+	return nil
 }
 
 func defaultConfigPath() string {
@@ -88,25 +139,31 @@ func readConfigFileOrDefault(configFile string) ([]byte, error) {
 	return contents, err
 }
 
-func parseConfig(configFile string) (c config) {
+func parseConfig(configFile string) (config, error) {
 	var conf config
 
 	contents, err := readConfigFileOrDefault(configFile)
 	if err != nil {
-		zerror.ErrorConfigFileInvalidJson()
+		return conf, fmt.Errorf("The config file %s could not be read: %v", configFile, err)
+	}
+	if err := json.Unmarshal(contents, &conf); err != nil {
+		return conf, fmt.Errorf("The config file %s could not be parsed: %v", configFile, err)
 	}
 
-	json.Unmarshal(contents, &conf)
-	return conf
+	return conf, nil
 }
 
-func readFile(path string) (contents []byte, err error) {
+func readFile(path string) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	reader := bufio.NewReader(file)
 
-	contents, err = ioutil.ReadAll(reader)
-	return
+	contents, err := ioutil.ReadAll(reader)
+	if err != nil {
+		return nil, err
+	}
+
+	return contents, nil
 }

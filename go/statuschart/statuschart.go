@@ -2,84 +2,66 @@ package statuschart
 
 import (
 	"os"
-	"sync"
 	"time"
 
-	"github.com/burke/ttyutils"
 	"github.com/burke/zeus/go/processtree"
+	"github.com/burke/zeus/go/processtree/node"
 	slog "github.com/burke/zeus/go/shinylog"
 )
 
 const updateDebounceInterval = 1 * time.Millisecond
 
-type StatusChart struct {
-	RootSlave *processtree.SlaveNode
-	update    chan bool
-
-	numberOfSlaves int
-	Commands       []*processtree.CommandNode
-	L              sync.Mutex
-	drawnInitial   bool
-
-	directLogger *slog.ShinyLogger
-
-	extraOutput       string
-	terminalSupported bool
-
-	previousStates []*string
+type chart interface {
+	Update(processtree.State)
+	Stop() error
 }
 
-var theChart *StatusChart
+// Start begins outputting status updates to the provided file. When the update
+// channel closes, it shuts down and closes the returned channel.
+func Start(output *os.File, updates <-chan processtree.State) <-chan struct{} {
+	stopped := make(chan struct{})
 
-func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
-	quit := make(chan bool)
-
-	theChart = &StatusChart{}
-	theChart.RootSlave = tree.Root
-	theChart.numberOfSlaves = len(tree.SlavesByName)
-	theChart.Commands = tree.Commands
-	theChart.update = make(chan bool)
-	theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
-	theChart.terminalSupported = ttyutils.IsTerminal(os.Stdout.Fd())
-
-	if theChart.terminalSupported {
-		ttyStart(tree, done, quit)
-	} else {
-		stdoutStart(tree, done, quit)
-	}
-
-	go theChart.watchUpdates(tree.StateChanged)
-
-	return quit
-}
-
-func (s *StatusChart) watchUpdates(updates <-chan bool) {
-	// Debounce state updates
-	for <-updates {
-		reported := false
-		timeout := time.After(updateDebounceInterval)
-		for !reported {
-			select {
-			case <-updates:
-			case <-timeout:
-				s.update <- true
-				reported = true
-			}
+	var ch chart
+	var err error
+	ch, err = newTTYChart(output)
+	if err != nil {
+		ch = &stdoutChart{
+			log: slog.NewShinyLogger(output, output),
 		}
 	}
+
+	go func() {
+		// Introduce latency in state updates to group events
+		for status := range updates {
+			reported := false
+			timeout := time.After(updateDebounceInterval)
+			for !reported {
+				select {
+				case status = <-updates:
+				case <-timeout:
+					ch.Update(status)
+					reported = true
+				}
+			}
+		}
+		ch.Stop()
+		close(stopped)
+	}()
+
+	return stopped
 }
 
-func stateSuffix(state string) string {
+func stateSuffix(state node.State) string {
 	status := ""
 
 	switch state {
-	case processtree.SUnbooted:
+	case node.SUnbooted:
 		status = "{U}"
-	case processtree.SBooting:
+	case node.SBooting:
 		status = "{B}"
-	case processtree.SCrashed:
+	case node.SCrashed:
 		status = "{!C}"
-	case processtree.SReady:
+	case node.SReady:
 		status = "{R}"
 	default:
 		status = "{?}"
@@ -88,8 +70,7 @@ func stateSuffix(state string) string {
 	return status
 }
 
-func printStateInfo(indentation, identifier, state string, verbose, printNewline bool) {
-	log := theChart.directLogger
+func printStateInfo(log *slog.ShinyLogger, indentation, identifier string, state node.State, verbose, printNewline bool) {
 	newline := ""
 	suffix := ""
 	if printNewline {
@@ -99,16 +80,26 @@ func printStateInfo(indentation, identifier, state string, verbose, printNewline
 		suffix = stateSuffix(state)
 	}
 	switch state {
-	case processtree.SUnbooted:
+	case node.SUnbooted:
 		log.ColorizedSansNl(indentation + "{magenta}" + identifier + suffix + "\033[K" + newline)
-	case processtree.SBooting:
+	case node.SBooting:
 		log.ColorizedSansNl(indentation + "{blue}" + identifier + suffix + "\033[K" + newline)
-	case processtree.SCrashed:
+	case node.SCrashed:
 		log.ColorizedSansNl(indentation + "{red}" + identifier + suffix + "\033[K" + newline)
-	case processtree.SReady:
+	case node.SReady:
 		// no status suffix, as that's the optimal state
 		log.ColorizedSansNl(indentation + "{green}" + identifier + suffix + "\033[K" + newline)
 	default:
 		log.ColorizedSansNl(indentation + "{yellow}" + identifier + suffix + "\033[K" + newline)
 	}
+}
+
+func collectCommandAliases(state processtree.State) map[string][]string {
+	commands := make(map[string][]string, len(state.Commands))
+
+	for alias, cmd := range state.Aliases {
+		commands[cmd] = append(commands[cmd], alias)
+	}
+
+	return commands
 }

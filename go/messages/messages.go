@@ -2,6 +2,7 @@ package messages
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
@@ -9,7 +10,11 @@ import (
 func ParsePidMessage(msg string) (int, int, string, error) {
 	parts := strings.SplitN(msg, ":", 4)
 	if parts[0] != "P" {
-		return -1, -1, "", errors.New("Wrong message type! Expected PidMessage, got: " + msg)
+		return -1, -1, "", fmt.Errorf("expected type P (PidMessage), got %q from %q", parts[0], msg)
+	}
+
+	if len(parts) < 4 {
+		return -1, -1, "", fmt.Errorf("invalid PidMessage %q", msg)
 	}
 
 	identifier := parts[3]

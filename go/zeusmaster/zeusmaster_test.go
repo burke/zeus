@@ -137,7 +137,12 @@ func writeTestFiles(dir string) error {
 		}
 	}
 
-	if err := os.Symlink(filepath.Join(gempath, "lib"), filepath.Join(dir, "lib")); err != nil {
+	libpath := filepath.Join(gempath, "lib")
+	if _, err := os.Stat(libpath); err != nil {
+		return fmt.Errorf("invalid gem lib path %s: %v", libpath, err)
+	}
+
+	if err := os.Symlink(libpath, filepath.Join(dir, "lib")); err != nil {
 		return fmt.Errorf("error linking zeus gem: %v", err)
 	}
 
@@ -199,6 +204,14 @@ func TestZeusBoots(t *testing.T) {
 		zexit <- zeusmaster.Run(filepath.Join(dir, "zeus.json"), filemonitor.DefaultFileChangeDelay)
 	}()
 
+	defer func() {
+		// The zeusmaster catches the interrupt and exits gracefully
+		me.Signal(os.Interrupt)
+		if code := <-zexit; code != 0 {
+			t.Fatalf("Zeus exited with %d", code)
+		}
+	}()
+
 	expects := map[string]string{
 		// TODO: Use the zeusclient to spawn a command to test
 		// that path.
@@ -249,21 +262,34 @@ func TestZeusBoots(t *testing.T) {
 		cmdWriter.Close()
 	}()
 
-	have, err := ioutil.ReadAll(cmdReader)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := "bijagua\n"; string(have) != want {
-		t.Errorf("expected %q, got %q", want, have)
-	}
-	if code := <-cexit; code != 0 {
-		t.Errorf("cmd exited with %d", code)
-	}
+	cerr := make(chan error)
+	go func() {
+		// this needs to timeout
+		have, err := ioutil.ReadAll(cmdReader)
+		if err != nil {
+			cerr <- err
+		}
+		if want := "bijagua\n"; string(have) != want {
+			t.Errorf("expected %q, got %q", want, have)
+		}
+		cerr <- nil
+	}()
 
-	// The zeusmaster catches the interrupt and exits gracefully
-	me.Signal(os.Interrupt)
-	if code := <-zexit; code != 0 {
-		t.Fatalf("Zeus exited with %d", code)
+	for cerr != nil || cexit != nil {
+		select {
+		case code := <-cexit:
+			if code != 0 {
+				t.Errorf("cmd exited with %d", code)
+			}
+			cexit = nil
+		case err := <-cerr:
+			if err != nil {
+				t.Fatal(err)
+			}
+			cerr = nil
+		case <-time.After(time.Second):
+			t.Fatalf("timeout waiting for cmd")
+		}
 	}
 }
 
