@@ -1,6 +1,16 @@
 # Unreleased
 
-https://github.com/burke/zeus/compare/v0.15.10...master
+https://github.com/burke/zeus/compare/v0.15.11...master
+
+# 0.15.11
+
+https://github.com/burke/zeus/compare/v0.15.10...v0.15.11
+
+* Send TERM instead of KILL when killing processes to allow them time
+  to clean up after themselves.
+* Add support for reporting files loaded after an action is completed.
+* Add file change information to trace logs for debugging and move unexpected
+  process logging to trace logs.
 
 # 0.15.10
 
