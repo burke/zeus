@@ -1,7 +1,10 @@
 package processtree
 
 import (
+	"fmt"
 	"sync"
+
+	"github.com/burke/zeus/go/unixsocket"
 )
 
 type ProcessTree struct {
@@ -10,6 +13,8 @@ type ProcessTree struct {
 	SlavesByName map[string]*SlaveNode
 	Commands     []*CommandNode
 	StateChanged chan bool
+
+	restartMutex sync.Mutex
 }
 
 type ProcessTreeNode struct {
@@ -24,6 +29,29 @@ type CommandNode struct {
 	Aliases []string
 }
 
+func (tree *ProcessTree) Start(fileChanges <-chan []string, done chan bool) chan bool {
+	quit := make(chan bool)
+	go func() {
+		for _, slave := range tree.SlavesByName {
+			go slave.Run(tree.StateChanged, tree.ExecCommand)
+			defer slave.ForceKill()
+		}
+
+		for {
+			select {
+			case <-quit:
+				done <- true
+				return
+			case files := <-fileChanges:
+				if len(files) > 0 {
+					tree.RestartNodesWithFeatures(files)
+				}
+			}
+		}
+	}()
+	return quit
+}
+
 func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *SlaveNode) *CommandNode {
 	x := &CommandNode{}
 	x.Parent = parent
@@ -33,14 +61,21 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 	return x
 }
 
-func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
-	if name == "" {
-		return tree.Root
+func (tree *ProcessTree) BootCommand(requested string) (*unixsocket.Usock, string, error) {
+	cmdNode := tree.findCommand(requested)
+	if cmdNode == nil {
+		return nil, "", fmt.Errorf("unknown command %s", requested)
 	}
-	return tree.SlavesByName[name]
+
+	sock, err := cmdNode.Parent.BootCommand(requested)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return sock, cmdNode.Name, nil
 }
 
-func (tree *ProcessTree) FindCommand(requested string) *CommandNode {
+func (tree *ProcessTree) findCommand(requested string) *CommandNode {
 	for _, command := range tree.Commands {
 		if command.Name == requested {
 			return command
@@ -65,11 +100,9 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 	return values
 }
 
-var restartMutex sync.Mutex
-
 func (tree *ProcessTree) RestartNodesWithFeatures(files []string) {
-	restartMutex.Lock()
-	defer restartMutex.Unlock()
+	tree.restartMutex.Lock()
+	defer tree.restartMutex.Unlock()
 	tree.Root.trace("%d files changed, beginning with %q", len(files), files[0])
 	tree.Root.restartNodesWithFeatures(tree, files)
 }
