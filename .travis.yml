@@ -5,18 +5,22 @@ os:
   - linux
   - osx
 env:
-  - USE_RUBY=2.0.0-p647
-  - USE_RUBY=2.1.7
-  - USE_RUBY=2.2.3
+  - USE_RUBY=2.1.10
+  - USE_RUBY=2.2.5
+  - USE_RUBY=2.3.1
+  - USE_RUBY=2.4.0-preview2
+
 # OS X builds are slow and heavily rate limited. Ruby should behave similarly
 # across platforms so we sacrifice testing multiple Ruby versions in favor of
 # faster build times.
 matrix:
   exclude:
     - os: osx
-      env: USE_RUBY=2.0.0-p647
+      env: USE_RUBY=2.1.10
     - os: osx
-      env: USE_RUBY=2.1.7
+      env: USE_RUBY=2.2.5
+    - os: osx
+      env: USE_RUBY=2.4.0-preview2
 before_install:
   - rvm use $USE_RUBY --install --fuzzy
 script:
