@@ -69,7 +69,13 @@ describe "Zeus::LoadTracking" do
 
     context 'loading invalid code' do
       it 'tracks requires that raise a SyntaxError' do
-        expect_to_load([test_filename, expand_asset_path('invalid_syntax.rb')], SyntaxError) do
+        files = [expand_asset_path('invalid_syntax.rb')]
+        # SyntaxError does not have a backtrace in 2.3+ (https://bugs.ruby-lang.org/issues/12811)
+        if Gem::Version.new(RUBY_VERSION) < Gem::Version.new('2.3.0')
+          files << test_filename
+        end
+
+        expect_to_load(files, SyntaxError) do
           require expand_asset_path('invalid_syntax')
         end
       end
