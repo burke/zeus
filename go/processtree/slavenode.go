@@ -209,8 +209,14 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 	// Note we don't hold the mutex while waiting for the action to execute.
 	msg, err := s.socket.ReadMessage()
 	if err != nil {
-		slog.Error(err)
+		s.L.Lock()
+		defer s.L.Unlock()
+		s.Error = err.Error()
+		slog.ErrorString("[" + s.Name + "] " + err.Error())
+
+		return SCrashed
 	}
+
 	s.trace("received action message")
 	s.L.Lock()
 	defer s.L.Unlock()
