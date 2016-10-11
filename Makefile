@@ -28,7 +28,7 @@ fmt: govendor
 test: test-go test-rubygem
 
 test-go: go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb govendor
-	ZEUS_TEST_GEMPATH=$(GEMPATH) GO15VENDOREXPERIMENT=1 govendor test +local
+	ZEUS_TEST_GEMPATH="$(GEMPATH)" GO15VENDOREXPERIMENT=1 govendor test +local
 
 test-rubygem: rubygem/lib/zeus/version.rb rubygem/Gemfile.lock
 	cd rubygem && bin/rspec
