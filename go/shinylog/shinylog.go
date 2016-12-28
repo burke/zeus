@@ -13,18 +13,32 @@ import (
 type ShinyLogger struct {
 	mu             sync.Mutex
 	happyLogger    log.Logger
+	errorLogger    log.Logger
 	sadLogger      log.Logger
 	suppressOutput bool
 	disableColor   bool
+}
+
+type loggerOptions struct {
+	isError, printNewline, includeLocation bool
+}
+
+var errorOptions loggerOptions
+var outOptions loggerOptions
+
+func init() {
+	errorOptions = loggerOptions{isError: true, printNewline: true, includeLocation: true}
+	outOptions = loggerOptions{isError: false, printNewline: true, includeLocation: false}
 }
 
 func NewShinyLogger(out, err interface {
 	io.Writer
 }) *ShinyLogger {
 	happyLogger := log.New(out, "", 0)
+	errorLogger := log.New(err, "", 0)
 	sadLogger := log.New(err, "", log.Lshortfile)
 	var mu sync.Mutex
-	return &ShinyLogger{mu, *happyLogger, *sadLogger, false, false}
+	return &ShinyLogger{mu, *happyLogger, *errorLogger, *sadLogger, false, false}
 }
 
 func NewTraceLogger(out interface {
@@ -78,6 +92,7 @@ func Error(err error) bool                { return DefaultLogger().Error(err) }
 func FatalError(err error)                { DefaultLogger().FatalError(err) }
 func FatalErrorString(msg string)         { DefaultLogger().FatalErrorString(msg) }
 func ErrorString(msg string) bool         { return DefaultLogger().ErrorString(msg) }
+func StdErrorString(msg string) bool      { return DefaultLogger().StdErrorString(msg) }
 func Red(msg string) bool                 { return DefaultLogger().Red(msg) }
 func Green(msg string) bool               { return DefaultLogger().Green(msg) }
 func Brightgreen(msg string) bool         { return DefaultLogger().Brightgreen(msg) }
@@ -108,11 +123,11 @@ func (l *ShinyLogger) DisableColor() {
 }
 
 func (l *ShinyLogger) Colorized(msg string) (printed bool) {
-	return l.colorized(3, msg, false, true)
+	return l.colorized(3, msg, outOptions)
 }
 
 func (l *ShinyLogger) ColorizedSansNl(msg string) (printed bool) {
-	return l.colorized(3, msg, false, false)
+	return l.colorized(3, msg, loggerOptions{isError: false, printNewline: false, includeLocation: false})
 }
 
 // If we send SIGTERM rather than explicitly exiting,
@@ -124,45 +139,49 @@ func terminate() {
 }
 
 func (l *ShinyLogger) FatalErrorString(msg string) {
-	l.colorized(3, "{red}"+msg, true, true)
+	l.colorized(3, "{red}"+msg, errorOptions)
 	terminate()
 }
 
 func (l *ShinyLogger) FatalError(err error) {
-	l.colorized(3, "{red}"+err.Error(), true, true)
+	l.colorized(3, "{red}"+err.Error(), errorOptions)
 	terminate()
 }
 
 func (l *ShinyLogger) Error(err error) bool {
-	return l.colorized(3, "{red}"+err.Error(), true, true)
+	return l.colorized(3, "{red}"+err.Error(), errorOptions)
 }
 
 func (l *ShinyLogger) ErrorString(msg string) bool {
-	return l.colorized(3, "{red}"+msg, true, true)
+	return l.colorized(3, "{red}"+msg, errorOptions)
+}
+
+func (l *ShinyLogger) StdErrorString(msg string) bool {
+	return l.colorized(3, "{red}"+msg, loggerOptions{isError: true, printNewline: true, includeLocation: false})
 }
 
 func (l *ShinyLogger) Red(msg string) bool {
-	return l.colorized(3, "{red}"+msg, false, true)
+	return l.colorized(3, "{red}"+msg, outOptions)
 }
 
 func (l *ShinyLogger) Green(msg string) bool {
-	return l.colorized(3, "{green}"+msg, false, true)
+	return l.colorized(3, "{green}"+msg, outOptions)
 }
 
 func (l *ShinyLogger) Brightgreen(msg string) bool {
-	return l.colorized(3, "{brightgreen}"+msg, false, true)
+	return l.colorized(3, "{brightgreen}"+msg, outOptions)
 }
 
 func (l *ShinyLogger) Yellow(msg string) bool {
-	return l.colorized(3, "{yellow}"+msg, false, true)
+	return l.colorized(3, "{yellow}"+msg, outOptions)
 }
 
 func (l *ShinyLogger) Blue(msg string) bool {
-	return l.colorized(3, "{blue}"+msg, false, true)
+	return l.colorized(3, "{blue}"+msg, outOptions)
 }
 
 func (l *ShinyLogger) Magenta(msg string) bool {
-	return l.colorized(3, "{magenta}"+msg, false, true)
+	return l.colorized(3, "{magenta}"+msg, outOptions)
 }
 
 func (l *ShinyLogger) formatColors(msg string) string {
@@ -186,7 +205,7 @@ func (l *ShinyLogger) formatColors(msg string) string {
 	return msg
 }
 
-func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool, printNewline bool) (printed bool) {
+func (l *ShinyLogger) colorized(callDepth int, msg string, options loggerOptions) (printed bool) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -196,15 +215,18 @@ func (l *ShinyLogger) colorized(callDepth int, msg string, isError bool, printNe
 		if l == DefaultLogger() {
 			callDepth += 1 // this was called through a proxy method
 		}
-		if isError {
-			l.sadLogger.Output(callDepth, msg+reset)
+		if options.isError {
+			if options.includeLocation {
+				l.sadLogger.Output(callDepth, msg+reset)
+			} else {
+				l.errorLogger.Output(callDepth, msg+reset)
+			}
 		} else {
-			if printNewline {
+			if options.printNewline {
 				fmt.Println(msg + reset)
 			} else {
 				fmt.Print(msg + reset)
 			}
-			//l.happyLogger.Output(callDepth, msg+reset)
 		}
 	}
 	return !l.suppressOutput
