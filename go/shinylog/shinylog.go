@@ -24,11 +24,13 @@ type loggerOptions struct {
 }
 
 var errorOptions loggerOptions
-var outOptions loggerOptions
+var stdoutOptions loggerOptions
+var stderrOptions loggerOptions
 
 func init() {
 	errorOptions = loggerOptions{isError: true, printNewline: true, includeLocation: true}
-	outOptions = loggerOptions{isError: false, printNewline: true, includeLocation: false}
+	stdoutOptions = loggerOptions{isError: false, printNewline: true, includeLocation: false}
+	stderrOptions = loggerOptions{isError: false, printNewline: true, includeLocation: false}
 }
 
 func NewShinyLogger(out, err interface {
@@ -123,7 +125,7 @@ func (l *ShinyLogger) DisableColor() {
 }
 
 func (l *ShinyLogger) Colorized(msg string) (printed bool) {
-	return l.colorized(3, msg, outOptions)
+	return l.colorized(3, msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) ColorizedSansNl(msg string) (printed bool) {
@@ -157,31 +159,31 @@ func (l *ShinyLogger) ErrorString(msg string) bool {
 }
 
 func (l *ShinyLogger) StdErrorString(msg string) bool {
-	return l.colorized(3, "{red}"+msg, loggerOptions{isError: true, printNewline: true, includeLocation: false})
+	return l.colorized(3, "{red}"+msg, stderrOptions)
 }
 
 func (l *ShinyLogger) Red(msg string) bool {
-	return l.colorized(3, "{red}"+msg, outOptions)
+	return l.colorized(3, "{red}"+msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) Green(msg string) bool {
-	return l.colorized(3, "{green}"+msg, outOptions)
+	return l.colorized(3, "{green}"+msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) Brightgreen(msg string) bool {
-	return l.colorized(3, "{brightgreen}"+msg, outOptions)
+	return l.colorized(3, "{brightgreen}"+msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) Yellow(msg string) bool {
-	return l.colorized(3, "{yellow}"+msg, outOptions)
+	return l.colorized(3, "{yellow}"+msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) Blue(msg string) bool {
-	return l.colorized(3, "{blue}"+msg, outOptions)
+	return l.colorized(3, "{blue}"+msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) Magenta(msg string) bool {
-	return l.colorized(3, "{magenta}"+msg, outOptions)
+	return l.colorized(3, "{magenta}"+msg, stdoutOptions)
 }
 
 func (l *ShinyLogger) formatColors(msg string) string {
