@@ -143,13 +143,14 @@ module Zeus
         $0 = "zeus command: #{identifier}"
 
         plan.after_fork
-        client_terminal = local.recv_io
+        remote_stdin_stdout = local.recv_io
+        remote_stderr = local.recv_io
         local.write "P:#{Process.pid}:#{@parent_pid}:\0"
         local.close
 
-        $stdin.reopen(client_terminal)
-        $stdout.reopen(client_terminal)
-        $stderr.reopen(client_terminal)
+        $stdin.reopen(remote_stdin_stdout)
+        $stdout.reopen(remote_stdin_stdout)
+        $stderr.reopen(remote_stderr)
         ARGV.replace(arguments)
 
         plan.send(identifier)

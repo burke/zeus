@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/burke/ttyutils"
@@ -26,7 +27,7 @@ const (
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
-func Run(args []string, input io.Reader, output *os.File) int {
+func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
 		println("As a safety precaution to protect you from nuking your development database,")
@@ -34,33 +35,23 @@ func Run(args []string, input io.Reader, output *os.File) int {
 		return 1
 	}
 
-	isTerminal := ttyutils.IsTerminal(output.Fd())
-
-	var master, slave *os.File
-	var err error
-	if isTerminal {
-		master, slave, err = pty.Open()
-	} else {
-		master, slave, err = unixsocket.Socketpair(syscall.SOCK_STREAM)
-	}
+	// setup stdout
+	localStdout, remoteStdout, outputIsTerminal, err := socketsForOutput(output)
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
+	defer localStdout.Close()
+	defer remoteStdout.Close()
 
-	defer master.Close()
-	var oldState *ttyutils.Termios
-	if isTerminal {
-		oldState, err = ttyutils.MakeTerminalRaw(output.Fd())
-		if err != nil {
-			slog.ErrorString(err.Error() + "\r")
-			return 1
-		}
-		defer ttyutils.RestoreTerminalState(output.Fd(), oldState)
+	// setup stderr
+	localStderr, remoteStderr, _, err := socketsForOutput(stderr)
+	if err != nil {
+		slog.ErrorString(err.Error() + "\r")
+		return 1
 	}
-
-	// should this happen if we're running over a pipe? I think maybe not?
-	ttyutils.MirrorWinsize(output, master)
+	defer localStderr.Close()
+	defer remoteStderr.Close()
 
 	addr, err := net.ResolveUnixAddr("unixgram", unixsocket.ZeusSockName())
 	if err != nil {
@@ -83,8 +74,8 @@ func Run(args []string, input io.Reader, output *os.File) int {
 		return 1
 	}
 
-	usock.WriteFD(int(slave.Fd()))
-	slave.Close()
+	usock.WriteFD(int(remoteStdout.Fd()))
+	usock.WriteFD(int(remoteStderr.Fd()))
 
 	msg, err = usock.ReadMessage()
 	if err != nil {
@@ -106,7 +97,7 @@ func Run(args []string, input io.Reader, output *os.File) int {
 		return 1
 	}
 
-	if isTerminal {
+	if outputIsTerminal {
 		c := make(chan os.Signal, 1)
 		handledSignals := append(append(terminatingSignals, syscall.SIGWINCH), syscall.SIGCONT)
 		signal.Notify(c, handledSignals...)
@@ -115,10 +106,9 @@ func Run(args []string, input io.Reader, output *os.File) int {
 				if sig == syscall.SIGCONT {
 					syscall.Kill(commandPid, syscall.SIGCONT)
 				} else if sig == syscall.SIGWINCH {
-					ttyutils.MirrorWinsize(output, master)
+					ttyutils.MirrorWinsize(output, localStdout)
 					syscall.Kill(commandPid, syscall.SIGWINCH)
 				} else { // member of terminatingSignals
-					ttyutils.RestoreTerminalState(output.Fd(), oldState)
 					print("\r")
 					syscall.Kill(commandPid, sig.(syscall.Signal))
 					os.Exit(1)
@@ -136,31 +126,30 @@ func Run(args []string, input io.Reader, output *os.File) int {
 		}
 	}
 
-	eof := make(chan bool)
-	go func() {
-		for {
-			buf := make([]byte, 1024)
-			n, err := master.Read(buf)
+	var endOfIO sync.WaitGroup
 
-			if err == nil || (err == io.EOF && n > 0) {
-				output.Write(buf[:n])
-			} else {
-				eof <- true
-				break
-			}
+	err = forwardOutput(localStdout, output, endOfIO)
+	if err != nil {
+		slog.ErrorString(err.Error() + "\r")
+		return 1
+	}
 
-		}
-	}()
+	err = forwardOutput(localStderr, stderr, endOfIO)
+	if err != nil {
+		slog.ErrorString(err.Error() + "\r")
+		return 1
+	}
 
 	go func() {
+		endOfIO.Add(1)
 		buf := make([]byte, 8192)
 		for {
 			n, err := input.Read(buf)
 			if err != nil {
-				eof <- true
+				endOfIO.Done()
 				break
 			}
-			if isTerminal {
+			if outputIsTerminal {
 				for i := 0; i < n; i++ {
 					switch buf[i] {
 					case sigInt:
@@ -173,11 +162,11 @@ func Run(args []string, input io.Reader, output *os.File) int {
 					}
 				}
 			}
-			master.Write(buf[:n])
+			localStdout.Write(buf[:n])
 		}
 	}()
 
-	<-eof
+	endOfIO.Wait()
 
 	if exitStatus == -1 {
 		msg, err = usock.ReadMessage()
@@ -223,4 +212,47 @@ func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
 	}()
 
 	return nil
+}
+
+func socketsForOutput(out *os.File) (local, remote *os.File, outIsTerminal bool, err error) {
+	outIsTerminal = ttyutils.IsTerminal(out.Fd())
+
+	if outIsTerminal {
+		local, remote, err = pty.Open()
+	} else {
+		local, remote, err = unixsocket.Socketpair(syscall.SOCK_STREAM)
+	}
+
+	return
+}
+
+func forwardOutput(from, to *os.File, signalEnd sync.WaitGroup) (err error) {
+	var oldToState *ttyutils.Termios
+	ttyutils.MirrorWinsize(to, from)
+
+	if ttyutils.IsTerminal(to.Fd()) {
+		oldToState, err = ttyutils.MakeTerminalRaw(to.Fd())
+		if err != nil {
+			return
+		}
+	}
+
+	go func() {
+		defer ttyutils.RestoreTerminalState(to.Fd(), oldToState)
+
+		signalEnd.Add(1)
+		for {
+			buf := make([]byte, 1024)
+			n, err := from.Read(buf)
+
+			if err == nil || (err == io.EOF && n > 0) {
+				to.Write(buf[:n])
+			} else {
+				signalEnd.Done()
+				break
+			}
+		}
+	}()
+
+	return
 }
