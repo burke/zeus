@@ -11,12 +11,11 @@ import (
 )
 
 type ShinyLogger struct {
-	mu             sync.Mutex
-	happyLogger    log.Logger
-	errorLogger    log.Logger
-	sadLogger      log.Logger
-	suppressOutput bool
-	disableColor   bool
+	mu                  sync.Mutex
+	errorLogger         log.Logger
+	locationErrorLogger log.Logger
+	suppressOutput      bool
+	disableColor        bool
 }
 
 type loggerOptions struct {
@@ -36,11 +35,10 @@ func init() {
 func NewShinyLogger(out, err interface {
 	io.Writer
 }) *ShinyLogger {
-	happyLogger := log.New(out, "", 0)
 	errorLogger := log.New(err, "", 0)
-	sadLogger := log.New(err, "", log.Lshortfile)
+	locationErrorLogger := log.New(err, "", log.Lshortfile)
 	var mu sync.Mutex
-	return &ShinyLogger{mu, *happyLogger, *errorLogger, *sadLogger, false, false}
+	return &ShinyLogger{mu, *errorLogger, *locationErrorLogger, false, false}
 }
 
 func NewTraceLogger(out interface {
@@ -207,7 +205,7 @@ func (l *ShinyLogger) formatColors(msg string) string {
 	return msg
 }
 
-func (l *ShinyLogger) colorized(callDepth int, msg string, options loggerOptions) (printed bool) {
+func (l *ShinyLogger) colorized(callDepth int, msg string, options loggerOptions) bool {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 
@@ -219,7 +217,7 @@ func (l *ShinyLogger) colorized(callDepth int, msg string, options loggerOptions
 		}
 		if options.isError {
 			if options.includeLocation {
-				l.sadLogger.Output(callDepth, msg+reset)
+				l.locationErrorLogger.Output(callDepth, msg+reset)
 			} else {
 				l.errorLogger.Output(callDepth, msg+reset)
 			}
