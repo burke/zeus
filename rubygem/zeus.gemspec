@@ -16,7 +16,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["burke@libbey.me"]
   gem.description   = %q{Boot any rails app in under a second}
   gem.summary       = %q{Zeus is an intelligent preloader for ruby applications. It allows normal development tasks to be run in a fraction of a second.}
-  gem.homepage      = "http://zeus.is"
+  gem.homepage      = "https://github.com/burke/zeus"
 
   gem.files         = files
   gem.extensions    = []

@@ -2,6 +2,12 @@
 
 https://github.com/burke/zeus/compare/v0.15.11...master
 
+# 0.15.12
+
+https://github.com/burke/zeus/compare/v0.15.11...v0.15.12
+
+* relrelease of 0.15.11 as it's build had failed to include the actual binaries
+
 # 0.15.11
 
 https://github.com/burke/zeus/compare/v0.15.10...v0.15.11
