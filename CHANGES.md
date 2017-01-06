@@ -11,6 +11,7 @@ https://github.com/burke/zeus/compare/v0.15.10...v0.15.11
 * Add support for reporting files loaded after an action is completed.
 * Add file change information to trace logs for debugging and move unexpected
   process logging to trace logs.
+* Moved zeus client error message to stderr so they are more visible
 
 # 0.15.10
 
