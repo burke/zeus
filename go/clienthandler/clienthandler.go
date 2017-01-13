@@ -71,6 +71,9 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	clientFile, err := receiveTTY(usock, err)
 	defer clientFile.Close()
 
+	stderrFile, err := receiveTTY(usock, err)
+	defer stderrFile.Close()
+
 	if err == nil && slaveNode.Error != "" {
 		writeStacktrace(usock, slaveNode, clientFile)
 		return
@@ -88,7 +91,10 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 
 	err = sendClientPidAndArgumentsToCommand(commandUsock, clientPid, argCount, argFD, err)
 
+	// send stdout to use
 	err = sendTTYToCommand(commandUsock, clientFile, err)
+	// send stderr to use
+	err = sendTTYToCommand(commandUsock, stderrFile, err)
 
 	cmdPid, err := receivePidFromCommand(commandUsock, err)
 

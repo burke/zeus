@@ -69,6 +69,7 @@ class CustomPlan < Zeus::Plan
 
   command :cmd do
     puts "bijagua"
+    STDERR.puts "bazinga"
   end
 
   command :data_srv do
@@ -238,15 +239,23 @@ func TestZeusBoots(t *testing.T) {
 	defer func() { close(readCloser) }()
 
 	cmdReader, cmdWriter, err := os.Pipe()
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	cmdErrReader, cmdErrWriter, err := os.Pipe()
+
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	cexit := make(chan int, 1)
 	go func() {
-		cexit <- zeusclient.Run([]string{"cmd"}, hangingReader{readCloser}, cmdWriter)
+		cexit <- zeusclient.Run([]string{"cmd"}, hangingReader{readCloser}, cmdWriter, cmdErrWriter)
 		time.Sleep(100 * time.Millisecond)
 		cmdWriter.Close()
+		cmdErrWriter.Close()
 	}()
 
 	have, err := ioutil.ReadAll(cmdReader)
@@ -258,6 +267,14 @@ func TestZeusBoots(t *testing.T) {
 	}
 	if code := <-cexit; code != 0 {
 		t.Errorf("cmd exited with %d", code)
+	}
+
+	have, err = ioutil.ReadAll(cmdErrReader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := "bazinga\n"; string(have) != want {
+		t.Errorf("expected stderr %q, got %q", want, have)
 	}
 
 	// The zeusmaster catches the interrupt and exits gracefully

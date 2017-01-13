@@ -86,7 +86,7 @@ func main() {
 			if args[0] == name {
 				// Don't confuse the master by sending *full* args to
 				// it; just those that are not zeus-specific.
-				os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout))
+				os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout, os.Stderr))
 			}
 		}
 
