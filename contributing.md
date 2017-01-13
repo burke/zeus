@@ -49,10 +49,10 @@ site [has documentation on this](http://golang.org/doc/code.html).
 
 ## Step 3: Dependencies
 
-cd into the zeus project directory and run `make dev_bootstrap`. This will
-fetch and compile a couple libraries zeus uses for terminal interaction and
-such. Read through that last chunk of the `Makefile` to understand what's going
-on.
+cd into the zeus project directory and run `make`. This will fetch and
+compile a couple libraries zeus uses for terminal interaction and such.
+Read through that last chunk of the `Makefile` to understand what's
+going on.
 
 Of particular interest is [`gox`](http://github.com/mitchellh/gox), which we
 use to crosscompile multiple binaries.
@@ -69,10 +69,8 @@ to boot a rails app under the control of the master process.
 
 ### Building
 
-Just run `make`, basically. The `Makefile` should be an easy read. `make
-darwin` and related tasks will just build the go binaries to `./build`, while
-`make gem` will build the rubygem from the files currently in `./build`. `make
-all` does the whole shebang, but takes a few seconds to complete.
+Just run `make`, which would build the go binaries to `./build`
+directory. This step might take some time to complete.
 
 ## Step 5: Contributing
 
