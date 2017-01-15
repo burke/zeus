@@ -204,7 +204,11 @@ module Zeus
       # RSpec suite by default.
       if using_rspec?(argv)
         ARGV.replace(argv)
-        RSpec::Core::Runner.invoke
+        if RSpec::Core::Runner.respond_to?(:invoke)
+          RSpec::Core::Runner.invoke
+        else
+          RSpec::Core::Runner.run(argv)
+        end
       else
         require 'minitest/autorun' if using_minitest?
         # Minitest and old Test::Unit
