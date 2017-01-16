@@ -2,6 +2,10 @@
 
 https://github.com/burke/zeus/compare/v0.15.11...master
 
+* stdout and stderr are seperated so output to stderr from the programm will end 
+  up on stderr on the client, same for stdout
+* support for rspec 2.x series, missing `invoke` on the rake task.
+
 # 0.15.12
 
 https://github.com/burke/zeus/compare/v0.15.11...v0.15.12
