@@ -72,6 +72,15 @@ to boot a rails app under the control of the master process.
 Just run `make`, which would build the go binaries to `./build`
 directory. This step might take some time to complete.
 
+## Releasing
+
+Be aware that all release builts should be done on MacOSX to include the
+binaries for MacOSX in the gem, when built on Linux only the linux binaries will
+be included and therefor zeus will not work on linux.
+
+* Build via normal `make`, this puts the build gem on in `rubygem/pkg/zeus-<VERSION>.gem`
+* With access to rubygems run `gem push rubygem/pkg/zeus-<VERSION>.gem`
+
 ## Step 5: Contributing
 
 Fork, branch, pullrequest! I'm sometimes really bad about responding to these
@@ -81,5 +90,5 @@ getting back to you.
 ## Questions?
 
 If this doesn't work out for you, hit me up on twitter at @burkelibbey or email
-at burke@libbey.me
+at burke@libbey.me, or maybe @ischi on twitter can help as well.
 
