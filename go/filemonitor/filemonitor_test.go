@@ -14,8 +14,8 @@ import (
 	"github.com/burke/zeus/go/filemonitor"
 )
 
-func writeTestFiles(dir string) ([]string, error) {
-	files := make([]string, 3)
+func writeTestFiles(dir string, count int) ([]string, error) {
+	files := make([]string, count)
 
 	dir, err := filepath.EvalSymlinks(dir)
 	if err != nil {
@@ -35,6 +35,50 @@ func writeTestFiles(dir string) ([]string, error) {
 	return files, nil
 }
 
+func TestFileMonitorManyFiles(t *testing.T) {
+	count := 5000
+	dir, err := ioutil.TempDir("", "zeus_test_many_files")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	files, err := writeTestFiles(dir, count)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	fm, err := filemonitor.NewFileMonitor(filemonitor.DefaultFileChangeDelay)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer fm.Close()
+
+	watched := files[0:count]
+	for i, file := range watched {
+		err = fm.Add(file)
+		if err != nil {
+			t.Fatalf("%d, %v", i, err)
+		}
+	}
+
+	changes := fm.Listen()
+
+	// Without a short sleep we get notified for the original
+	// file creation using FSEvents
+	time.Sleep(20 * time.Millisecond)
+
+	for i, file := range files {
+		if err := ioutil.WriteFile(file, []byte("baz"), 0); err != nil {
+			t.Fatalf("%d: %v", i, err)
+		}
+	}
+
+	if err := expectChanges(changes, watched); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestFileMonitor(t *testing.T) {
 	dir, err := ioutil.TempDir("", "zeus_test")
 	if err != nil {
@@ -42,7 +86,7 @@ func TestFileMonitor(t *testing.T) {
 	}
 	defer os.RemoveAll(dir)
 
-	files, err := writeTestFiles(dir)
+	files, err := writeTestFiles(dir, 3)
 	if err != nil {
 		t.Fatal(err)
 	}
