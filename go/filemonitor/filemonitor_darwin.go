@@ -3,6 +3,8 @@
 package filemonitor
 
 import (
+	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/fsnotify/fsevents"
@@ -82,24 +84,38 @@ func (f *fsEventsMonitor) watch() {
 func (f *fsEventsMonitor) handleAdd() {
 	watched := make(map[string]bool)
 	started := false
+	// We don't want to add individual files to watch here but figure out the
+	// directory to watch and watch it instead.
 
 	for file := range f.add {
-		if watched[file] {
+		path, err := pathToMonitor(file)
+		if err != nil {
+			// can't access the file for some reason, best to ignore, probably should
+			// log something here
 			continue
 		}
 
-		allFiles := []string{file}
+		if watched[path] {
+			continue
+		}
+
+		allFiles := []string{path}
 
 		// Read all messages waiting in the channel so we can batch restarts
 		done := false
 		for !done {
 			select {
 			case file := <-f.add:
-				if watched[file] {
+				path, err := pathToMonitor(file)
+				if err != nil {
 					continue
 				}
 
-				allFiles = append(allFiles, file)
+				if watched[path] {
+					continue
+				}
+
+				allFiles = append(allFiles, path)
 			default:
 				done = true
 			}
@@ -107,6 +123,10 @@ func (f *fsEventsMonitor) handleAdd() {
 
 		for _, file := range allFiles {
 			watched[file] = true
+			if contains(f.stream.Paths, file) {
+				continue
+			}
+
 			f.stream.Paths = append(f.stream.Paths, file)
 		}
 
@@ -122,4 +142,29 @@ func (f *fsEventsMonitor) handleAdd() {
 	if started {
 		f.stream.Stop()
 	}
+}
+
+func pathToMonitor(rawPath string) (path string, err error) {
+	stat, err := os.Stat(rawPath)
+	if err != nil {
+		return
+	}
+
+	if stat.IsDir() {
+		path = rawPath
+	} else {
+		path = filepath.Dir(rawPath)
+	}
+
+	return
+}
+
+func contains(s []string, e string) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+
+	return false
 }
