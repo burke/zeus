@@ -40,6 +40,28 @@ A: No. You can, but running `bundle exec zeus` instead of `zeus` adds precious s
 It is common to see tests running twice when starting out with Zeus. If you see your tests/specs running twice, you should try disabling `require 'rspec/autotest'` and `require 'rspec/autorun'` (for RSpec), or `require 'minitest/autorun'` (for Minitest). (see [#134](https://github.com/burke/zeus/issues/134) for more information).
 
 
+## Rails Set up 
+
+In your app's directory initialize zeus:
+
+    zeus init
+
+which will create two files
+
+    custom_plan.rb
+    zeus.json
+
+Force the test environment: In `test/test_helper.rb' (or `spec/spec_helper.rb` if using RSpec), change:
+
+
+    ENV['RAILS_ENV'] ||= 'test'
+
+To:
+
+    ENV['RAILS_ENV'] = 'test'
+
+_More helpful set up hints at [this very nice guide put together by Thoughtbot](https://robots.thoughtbot.com/improving-rails-boot-time-with-zeus)_
+
 ## Usage
 
 Start the server:
