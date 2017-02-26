@@ -204,6 +204,8 @@ module Zeus
       # RSpec suite by default.
       if using_rspec?(argv)
         ARGV.replace(argv)
+        # if no directory is given, run the default spec directory
+        argv << "spec" if argv.empty?
         if RSpec::Core::Runner.respond_to?(:invoke)
           RSpec::Core::Runner.invoke
         else
