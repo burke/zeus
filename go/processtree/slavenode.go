@@ -64,6 +64,13 @@ const (
 	SCrashed  = "C"
 )
 
+var humanreadableStates = map[string]string{
+	SUnbooted: "unbooted",
+	SBooting:  "booted",
+	SReady:    "ready",
+	SCrashed:  "crashed",
+}
+
 func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode, monitor filemonitor.FileMonitor) *SlaveNode {
 	s := SlaveNode{}
 	s.needsRestart = make(chan bool, 1)
@@ -161,6 +168,10 @@ func (s *SlaveNode) State() string {
 	defer s.L.Unlock()
 
 	return s.state
+}
+
+func (s *SlaveNode) HumanReadableState() string {
+	return humanreadableStates[s.state]
 }
 
 func (s *SlaveNode) HasFeature(file string) bool {

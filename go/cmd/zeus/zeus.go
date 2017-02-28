@@ -23,6 +23,7 @@ var color bool = true
 func main() {
 	args := os.Args[1:]
 	configFile := "zeus.json"
+	simpleStatus := false
 	fileChangeDelay := filemonitor.DefaultFileChangeDelay
 
 	for ; args != nil && len(args) > 0 && args[0][0] == '-'; args = args[1:] {
@@ -30,6 +31,9 @@ func main() {
 		case "--no-color":
 			color = false
 			slog.DisableColor()
+		case "--simple-status":
+			slog.DisableColor()
+			simpleStatus = true
 		case "--log":
 			tracefile, err := os.OpenFile(args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 			if err == nil {
@@ -75,7 +79,7 @@ func main() {
 	} else if args[0] == "version" {
 		printVersion()
 	} else if args[0] == "start" {
-		os.Exit(zeusmaster.Run(configFile, fileChangeDelay))
+		os.Exit(zeusmaster.Run(configFile, fileChangeDelay, simpleStatus))
 	} else if args[0] == "init" {
 		zeusInit()
 	} else if args[0] == "commands" {

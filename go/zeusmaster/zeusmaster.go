@@ -25,7 +25,7 @@ const listenerPortVar = "ZEUS_NETWORK_FILE_MONITOR_PORT"
 // Leaving out SIGPIPE as that is a signal the master receives if a client process is killed.
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
-func Run(configFile string, fileChangeDelay time.Duration) int {
+func Run(configFile string, fileChangeDelay time.Duration, simpleStatus bool) int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server v" + zeusversion.VERSION)
 
 	zerror.Init()
@@ -44,7 +44,7 @@ func Run(configFile string, fileChangeDelay time.Duration) int {
 	defer monitor.Close()
 	defer slog.Suppress()
 	defer zerror.PrintFinalOutput()
-	defer exit(statuschart.Start(tree, done), done)
+	defer exit(statuschart.Start(tree, done, simpleStatus), done)
 
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, terminatingSignals...)

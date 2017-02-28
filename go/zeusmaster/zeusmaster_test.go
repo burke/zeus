@@ -197,7 +197,7 @@ func TestZeusBoots(t *testing.T) {
 	enableTracing()
 	zexit := make(chan int)
 	go func() {
-		zexit <- zeusmaster.Run(filepath.Join(dir, "zeus.json"), filemonitor.DefaultFileChangeDelay)
+		zexit <- zeusmaster.Run(filepath.Join(dir, "zeus.json"), filemonitor.DefaultFileChangeDelay, false)
 	}()
 
 	expects := map[string]string{
