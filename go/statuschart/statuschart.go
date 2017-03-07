@@ -71,7 +71,7 @@ func startLineOutput(tree *processtree.ProcessTree, done, quit chan bool) {
 				for name, slave := range tree.SlavesByName {
 					state, found := states[name]
 					if !found || (state != slave.State()) {
-						fmt.Println("node: " + name + " status: " + slave.HumanReadableState())
+						fmt.Println("environment: " + name + " status: " + slave.HumanReadableState())
 						states[name] = slave.State()
 					}
 				}
