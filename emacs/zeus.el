@@ -35,13 +35,16 @@
   (-flatten (delq nil (mapcar
                        (function (lambda (entry)
                                    (cond
-                                    ((command-p entry) (car entry))
-                                    ((listp entry) (filter-commands entry)))))
+                                    ((zeus--command-p entry) (car entry))
+                                    ((listp entry) (zeus--extract-commands entry)))))
                        entries))))
 
 (defun zeus--completing-read ()
   (if zeus-mode-completion-use-ido
       'ido-completing-read 'completing-read))
+
+(defun zeus--command-p (entry)
+  (and (listp entry) (arrayp (cdr entry))))
 
 ;;;###autoload
 (defun zeus-start ()
@@ -63,4 +66,4 @@
   (let ((cmd-name (concat "zeus" cmd)))
     (pop-to-buffer (zeus--run cmd-name "*zeus-command*" cmd))))
 
-(provide 'zeus-mode)
+(provide 'zeus)
