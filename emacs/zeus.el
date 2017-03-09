@@ -18,9 +18,12 @@
   "zeus server process buffer"
   nil)
 
-(defun zeus--run (name buffer-name command &optional options)
+(defun zeus--command-string (cmd args &optional options)
+  (s-join " " (list "zeus" (s-join " " options) cmd args)))
+
+(defun zeus--run (name buffer-name cmd args &optional options)
   "Run a zeus command returning the running process buffer"
-  (let ((zeus-command (s-join " " (list "zeus" (s-join " " options) command))))
+  (let ((zeus-command (zeus--command-string cmd args options)))
     (process-buffer (start-process-shell-command name buffer-name zeus-command))))
 
 (defun zeus--available-commands ()
@@ -48,9 +51,10 @@
 
 ;;;###autoload
 (defun zeus-start ()
-  "Start the zeus server in the current directory using simple-status output"
+  "Start the zeus server in the current directory using
+simple-status output"
   (interactive)
-  (setq *zeus-server-process* (zeus--run "zeus-server" "*zeus-server*" "start" '("--simple-status")))
+  (setq *zeus-server-process* (zeus--run "zeus-server" "*zeus-server*" "start" "" '("--simple-status")))
   (pop-to-buffer *zeus-server-process*))
 
 (defun zeus-stop ()
@@ -59,11 +63,18 @@
   (when *zeus-server-process*
     (interrupt-process *zeus-server-process*)))
 
-(defun zeus-run-command (cmd)
-  "Run a command for zeus, i.e. zeus test to run the tests against the current zeus instance"
+(defun zeus-run-command (prefix cmd args)
+  "Run a command for zeus, i.e. zeus test to run the tests
+against the current zeus instance when run with prefix run the
+command in compile buffer"
   (interactive
-   (list (funcall (zeus--completing-read) "Command to run: " (zeus--available-commands))))
+   (list
+    current-prefix-arg
+    (funcall (zeus--completing-read) "Command to run: " (zeus--available-commands))
+    (read-string "Additional arguments: " "")))
   (let ((cmd-name (concat "zeus" cmd)))
-    (pop-to-buffer (zeus--run cmd-name "*zeus-command*" cmd))))
+    (if prefix
+        (compile (zeus--command-string cmd args))
+      (pop-to-buffer (zeus--run cmd-name "*zeus-command*" cmd args)))))
 
 (provide 'zeus)
