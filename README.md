@@ -51,7 +51,7 @@ which will create two files
     custom_plan.rb
     zeus.json
 
-Force the test environment: In `test/test_helper.rb' (or `spec/spec_helper.rb` if using RSpec), change:
+Force the test environment: In `test/test_helper.rb` (or `spec/spec_helper.rb` if using RSpec), change:
 
 
     ENV['RAILS_ENV'] ||= 'test'
