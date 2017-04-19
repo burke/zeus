@@ -239,10 +239,10 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 }
 
 // In the "SReady" state, we have a functioning process we can spawn
-// new processes of of. We respond to requests to boot slaves and
+// new processes off of. We respond to requests to boot slaves and
 // run commands until we receive a request to restart. This kills
 // the process and transitions to SUnbooted.
-func (s *SlaveNode) doReadyState() string { // -> SUnbooted
+func (s *SlaveNode) doReadyState() string { // -> {SUnbooted, SCrashed}
 	s.hasSuccessfullyBooted = true
 
 	// If we have a queued restart, service that rather than booting
@@ -254,6 +254,8 @@ func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 	default:
 	}
 
+	processStatus := s.waitForProcess()
+
 	for {
 		select {
 		case <-s.needsRestart:
@@ -263,6 +265,13 @@ func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 			s.bootSlave(slave)
 		case request := <-s.commandBootRequests:
 			s.bootCommand(request)
+		case code := <-processStatus:
+			if code == -1 {
+				s.Error = fmt.Sprintf("child process exited unexpectedly with status %d", code)
+			} else {
+				s.Error = "child process exited unexpectedly with non-zero status"
+			}
+			return SCrashed
 		}
 	}
 }
@@ -359,6 +368,35 @@ func (s *SlaveNode) bootCommand(request *CommandRequest) {
 	fileName := strconv.Itoa(rand.Int())
 	commandFile := os.NewFile(uintptr(commandFD), fileName)
 	request.Retchan <- &CommandReply{s.state, commandFile}
+}
+
+func (s *SlaveNode) waitForProcess() <-chan int {
+	s.L.Lock()
+	defer s.L.Unlock()
+
+	result := make(chan int)
+	proc, err := os.FindProcess(s.pid)
+	if err != nil {
+		// Per the Golang docs, this should never return an error on
+		// the Unix systems Zeus supports.
+		panic(err)
+	}
+
+	go func() {
+		state, err := proc.Wait()
+		if err != nil {
+			s.trace("error waiting for child process to exit: %v", err)
+			result <- -1
+		} else if state.Success() {
+			result <- 0
+		} else if status, ok := state.Sys().(syscall.WaitStatus); ok {
+			result <- int(status)
+		} else {
+			result <- -1
+		}
+	}()
+
+	return result
 }
 
 func (s *SlaveNode) ForceKill() {
