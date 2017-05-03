@@ -1,6 +1,7 @@
 package statuschart
 
 import (
+	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -31,7 +32,7 @@ type StatusChart struct {
 
 var theChart *StatusChart
 
-func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
+func Start(tree *processtree.ProcessTree, done chan bool, simple bool) chan bool {
 	quit := make(chan bool)
 
 	theChart = &StatusChart{}
@@ -42,15 +43,41 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
 	theChart.terminalSupported = ttyutils.IsTerminal(os.Stdout.Fd())
 
-	if theChart.terminalSupported {
-		ttyStart(tree, done, quit)
+	if simple {
+		startLineOutput(tree, done, quit)
 	} else {
-		stdoutStart(tree, done, quit)
+		if theChart.terminalSupported {
+			ttyStart(tree, done, quit)
+		} else {
+			stdoutStart(tree, done, quit)
+		}
 	}
 
 	go theChart.watchUpdates(tree.StateChanged)
 
 	return quit
+}
+
+func startLineOutput(tree *processtree.ProcessTree, done, quit chan bool) {
+	states := make(map[string]string)
+
+	go func() {
+		for {
+			select {
+			case <-quit:
+				done <- true
+				return
+			case <-theChart.update:
+				for name, slave := range tree.SlavesByName {
+					state, found := states[name]
+					if !found || (state != slave.State()) {
+						fmt.Println("environment: " + name + " status: " + slave.HumanReadableState())
+						states[name] = slave.State()
+					}
+				}
+			}
+		}
+	}()
 }
 
 func (s *StatusChart) watchUpdates(updates <-chan bool) {
