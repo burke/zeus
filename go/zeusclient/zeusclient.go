@@ -128,18 +128,19 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 
 	var endOfIO sync.WaitGroup
 
-	var oldTerminalStateStdout *ttyutils.Termios
-	err, oldTerminalStateStdout = forwardOutput(localStdout, output, endOfIO)
-	defer ttyutils.RestoreTerminalState(output.Fd(), oldTerminalStateStdout)
-	// TODO restore terminal state
+	err, oldTerminalStateStdout := forwardOutput(localStdout, output, endOfIO)
+	if oldTerminalStateStdout != nil {
+		defer ttyutils.RestoreTerminalState(output.Fd(), oldTerminalStateStdout)
+	}
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
 
-	var oldTerminalStateStderr *ttyutils.Termios
-	err, oldTerminalStateStderr = forwardOutput(localStderr, stderr, endOfIO)
-	defer ttyutils.RestoreTerminalState(stderr.Fd(), oldTerminalStateStderr)
+	err, oldTerminalStateStderr := forwardOutput(localStderr, stderr, endOfIO)
+	if oldTerminalStateStderr != nil {
+		defer ttyutils.RestoreTerminalState(stderr.Fd(), oldTerminalStateStderr)
+	}
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
@@ -242,8 +243,6 @@ func forwardOutput(from, to *os.File, signalEnd sync.WaitGroup) (err error, oldT
 	}
 
 	go func() {
-		defer ttyutils.RestoreTerminalState(to.Fd(), oldTerminalState)
-
 		signalEnd.Add(1)
 		for {
 			buf := make([]byte, 1024)
