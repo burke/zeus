@@ -13,6 +13,7 @@ require 'set'
 require 'zeus/load_tracking'
 require 'zeus/plan'
 require 'zeus/version'
+require 'zeus/pry'
 
 module Zeus
   class << self
