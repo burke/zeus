@@ -2,8 +2,9 @@ module Zeus
   class LoadTracking
     class << self
       def add_feature(file)
+        return unless @feature_pipe
         full_path = File.expand_path(file)
-        return unless File.exist?(full_path) && @feature_pipe
+        return unless File.exist?(full_path)
         notify_features([full_path])
       end
 
