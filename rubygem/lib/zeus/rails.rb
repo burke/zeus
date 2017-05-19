@@ -203,6 +203,7 @@ module Zeus
       # then "zeus test/rspec/testrb" without arguments runs the
       # RSpec suite by default.
       if using_rspec?(argv)
+        require 'rspec/autorun'
         ARGV.replace(argv)
         # if no directory is given, run the default spec directory
         argv << "spec" if argv.empty?
