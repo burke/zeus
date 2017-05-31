@@ -1,8 +1,18 @@
-# Unreleased
+# 0.15.14
 
-https://github.com/burke/zeus/compare/v0.15.11...master
+https://github.com/burke/zeus/compare/v0.15.13...master
 
-* stdout and stderr are seperated so output to stderr from the programm will end 
+* Emacs integration and related readme. ([sideshowcoder](github.com/sideshowcoder))
+* Simple status interface mode (in order to support non-advanced terminals,
+  useful for emacs integration). ([sideshowcoder](github.com/sideshowcoder))
+* Terminal restore issue fix ([#252](https://github.com/burke/zeus/issues/252)). ([sideshowcoder](github.com/sideshowcoder))
+* Zeus rspec with no args run tests on `spec` folder. ([sideshowcoder](github.com/sideshowcoder))
+
+# 0.15.13
+
+https://github.com/burke/zeus/compare/v0.15.12...v0.15.13
+
+* stdout and stderr are seperated so output to stderr from the programm will end
   up on stderr on the client, same for stdout
 * support for rspec 2.x series, missing `invoke` on the rake task.
 
