@@ -1,12 +1,17 @@
+# Next
+
+https://github.com/burke/zeus/compare/v0.15.14...master
+
 # 0.15.14
 
-https://github.com/burke/zeus/compare/v0.15.13...master
+https://github.com/burke/zeus/compare/v0.15.13...v0.15.14
 
 * Emacs integration and related readme. ([sideshowcoder](github.com/sideshowcoder))
 * Simple status interface mode (in order to support non-advanced terminals,
   useful for emacs integration). ([sideshowcoder](github.com/sideshowcoder))
 * Terminal restore issue fix ([#252](https://github.com/burke/zeus/issues/252)). ([sideshowcoder](github.com/sideshowcoder))
 * Zeus rspec with no args run tests on `spec` folder. ([sideshowcoder](github.com/sideshowcoder))
+* pry pager hang workaround, disabling paging in pry in zeus ([#627](https://github.com/burke/zeus/issues/627)). ([sideshowcoder](github.com/sideshowcoder))
 
 # 0.15.13
 
