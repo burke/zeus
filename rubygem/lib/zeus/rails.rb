@@ -117,7 +117,7 @@ module Zeus
       load_rails_generators
 
       if rails_5_1_or_higher?
-        run_rails_5_1_or_higer_command('generate')
+        run_rails_5_1_or_higher_command('generate')
       else
         require 'rails/commands/generate'
       end
@@ -127,7 +127,7 @@ module Zeus
     def destroy
       load_rails_generators
       if rails_5_1_or_higher?
-        run_rails_5_1_or_higer_command('destroy')
+        run_rails_5_1_or_higher_command('destroy')
       else
         require 'rails/commands/destroy'
       end
@@ -135,7 +135,7 @@ module Zeus
 
     def runner
       if rails_5_1_or_higher?
-        run_rails_5_1_or_higer_command('runner')
+        run_rails_5_1_or_higher_command('runner')
       else
         require 'rails/commands/runner'
       end
@@ -143,7 +143,7 @@ module Zeus
 
     def console
       if rails_5_1_or_higher?
-        run_rails_5_1_or_higer_command('console')
+        run_rails_5_1_or_higher_command('console')
       else
         require 'rails/commands/console'
         if defined?(Pry)
@@ -163,7 +163,7 @@ module Zeus
 
     def dbconsole
       if rails_5_1_or_higher?
-        run_rails_5_1_or_higer_command('dbconsole')
+        run_rails_5_1_or_higher_command('dbconsole')
       else
         require 'rails/commands/dbconsole'
 
@@ -183,7 +183,7 @@ module Zeus
 
     def server
       if rails_5_1_or_higher?
-        run_rails_5_1_or_higer_command('server')
+        run_rails_5_1_or_higher_command('server')
       else
         require 'rails/commands/server'
         server = ::Rails::Server.new
@@ -296,7 +296,7 @@ module Zeus
     rescue LoadError # Rails 3.0 doesn't require this block to be run, but 3.2+ does
     end
 
-    def run_rails_5_1_or_higer_command(command)
+    def run_rails_5_1_or_higher_command(command)
       require 'rails/command'
       ::Rails::Command.invoke(command, ARGV)
     end
