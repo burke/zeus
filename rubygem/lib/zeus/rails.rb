@@ -115,56 +115,81 @@ module Zeus
 
     def generate
       load_rails_generators
-      require 'rails/commands/generate'
+
+      if rails_5_1_or_higher?
+        run_rails_5_1_or_higher_command('generate')
+      else
+        require 'rails/commands/generate'
+      end
+
     end
 
     def destroy
       load_rails_generators
-      require 'rails/commands/destroy'
+      if rails_5_1_or_higher?
+        run_rails_5_1_or_higher_command('destroy')
+      else
+        require 'rails/commands/destroy'
+      end
     end
 
     def runner
-      require 'rails/commands/runner'
+      if rails_5_1_or_higher?
+        run_rails_5_1_or_higher_command('runner')
+      else
+        require 'rails/commands/runner'
+      end
     end
 
     def console
-      require 'rails/commands/console'
-
-      if defined?(Pry)
-        # Adding Rails Console helpers to Pry.
-        if (3..4).include?(::Rails::VERSION::MAJOR)
-          require 'rails/console/app'
-          require 'rails/console/helpers'
-          TOPLEVEL_BINDING.eval('self').extend ::Rails::ConsoleMethods
-        end
-
-        Pry.start
+      if rails_5_1_or_higher?
+        run_rails_5_1_or_higher_command('console')
       else
-        ::Rails::Console.start(::Rails.application)
+        require 'rails/commands/console'
+        if defined?(Pry)
+          # Adding Rails Console helpers to Pry.
+          if (3..4).include?(::Rails::VERSION::MAJOR)
+            require 'rails/console/app'
+            require 'rails/console/helpers'
+            TOPLEVEL_BINDING.eval('self').extend ::Rails::ConsoleMethods
+          end
+
+          Pry.start
+        else
+          ::Rails::Console.start(::Rails.application)
+        end
       end
     end
 
     def dbconsole
-      require 'rails/commands/dbconsole'
-
-      meth = ::Rails::DBConsole.method(:start)
-
-      # `Rails::DBConsole.start` has been changed to load faster in
-      # https://github.com/rails/rails/commit/346bb018499cde6699fcce6c68dd7e9be45c75e1
-      #
-      # This will work with both versions.
-      if meth.arity.zero?
-        ::Rails::DBConsole.start
+      if rails_5_1_or_higher?
+        run_rails_5_1_or_higher_command('dbconsole')
       else
-        ::Rails::DBConsole.start(::Rails.application)
+        require 'rails/commands/dbconsole'
+
+        meth = ::Rails::DBConsole.method(:start)
+
+        # `Rails::DBConsole.start` has been changed to load faster in
+        # https://github.com/rails/rails/commit/346bb018499cde6699fcce6c68dd7e9be45c75e1
+        #
+        # This will work with both versions.
+        if meth.arity.zero?
+          ::Rails::DBConsole.start
+        else
+          ::Rails::DBConsole.start(::Rails.application)
+        end
       end
     end
 
     def server
-      require 'rails/commands/server'
-      server = ::Rails::Server.new
-      Dir.chdir(::Rails.application.root)
-      server.start
+      if rails_5_1_or_higher?
+        run_rails_5_1_or_higher_command('server')
+      else
+        require 'rails/commands/server'
+        server = ::Rails::Server.new
+        Dir.chdir(::Rails.application.root)
+        server.start
+      end
     end
 
     def test_environment
@@ -271,6 +296,15 @@ module Zeus
     rescue LoadError # Rails 3.0 doesn't require this block to be run, but 3.2+ does
     end
 
+    def run_rails_5_1_or_higher_command(command)
+      require 'rails/command'
+      ::Rails::Command.invoke(command, ARGV)
+    end
+
+    def rails_5_1_or_higher?
+      (::Rails::VERSION::MAJOR == 5 && ::Rails::VERSION::MINOR >= 1) ||
+        ::Rails::VERSION::MAJOR > 5
+    end
   end
 end
 
