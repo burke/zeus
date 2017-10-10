@@ -87,3 +87,19 @@ func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files []strin
 		s.restartNodesWithFeatures(tree, files)
 	}
 }
+
+// We implement sort.Interface - Len, Less, and Swap - on list of commands so
+// we can use the sort package’s generic Sort function.
+type Commands []*CommandNode
+
+func (c Commands) Len() int {
+	return len(c)
+}
+
+func (c Commands) Swap(i, j int) {
+	c[i], c[j] = c[j], c[i]
+}
+
+func (c Commands) Less(i, j int) bool {
+	return c[i].Name < c[j].Name
+}
