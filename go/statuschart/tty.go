@@ -2,6 +2,7 @@ package statuschart
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/burke/ttyutils"
@@ -100,6 +101,8 @@ func (s *StatusChart) lengthOfOutput() int {
 }
 
 func (s *StatusChart) drawCommands() {
+	sort.Sort(processtree.Commands(s.Commands))
+
 	for _, command := range s.Commands {
 		state := command.Parent.State()
 
