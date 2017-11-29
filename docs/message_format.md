@@ -1,6 +1,6 @@
 # Message Format
 
-There are a number of different types of messages passed between Master and Worker processes.
+There are a number of different types of messages passed between Coordinator and Worker processes.
 
 In the interest of simplifying Worker libraries, messages are sent as single packets over a UNIX datagram socket, with a single-letter prefix, followed by a colon, indicating the message type.
 
@@ -8,7 +8,7 @@ the parenthesesized values after each title are the message code, and the handli
 
 #### Pid & Identifier message (`P`, `WorkerMonitor`)
 
-This is sent from Worker to Master immediately after booting, to identify itself.
+This is sent from Worker to Coordinator immediately after booting, to identify itself.
 
 It is formed by joining the process's pid and identifier with a colon.
 
@@ -16,7 +16,7 @@ Example: `P:1235:default_bundle`
 
 #### Action response message (`R`, `WorkerMonitor`)
 
-This is sent from the Worker to the Master once the action has executed.
+This is sent from the Worker to the Coordinator once the action has executed.
 
 It can either be "OK", if the action was successful, or any other string, which should be a stderr-like
 representation of the error, including stack trace if applicable.
@@ -27,13 +27,13 @@ Example: `R:-e:1:in '<main>': unhandled exception`
 
 #### Spawn Worker message (`S`, `WorkerMonitor`)
 
-This is sent from the Master to the Worker and contains the Identifier of a new Worker to fork immediately.
+This is sent from the Coordinator to the Worker and contains the Identifier of a new Worker to fork immediately.
 
 Example: `S:test_environment`
 
 #### Spawn Command message (`C`, `ClientHandler`)
 
-This is sent from the Master to the Worker and contains the Identifier of a new Command to fork immediately.
+This is sent from the Coordinator to the Worker and contains the Identifier of a new Command to fork immediately.
 
 Example: `C:console`
 
@@ -46,7 +46,7 @@ Example: `Q:testrb:-Itest -I. test/unit/module_test.rb`
 
 #### Feature message (`F`, `FileMonitor`)
 
-This is sent from the Worker to the Master to indicate it now depends on a file at a given path.
+This is sent from the Worker to the Coordinator to indicate it now depends on a file at a given path.
 
 The path is expected to be the full, expanded path.
 

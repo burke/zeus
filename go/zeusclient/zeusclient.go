@@ -61,7 +61,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 
 	conn, err := net.DialUnix("unix", nil, addr)
 	if err != nil {
-		zerror.ErrorCantConnectToMaster()
+		zerror.ErrorCantConnectToCoordinator()
 		return 1
 	}
 	usock := unixsocket.New(conn)
@@ -192,7 +192,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 }
 
 func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
-	master, worker, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
+	coordinator, worker, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
 	if err != nil {
 		return err
 	}
@@ -203,13 +203,13 @@ func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
 	worker.Close()
 
 	go func() {
-		defer master.Close()
+		defer coordinator.Close()
 		argAsBytes := []byte{}
 		for _, arg := range args[1:] {
 			argAsBytes = append(argAsBytes, []byte(arg)...)
 			argAsBytes = append(argAsBytes, byte(0))
 		}
-		_, err = master.Write(argAsBytes)
+		_, err = coordinator.Write(argAsBytes)
 		if err != nil {
 			slog.ErrorString("Could not send arguments across: " +
 				err.Error() + "\r")

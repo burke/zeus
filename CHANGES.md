@@ -158,7 +158,7 @@ https://github.com/burke/zeus/compare/v0.13.1...v0.13.2
 
 * Improved a few cases where client processes disconnect unexpectedly.
 
-* Changed up the worker/master IPC, solving a bunch of issues on Linux, by
+* Changed up the worker/coordinator IPC, solving a bunch of issues on Linux, by
   switching from a socket to a pipe.
 
 * Client terminations are now handled a bit more gracefully. The terminal is

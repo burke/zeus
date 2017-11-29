@@ -1,19 +1,19 @@
-# Master/Worker Handshake
+# Coordinator/Worker Handshake
 
 #### 1. Socket
 
-The Worker is always started with an environment variable named `ZEUS_MASTER_FD`. The file descriptor at the given integer value is a socket to the Master process.
+The Worker is always started with an environment variable named `ZEUS_COORDINATOR_FD`. The file descriptor at the given integer value is a socket to the Coordinator process.
 
-The Worker should open a UNIX Domain Socket using the `ZEUS_MASTER_FD` File Descriptor (`globalMasterSock`).
+The Worker should open a UNIX Domain Socket using the `ZEUS_COORDINATOR_FD` File Descriptor (`globalCoordinatorSock`).
 
 The Worker opens a new UNIX datagram Socketpair (`local`, `remote`)
 
-The Worker sends `remote` across `globalMasterSock`.
+The Worker sends `remote` across `globalCoordinatorSock`.
 
 #### 2. PID and Identifier
 
 The Worker determines whether it has been given an Identifier. If it is the first-booted worker, it was booted
-by the Master, and will not have one. When a Worker forks, it is passed an Identifier by the Master that it
+by the Coordinator, and will not have one. When a Worker forks, it is passed an Identifier by the Coordinator that it
 passes along to the newly-forked process.
 
 The Worker sends a "Pid & Identifier" message containing the pid and the identifier (blank if initial process)
@@ -41,4 +41,4 @@ that have been newly-loaded in the course of evaluating the action.
 Languages are expected to implement this using clever tricks.
 
 Steps 1-4 happend sequentially and in-order, but Submitting files in Step 5 should not prevent the Worker from
-handling further commands from the master. The Worker should be considered 'connected' after Step 4.
+handling further commands from the coordinator. The Worker should be considered 'connected' after Step 4.

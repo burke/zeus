@@ -33,8 +33,8 @@ describe Zeus do
     end
 
     it 'boots and tracks features' do
-      master_r, master_w = UNIXSocket.pair(Socket::SOCK_STREAM)
-      ENV['ZEUS_MASTER_FD'] = master_w.to_i.to_s
+      coordinator_r, coordinator_w = UNIXSocket.pair(Socket::SOCK_STREAM)
+      ENV['ZEUS_COORDINTOR_FD'] = coordinator_w.to_i.to_s
 
       thr = Thread.new do
         begin
@@ -49,7 +49,7 @@ describe Zeus do
 
       begin
         # Receive the control IO and start message
-        ctrl_io = master_r.recv_io(UNIXSocket)
+        ctrl_io = coordinator_r.recv_io(UNIXSocket)
         begin
           # We use recv instead of readline on the UNIXSocket to avoid
           # converting it to a buffered reader. That seems to interact

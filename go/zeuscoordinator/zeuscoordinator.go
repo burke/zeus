@@ -1,4 +1,4 @@
-package zeusmaster
+package zeuscoordinator
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ import (
 const listenerPortVar = "ZEUS_NETWORK_FILE_MONITOR_PORT"
 
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
-// Leaving out SIGPIPE as that is a signal the master receives if a client process is killed.
+// Leaving out SIGPIPE as that is a signal the coordinator receives if a client process is killed.
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
 func Run(configFile string, fileChangeDelay time.Duration, simpleStatus bool) int {

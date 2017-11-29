@@ -10,9 +10,9 @@ One or two sentences giving an overview of the issue.
 
 ## System details
 
-* **`uname -a`**: 
+* **`uname -a`**:
 
-* **`ruby -v`**: 
+* **`ruby -v`**:
 
 * **`go version`**: (only if hacking on the go code)
 
@@ -62,10 +62,10 @@ use to crosscompile multiple binaries.
 ### Context: How zeus is structured
 
 The core of zeus is a single go program that acts as the coordinating process
-(master, e.g. `zeus start`), or the client (called per-command, e.g. `zeus
+(coordinator, e.g. `zeus start`), or the client (called per-command, e.g. `zeus
 client`). This code is cross-compiled for a handful of different architectures
 and bundled with a ruby gem. The ruby gem contains all the shim code necessary
-to boot a rails app under the control of the master process.
+to boot a rails app under the control of the coordinator process.
 
 ### Building
 

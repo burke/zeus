@@ -12,8 +12,8 @@ import (
 )
 
 type WorkerMonitor struct {
-	tree             *ProcessTree
-	remoteMasterFile *os.File
+	tree                  *ProcessTree
+	remoteCoordinatorFile *os.File
 }
 
 func Error(err string) {
@@ -24,15 +24,15 @@ func Error(err string) {
 func StartWorkerMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
-		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
+		localCoordinatorFile, remoteCoordinatorFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
 		if err != nil {
 			Error("Couldn't create socketpair")
 		}
 
-		monitor := &WorkerMonitor{tree, remoteMasterFile}
+		monitor := &WorkerMonitor{tree, remoteCoordinatorFile}
 		defer monitor.cleanupChildren()
 
-		localMasterSocket, err := unixsocket.NewFromFile(localMasterFile)
+		localCoordinatorSocket, err := unixsocket.NewFromFile(localCoordinatorFile)
 		if err != nil {
 			Error("Couldn't Open UNIXSocket")
 		}
@@ -41,7 +41,7 @@ func StartWorkerMonitor(tree *ProcessTree, fileChanges <-chan []string, done cha
 		registeringFds := make(chan int, 3)
 		go func() {
 			for {
-				if fd, err := localMasterSocket.ReadFD(); err != nil {
+				if fd, err := localCoordinatorSocket.ReadFD(); err != nil {
 					slog.Error(err)
 				} else {
 					registeringFds <- fd

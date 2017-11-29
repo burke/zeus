@@ -2,17 +2,17 @@
 
 Zeus is composed of three components:
 
-1. [The Master Process](../go/zeusmaster). This is written in Go, and coordinates all the other processes. It connects Clients to Workers and handles reloading when files change.
+1. [The Coordinator Process](../go/zeuscoordinator). This is written in Go, and coordinates all the other processes. It connects Clients to Workers and handles reloading when files change.
 
-2. [Clients](../go/zeusclient). The Client is also written in Go. It sends a command to the Master, and has its streams wired up to a Command process, to make it appear to be running locally.
+2. [Clients](../go/zeusclient). The Client is also written in Go. It sends a command to the Coordinator, and has its streams wired up to a Command process, to make it appear to be running locally.
 
-3. [Workers/Commands](../rubygem). These are the target application. A small shim, written in the target language, manages the communication between the application and the Master process, and boots the application in phases. Though the Master and Client are completely language-agnostic, currently ruby is the only language for which a Worker shim exists.
+3. [Workers/Commands](../rubygem). These are the target application. A small shim, written in the target language, manages the communication between the application and the Coordinator process, and boots the application in phases. Though the Coordinator and Client are completely language-agnostic, currently ruby is the only language for which a Worker shim exists.
 
 If you've read Tony Hoare's (or C.A.R. Hoare's) "Communicating Sequential Processes", [`csp.pdf`](http://www.usingcsp.com/cspbook.pdf) might be a bit helpful in addition to this document. I haven't studied the math enough for it to be fully correct, but it gets some of the point across.
 
 See: [`terminology.md`](terminology.md)
 
-## Master Process
+## Coordinator Process
 
 ### Logical Modules
 
@@ -26,7 +26,7 @@ See: [`terminology.md`](terminology.md)
 
 ![arch.png](arch.png)
 
-The Master process revolves around the [`ProcessTree`](../go/processtree/processtree.go) -- the core data structure that maintains most of the state of the application. Each module performs most of its communication with other modules through interactions with the Tree.
+The Coordinator process revolves around the [`ProcessTree`](../go/processtree/processtree.go) -- the core data structure that maintains most of the state of the application. Each module performs most of its communication with other modules through interactions with the Tree.
 
 ### 1. Config
 
@@ -54,11 +54,11 @@ This component is responsible for communication with the target-language shim to
 
 * [`workermonitor.go`](../go/processtree/workermonitor.go)
 * [`workernode.go`](../go/processtree/workernode.go)
-* [`master_worker_handshake.md`](master_worker_handshake.md)
+* [`coordinator_worker_handshake.md`](coordinator_worker_handshake.md)
 
 ## Client Process
 
-The client process is mostly about terminal configuration. It opens a PTY, sets it to raw mode (so that 'fancy' commands behave as if they were running locally), and passes the worker side of the PTY to the Master process.
+The client process is mostly about terminal configuration. It opens a PTY, sets it to raw mode (so that 'fancy' commands behave as if they were running locally), and passes the worker side of the PTY to the Coordinator process.
 
 The client then sets up handlers to write STDIN to the PTY, and write the PTY's output to STDOUT. STDIN is scanned for certain escape codes (`^C`, `^\`, and `^Z`), which are sent as signals to the remote process to mimic the behaviour of a local process.
 
@@ -67,11 +67,11 @@ A handler is set up for SIGWINCH, again to forward it to the remote process, and
 When the remote process exits, it reports its exit status, which the client process then exits with.
 
 * [`zeusclient.go`](../go/zeusclient/zeusclient.go)
-* [`client_master_handshake.md`](client_master_handshake.md)
+* [`client_coordinator_handshake.md`](client_coordinator_handshake.md)
 
 ## Worker/Command Processes
 
-The Worker processes boot the actual application, and run commands. See [`master_worker_handshake.md`](master_worker_handshake.md), and the ruby implementation in the `rubygem` directory.
+The Worker processes boot the actual application, and run commands. See [`coordinator_worker_handshake.md`](coordinator_worker_handshake.md), and the ruby implementation in the `rubygem` directory.
 
 * [`zeus.rb`](../rubygem/lib/zeus.rb)
 * [`zeus/rails.rb`](../rubygem/lib/zeus/rails.rb)

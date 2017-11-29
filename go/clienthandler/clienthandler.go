@@ -55,7 +55,7 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	return quit
 }
 
-// see docs/client_master_handshake.md
+// see docs/client_coordinator_handshake.md
 func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Usock) {
 	defer usock.Close()
 	// we have established first contact to the client.
