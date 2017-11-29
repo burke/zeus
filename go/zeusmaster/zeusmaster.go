@@ -39,7 +39,7 @@ func Run(configFile string, fileChangeDelay time.Duration, simpleStatus bool) in
 
 	done := make(chan bool)
 
-	defer exit(processtree.StartSlaveMonitor(tree, monitor.Listen(), done), done)
+	defer exit(processtree.StartWorkerMonitor(tree, monitor.Listen(), done), done)
 	defer exit(clienthandler.Start(tree, done), done)
 	defer monitor.Close()
 	defer slog.Suppress()

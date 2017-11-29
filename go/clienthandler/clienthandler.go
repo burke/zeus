@@ -61,7 +61,7 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	// we have established first contact to the client.
 
 	command, clientPid, argCount, argFD, err := receiveCommandArgumentsAndPid(usock, nil)
-	commandNode, slaveNode, err := findCommandAndSlaveNodes(tree, command, err)
+	commandNode, workerNode, err := findCommandAndWorkerNodes(tree, command, err)
 	if err != nil {
 		// connection was established, no data was sent. Ignore.
 		return
@@ -74,17 +74,17 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	stderrFile, err := receiveTTY(usock, err)
 	defer stderrFile.Close()
 
-	if err == nil && slaveNode.Error != "" {
-		writeStacktrace(usock, slaveNode, clientFile)
+	if err == nil && workerNode.Error != "" {
+		writeStacktrace(usock, workerNode, clientFile)
 		return
 	}
 
-	commandUsock, err := bootNewCommand(slaveNode, command, err)
+	commandUsock, err := bootNewCommand(workerNode, command, err)
 	if err != nil {
 		// If a client connects while the command is just
 		// booting up, it actually makes it here - still
 		// expects a backtrace, of course.
-		writeStacktrace(usock, slaveNode, clientFile)
+		writeStacktrace(usock, workerNode, clientFile)
 		return
 	}
 	defer commandUsock.Close()
@@ -110,12 +110,12 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	// Done! Hooray!
 }
 
-func writeStacktrace(usock *unixsocket.Usock, slaveNode *processtree.SlaveNode, clientFile *os.File) {
+func writeStacktrace(usock *unixsocket.Usock, workerNode *processtree.WorkerNode, clientFile *os.File) {
 	// Fake process ID / output / error codes:
 	// Write a fake pid (step 6)
 	usock.WriteMessage("0")
 	// Write the error message to the terminal
-	clientFile.Write([]byte(slaveNode.Error))
+	clientFile.Write([]byte(workerNode.Error))
 	// Write a non-positive exit code to the client
 	usock.WriteMessage("1")
 }
@@ -148,7 +148,7 @@ func receiveCommandArgumentsAndPid(usock *unixsocket.Usock, err error) (string, 
 	return command, clientPid, argCount, argFD, err
 }
 
-func findCommandAndSlaveNodes(tree *processtree.ProcessTree, command string, err error) (*processtree.CommandNode, *processtree.SlaveNode, error) {
+func findCommandAndWorkerNodes(tree *processtree.ProcessTree, command string, err error) (*processtree.CommandNode, *processtree.WorkerNode, error) {
 	if err != nil {
 		return nil, nil, err
 	}
@@ -158,9 +158,9 @@ func findCommandAndSlaveNodes(tree *processtree.ProcessTree, command string, err
 		return nil, nil, errors.New("ERROR: Node not found!: " + command)
 	}
 	command = commandNode.Name
-	slaveNode := commandNode.Parent
+	workerNode := commandNode.Parent
 
-	return commandNode, slaveNode, nil
+	return commandNode, workerNode, nil
 }
 
 func receiveTTY(usock *unixsocket.Usock, err error) (*os.File, error) {
@@ -226,13 +226,13 @@ func sendCommandPidToClient(usock *unixsocket.Usock, pid int, err error) error {
 	return err
 }
 
-func bootNewCommand(slaveNode *processtree.SlaveNode, command string, err error) (*unixsocket.Usock, error) {
+func bootNewCommand(workerNode *processtree.WorkerNode, command string, err error) (*unixsocket.Usock, error) {
 	if err != nil {
 		return nil, err
 	}
 
 	request := &processtree.CommandRequest{Name: command, Retchan: make(chan *processtree.CommandReply)}
-	slaveNode.RequestCommandBoot(request)
+	workerNode.RequestCommandBoot(request)
 	reply := <-request.Retchan // TODO: don't really want to wait indefinitely.
 	// defer commandFile.Close() // TODO: can't do this here anymore.
 

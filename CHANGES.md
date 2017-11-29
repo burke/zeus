@@ -61,7 +61,7 @@ https://github.com/burke/zeus/compare/v0.15.6...v0.15.8
   zeus Gem no longer requires native extensions and file monitoring is
   much faster and more reliable.
 * Track files from exceptions during Zeus actions in Ruby.
-* Fix a thread safety in SlaveNode state access.
+* Fix a thread safety in WorkerNode state access.
 
 # 0.15.7
 
@@ -158,7 +158,7 @@ https://github.com/burke/zeus/compare/v0.13.1...v0.13.2
 
 * Improved a few cases where client processes disconnect unexpectedly.
 
-* Changed up the slave/master IPC, solving a bunch of issues on Linux, by
+* Changed up the worker/master IPC, solving a bunch of issues on Linux, by
   switching from a socket to a pipe.
 
 * Client terminations are now handled a bit more gracefully. The terminal is

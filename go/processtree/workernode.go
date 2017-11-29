@@ -24,12 +24,12 @@ const (
 	forceKillTimeout = time.Second
 )
 
-type SlaveNode struct {
+type WorkerNode struct {
 	ProcessTreeNode
 	socket      *unixsocket.Usock
 	pid         int
 	Error       string
-	Slaves      []*SlaveNode
+	Workers     []*WorkerNode
 	Commands    []*CommandNode
 	fileMonitor filemonitor.FileMonitor
 
@@ -37,7 +37,7 @@ type SlaveNode struct {
 
 	needsRestart        chan bool
 	commandBootRequests chan *CommandRequest
-	slaveBootRequests   chan *SlaveNode
+	workerBootRequests  chan *WorkerNode
 
 	L        sync.Mutex
 	features map[string]bool
@@ -71,25 +71,25 @@ var humanreadableStates = map[string]string{
 	SCrashed:  "crashed",
 }
 
-func (tree *ProcessTree) NewSlaveNode(identifier string, parent *SlaveNode, monitor filemonitor.FileMonitor) *SlaveNode {
-	s := SlaveNode{}
+func (tree *ProcessTree) NewWorkerNode(identifier string, parent *WorkerNode, monitor filemonitor.FileMonitor) *WorkerNode {
+	s := WorkerNode{}
 	s.needsRestart = make(chan bool, 1)
-	s.slaveBootRequests = make(chan *SlaveNode, 256)
+	s.workerBootRequests = make(chan *WorkerNode, 256)
 	s.commandBootRequests = make(chan *CommandRequest, 256)
 	s.features = make(map[string]bool)
 	s.event = make(chan bool)
 	s.Name = identifier
 	s.Parent = parent
 	s.fileMonitor = monitor
-	tree.SlavesByName[identifier] = &s
+	tree.WorkersByName[identifier] = &s
 	return &s
 }
 
-func (s *SlaveNode) RequestRestart() {
+func (s *WorkerNode) RequestRestart() {
 	s.L.Lock()
 	defer s.L.Unlock()
 
-	// If this slave is currently waiting on a process to boot,
+	// If this worker is currently waiting on a process to boot,
 	// unhang it and force it to transition to the crashed state
 	// where it will wait for restart messages.
 	if s.ReportBootEvent() {
@@ -103,15 +103,15 @@ func (s *SlaveNode) RequestRestart() {
 	}
 }
 
-func (s *SlaveNode) RequestSlaveBoot(slave *SlaveNode) {
-	s.slaveBootRequests <- slave
+func (s *WorkerNode) RequestWorkerBoot(worker *WorkerNode) {
+	s.workerBootRequests <- worker
 }
 
-func (s *SlaveNode) RequestCommandBoot(request *CommandRequest) {
+func (s *WorkerNode) RequestCommandBoot(request *CommandRequest) {
 	s.commandBootRequests <- request
 }
 
-func (s *SlaveNode) ReportBootEvent() bool {
+func (s *WorkerNode) ReportBootEvent() bool {
 	select {
 	case s.event <- true:
 		return true
@@ -120,24 +120,24 @@ func (s *SlaveNode) ReportBootEvent() bool {
 	}
 }
 
-func (s *SlaveNode) SlaveWasInitialized(pid, parentPid int, usock *unixsocket.Usock, featurePipeFd int) {
+func (s *WorkerNode) WorkerWasInitialized(pid, parentPid int, usock *unixsocket.Usock, featurePipeFd int) {
 	file := os.NewFile(uintptr(featurePipeFd), "featurepipe")
 
 	s.L.Lock()
 	if !s.ReportBootEvent() {
 		s.forceKillPid(pid)
-		s.trace("Unexpected process %d with parent %d for slave %q was killed", pid, parentPid, s.Name)
+		s.trace("Unexpected process %d with parent %d for worker %q was killed", pid, parentPid, s.Name)
 	} else {
 		s.wipe()
 		s.pid = pid
 		s.socket = usock
 		go s.handleMessages(file)
-		s.trace("initialized slave %s with pid %d from parent %d", s.Name, pid, parentPid)
+		s.trace("initialized worker %s with pid %d from parent %d", s.Name, pid, parentPid)
 	}
 	s.L.Unlock()
 }
 
-func (s *SlaveNode) Run(monitor *SlaveMonitor) {
+func (s *WorkerNode) Run(monitor *WorkerMonitor) {
 	nextState := SUnbooted
 	for {
 		s.L.Lock()
@@ -163,31 +163,31 @@ func (s *SlaveNode) Run(monitor *SlaveMonitor) {
 	}
 }
 
-func (s *SlaveNode) State() string {
+func (s *WorkerNode) State() string {
 	s.L.Lock()
 	defer s.L.Unlock()
 
 	return s.state
 }
 
-func (s *SlaveNode) HumanReadableState() string {
+func (s *WorkerNode) HumanReadableState() string {
 	return humanreadableStates[s.state]
 }
 
-func (s *SlaveNode) HasFeature(file string) bool {
+func (s *WorkerNode) HasFeature(file string) bool {
 	s.featureL.Lock()
 	defer s.featureL.Unlock()
 	return s.features[file]
 }
 
-// These "doXState" functions are called when a SlaveNode enters a state. They are expected
+// These "doXState" functions are called when a WorkerNode enters a state. They are expected
 // to continue to execute until
 
 // "SUnbooted" represents the state where we do not yet have the PID
 // of a process to use for *this* node. In this state, we wait for the
 // parent process to spawn a process for us and hear back from the
-// SlaveMonitor.
-func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBooting, SCrashed}
+// WorkerMonitor.
+func (s *WorkerNode) doUnbootedState(monitor *WorkerMonitor) string { // -> {SBooting, SCrashed}
 	if s.Parent == nil {
 		s.L.Lock()
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
@@ -198,10 +198,10 @@ func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBoot
 		go s.babysitRootProcess(cmd)
 		s.L.Unlock()
 	} else {
-		s.Parent.RequestSlaveBoot(s)
+		s.Parent.RequestWorkerBoot(s)
 	}
 
-	<-s.event // sent by SlaveWasInitialized
+	<-s.event // sent by WorkerWasInitialized
 
 	s.L.Lock()
 	defer s.L.Unlock()
@@ -213,10 +213,10 @@ func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBoot
 
 // In "SBooting", we have a pid and socket to the process we will use,
 // but it has not yet finished initializing (generally, running the code
-// specific to this slave). When we receive a message about the success or
+// specific to this worker). When we receive a message about the success or
 // failure of this operation, we transition to either crashed or ready.
-func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
-	// The slave will execute its action and respond with a status...
+func (s *WorkerNode) doBootingState() string { // -> {SCrashed, SReady}
+	// The worker will execute its action and respond with a status...
 	// Note we don't hold the mutex while waiting for the action to execute.
 	msg, err := s.socket.ReadMessage()
 	if err != nil {
@@ -250,14 +250,14 @@ func (s *SlaveNode) doBootingState() string { // -> {SCrashed, SReady}
 }
 
 // In the "SReady" state, we have a functioning process we can spawn
-// new processes of of. We respond to requests to boot slaves and
+// new processes of of. We respond to requests to boot workers and
 // run commands until we receive a request to restart. This kills
 // the process and transitions to SUnbooted.
-func (s *SlaveNode) doReadyState() string { // -> SUnbooted
+func (s *WorkerNode) doReadyState() string { // -> SUnbooted
 	s.hasSuccessfullyBooted = true
 
 	// If we have a queued restart, service that rather than booting
-	// slaves or commands on potentially stale code.
+	// workers or commands on potentially stale code.
 	select {
 	case <-s.needsRestart:
 		s.doRestart()
@@ -270,8 +270,8 @@ func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 		case <-s.needsRestart:
 			s.doRestart()
 			return SUnbooted
-		case slave := <-s.slaveBootRequests:
-			s.bootSlave(slave)
+		case worker := <-s.workerBootRequests:
+			s.bootWorker(worker)
 		case request := <-s.commandBootRequests:
 			s.bootCommand(request)
 		}
@@ -279,11 +279,11 @@ func (s *SlaveNode) doReadyState() string { // -> SUnbooted
 }
 
 // In the "SCrashed" state, we have an error message from starting
-// a process to propogate to the user and all slave nodes. We will
+// a process to propogate to the user and all worker nodes. We will
 // continue propogating the error until we receive a request to restart.
-func (s *SlaveNode) doCrashedState() string { // -> SUnbooted
+func (s *WorkerNode) doCrashedState() string { // -> SUnbooted
 	// If we have a queued restart, service that rather than booting
-	// slaves or commands on potentially stale code.
+	// workers or commands on potentially stale code.
 	select {
 	case <-s.needsRestart:
 		s.doRestart()
@@ -296,11 +296,11 @@ func (s *SlaveNode) doCrashedState() string { // -> SUnbooted
 		case <-s.needsRestart:
 			s.doRestart()
 			return SUnbooted
-		case slave := <-s.slaveBootRequests:
-			slave.L.Lock()
-			slave.Error = s.Error
-			slave.ReportBootEvent()
-			slave.L.Unlock()
+		case worker := <-s.workerBootRequests:
+			worker.L.Lock()
+			worker.Error = s.Error
+			worker.ReportBootEvent()
+			worker.L.Unlock()
 		case request := <-s.commandBootRequests:
 			s.L.Lock()
 			s.trace("reporting crash to command %v", request)
@@ -310,35 +310,35 @@ func (s *SlaveNode) doCrashedState() string { // -> SUnbooted
 	}
 }
 
-func (s *SlaveNode) doRestart() {
+func (s *WorkerNode) doRestart() {
 	s.L.Lock()
 	s.ForceKill()
 	s.wipe()
 	s.L.Unlock()
 
-	// Drain and ignore any enqueued slave boot requests since
+	// Drain and ignore any enqueued worker boot requests since
 	// we're going to make them all restart again anyway.
 	drained := false
 	for !drained {
 		select {
-		case <-s.slaveBootRequests:
+		case <-s.workerBootRequests:
 		default:
 			drained = true
 		}
 	}
 
-	for _, slave := range s.Slaves {
-		slave.RequestRestart()
+	for _, worker := range s.Workers {
+		worker.RequestRestart()
 	}
 }
 
-func (s *SlaveNode) bootSlave(slave *SlaveNode) {
+func (s *WorkerNode) bootWorker(worker *WorkerNode) {
 	s.L.Lock()
 	defer s.L.Unlock()
 
-	s.trace("now sending slave boot request for %s", slave.Name)
+	s.trace("now sending worker boot request for %s", worker.Name)
 
-	msg := messages.CreateSpawnSlaveMessage(slave.Name)
+	msg := messages.CreateSpawnWorkerMessage(worker.Name)
 	_, err := s.socket.WriteMessage(msg)
 	if err != nil {
 		slog.Error(err)
@@ -346,9 +346,9 @@ func (s *SlaveNode) bootSlave(slave *SlaveNode) {
 }
 
 // This unfortunately holds the mutex for a little while, and if the
-// command dies super early, the entire slave pretty well deadlocks.
+// command dies super early, the entire worker pretty well deadlocks.
 // TODO: review this.
-func (s *SlaveNode) bootCommand(request *CommandRequest) {
+func (s *WorkerNode) bootCommand(request *CommandRequest) {
 	s.L.Lock()
 	defer s.L.Unlock()
 
@@ -372,18 +372,18 @@ func (s *SlaveNode) bootCommand(request *CommandRequest) {
 	request.Retchan <- &CommandReply{s.state, commandFile}
 }
 
-func (s *SlaveNode) ForceKill() {
+func (s *WorkerNode) ForceKill() {
 	// note that we don't try to lock the mutex.
 	s.forceKillPid(s.pid)
 }
 
-func (s *SlaveNode) wipe() {
+func (s *WorkerNode) wipe() {
 	s.pid = 0
 	s.socket = nil
 	s.Error = ""
 }
 
-func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
+func (s *WorkerNode) babysitRootProcess(cmd *exec.Cmd) {
 	// We want to let this process run "forever", but it will eventually
 	// die... either on program termination or when its dependencies change
 	// and we kill it. when it's requested to restart, err is "signal 9",
@@ -419,7 +419,7 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 // We want to make this the single interface point with the socket.
 // we want to republish unneeded messages to channels so other modules
 //can pick them up. (notably, clienthandler.)
-func (s *SlaveNode) handleMessages(featurePipe *os.File) {
+func (s *WorkerNode) handleMessages(featurePipe *os.File) {
 	reader := bufio.NewReader(featurePipe)
 	for {
 		if msg, err := reader.ReadString('\n'); err != nil {
@@ -434,7 +434,7 @@ func (s *SlaveNode) handleMessages(featurePipe *os.File) {
 	}
 }
 
-func (s *SlaveNode) forceKillPid(pid int) error {
+func (s *WorkerNode) forceKillPid(pid int) error {
 	if pid <= 0 {
 		return nil
 	}
@@ -475,7 +475,7 @@ func (s *SlaveNode) forceKillPid(pid int) error {
 	}
 }
 
-func (s *SlaveNode) trace(format string, args ...interface{}) {
+func (s *WorkerNode) trace(format string, args ...interface{}) {
 	if !slog.TraceEnabled() {
 		return
 	}

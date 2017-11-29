@@ -11,7 +11,7 @@ import (
 	"github.com/burke/zeus/go/unixsocket"
 )
 
-type SlaveMonitor struct {
+type WorkerMonitor struct {
 	tree             *ProcessTree
 	remoteMasterFile *os.File
 }
@@ -21,7 +21,7 @@ func Error(err string) {
 	println(err)
 }
 
-func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan bool) chan bool {
+func StartWorkerMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		localMasterFile, remoteMasterFile, err := unixsocket.Socketpair(syscall.SOCK_DGRAM)
@@ -29,7 +29,7 @@ func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan
 			Error("Couldn't create socketpair")
 		}
 
-		monitor := &SlaveMonitor{tree, remoteMasterFile}
+		monitor := &WorkerMonitor{tree, remoteMasterFile}
 		defer monitor.cleanupChildren()
 
 		localMasterSocket, err := unixsocket.NewFromFile(localMasterFile)
@@ -49,8 +49,8 @@ func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan
 			}
 		}()
 
-		for _, slave := range monitor.tree.SlavesByName {
-			go slave.Run(monitor)
+		for _, worker := range monitor.tree.WorkersByName {
+			go worker.Run(monitor)
 		}
 
 		for {
@@ -59,7 +59,7 @@ func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan
 				done <- true
 				return
 			case fd := <-registeringFds:
-				go monitor.slaveDidBeginRegistration(fd)
+				go monitor.workerDidBeginRegistration(fd)
 			case files := <-fileChanges:
 				if len(files) > 0 {
 					tree.RestartNodesWithFeatures(files)
@@ -70,39 +70,39 @@ func StartSlaveMonitor(tree *ProcessTree, fileChanges <-chan []string, done chan
 	return quit
 }
 
-func (mon *SlaveMonitor) cleanupChildren() {
-	for _, slave := range mon.tree.SlavesByName {
-		slave.ForceKill()
+func (mon *WorkerMonitor) cleanupChildren() {
+	for _, worker := range mon.tree.WorkersByName {
+		worker.ForceKill()
 	}
 }
 
-func (mon *SlaveMonitor) slaveDidBeginRegistration(fd int) {
+func (mon *WorkerMonitor) workerDidBeginRegistration(fd int) {
 	// Having just started the process, we expect an IO, which we convert to a UNIX domain socket
 	fileName := strconv.Itoa(rand.Int())
-	slaveFile := os.NewFile(uintptr(fd), fileName)
-	slaveUsock, err := unixsocket.NewFromFile(slaveFile)
+	workerFile := os.NewFile(uintptr(fd), fileName)
+	workerUsock, err := unixsocket.NewFromFile(workerFile)
 	if err != nil {
 		slog.Error(err)
 	}
 
-	// We now expect the slave to use this fd they send us to send a Pid&Identifier Message
-	msg, err := slaveUsock.ReadMessage()
+	// We now expect the worker to use this fd they send us to send a Pid&Identifier Message
+	msg, err := workerUsock.ReadMessage()
 	if err != nil {
 		slog.Error(err)
 	}
 	pid, parentPid, identifier, err := messages.ParsePidMessage(msg)
 
-	// And the last step before executing its action, the slave sends us a pipe it will later use to
+	// And the last step before executing its action, the worker sends us a pipe it will later use to
 	// send us all the features it's loaded.
-	featurePipeFd, err := slaveUsock.ReadFD()
+	featurePipeFd, err := workerUsock.ReadFD()
 	if err != nil {
 		slog.Error(err)
 	}
 
-	slaveNode := mon.tree.FindSlaveByName(identifier)
-	if slaveNode == nil {
-		Error("slavemonitor.go:slaveDidBeginRegistration:Unknown identifier:" + identifier)
+	workerNode := mon.tree.FindWorkerByName(identifier)
+	if workerNode == nil {
+		Error("workermonitor.go:workerDidBeginRegistration:Unknown identifier:" + identifier)
 	}
 
-	slaveNode.SlaveWasInitialized(pid, parentPid, slaveUsock, featurePipeFd)
+	workerNode.WorkerWasInitialized(pid, parentPid, workerUsock, featurePipeFd)
 }

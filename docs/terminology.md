@@ -4,6 +4,6 @@
 
 * the Master is the Go program which mediates all the interaction between the other processes
 
-* a Slave is a process managed by Zeus which is used to load dependencies for commands
+* a Worker is a process managed by Zeus which is used to load dependencies for commands
 
-* a Command process is one forked from a Slave and connected to a Client
+* a Command process is one forked from a Worker and connected to a Client

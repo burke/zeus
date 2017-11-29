@@ -55,7 +55,7 @@ module Zeus
     def boot_steps(identifier)
       while true
         boot_step = catch(:boot_step) do
-          $0 = "zeus slave: #{identifier}"
+          $0 = "zeus worker: #{identifier}"
 
           setup_dummy_tty!
           master = setup_master_socket!
@@ -79,9 +79,9 @@ module Zeus
           while true
             messages = local.recv(2**16)
 
-            # Reap any child runners or slaves that might have exited in
+            # Reap any child runners or workers that might have exited in
             # the meantime. Note that reaping them like this can leave <=1
-            # zombie process per slave around while the slave waits for a
+            # zombie process per worker around while the worker waits for a
             # new command.
             children.each do |pid|
               children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)

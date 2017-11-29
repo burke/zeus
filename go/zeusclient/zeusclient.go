@@ -192,15 +192,15 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 }
 
 func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
-	master, slave, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
+	master, worker, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
 	if err != nil {
 		return err
 	}
-	usock.WriteFD(int(slave.Fd()))
+	usock.WriteFD(int(worker.Fd()))
 	if err != nil {
 		return err
 	}
-	slave.Close()
+	worker.Close()
 
 	go func() {
 		defer master.Close()
