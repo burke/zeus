@@ -34,7 +34,7 @@ describe Zeus do
 
     it 'boots and tracks features' do
       coordinator_r, coordinator_w = UNIXSocket.pair(Socket::SOCK_STREAM)
-      ENV['ZEUS_COORDINTOR_FD'] = coordinator_w.to_i.to_s
+      ENV['ZEUS_COORDINATOR_FD'] = coordinator_w.to_i.to_s
 
       thr = Thread.new do
         begin

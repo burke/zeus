@@ -39,7 +39,7 @@ module Zeus
       return coordinator_socket if coordinator_socket
 
       # compatibility in case someone ends up with a new ruby but an old zeus
-      fd = (ENV['ZEUS_COORDINATOR_FD'] || ENV['ZEUS_MASTER_FD')].to_i
+      fd = (ENV['ZEUS_COORDINATOR_FD'] || ENV['ZEUS_MASTER_FD']).to_i
       self.coordinator_socket = UNIXSocket.for_fd(fd)
     end
 
