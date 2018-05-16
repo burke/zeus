@@ -46,7 +46,7 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 		for {
 			select {
 			case <-quit:
-				_ = listener.Close()
+				listener.Close()
 				done <- true
 				return
 			case conn := <-connections:
