@@ -94,12 +94,12 @@ func parseConfig(configFile string) (c config) {
 
 	contents, err := readConfigFileOrDefault(configFile)
 	if err != nil {
-		zerror.ErrorConfigFileInvalidJson()
+		zerror.ErrorConfigFileInvalidJSON()
 	}
 
 	err = json.Unmarshal(contents, &conf)
 	if err != nil {
-		zerror.ErrorConfigFileInvalidJson()
+		zerror.ErrorConfigFileInvalidJSON()
 	}
 	return conf
 }
