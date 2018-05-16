@@ -18,6 +18,7 @@ type config struct {
 	Items   map[string]string
 }
 
+// BuildProcessTree builds the process tree.
 func BuildProcessTree(configFile string, monitor filemonitor.FileMonitor) *processtree.ProcessTree {
 	conf := parseConfig(configFile)
 	tree := &processtree.ProcessTree{}
@@ -96,7 +97,10 @@ func parseConfig(configFile string) (c config) {
 		zerror.ErrorConfigFileInvalidJson()
 	}
 
-	json.Unmarshal(contents, &conf)
+	err = json.Unmarshal(contents, &conf)
+	if err != nil {
+		zerror.ErrorConfigFileInvalidJson()
+	}
 	return conf
 }
 
