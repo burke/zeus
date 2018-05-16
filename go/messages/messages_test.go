@@ -12,3 +12,17 @@ func TestCreateCommandAndArgumentsMessage(t *testing.T) {
 		t.Fatal(message)
 	}
 }
+
+func TestCreateSpawnSlaveMessage(t *testing.T) {
+	message := messages.CreateSpawnSlaveMessage("decimate")
+	if message != "S:decimate" {
+		t.Fatal(message)
+	}
+}
+
+func TestCreateSpawnCommandMessage(t *testing.T) {
+	message := messages.CreateSpawnCommandMessage("decimate")
+	if message != "C:decimate" {
+		t.Fatal(message)
+	}
+}
