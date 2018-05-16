@@ -424,12 +424,13 @@ func (s *SlaveNode) handleMessages(featurePipe *os.File) {
 	for {
 		if msg, err := reader.ReadString('\n'); err != nil {
 			return
+		} else {
+			msg = strings.TrimRight(msg, "\n")
+			s.featureL.Lock()
+			s.features[msg] = true
+			s.featureL.Unlock()
+			s.fileMonitor.Add(msg)
 		}
-		msg = strings.TrimRight(msg, "\n")
-		s.featureL.Lock()
-		s.features[msg] = true
-		s.featureL.Unlock()
-		s.fileMonitor.Add(msg)
 	}
 }
 
