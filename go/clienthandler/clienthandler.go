@@ -2,6 +2,7 @@ package clienthandler
 
 import (
 	"errors"
+	"io"
 	"math/rand"
 	"net"
 	"os"
@@ -16,6 +17,7 @@ import (
 	"github.com/burke/zeus/go/zerror"
 )
 
+// Start boosts the process tree.
 func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
@@ -44,7 +46,7 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 		for {
 			select {
 			case <-quit:
-				listener.Close()
+				_ = listener.Close()
 				done <- true
 				return
 			case conn := <-connections:
@@ -69,15 +71,20 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	command = commandNode.Name // resolve aliases
 
 	clientFile, err := receiveTTY(usock, err)
-	defer clientFile.Close()
-
-	stderrFile, err := receiveTTY(usock, err)
-	defer stderrFile.Close()
 
 	if err == nil && slaveNode.Error != "" {
 		writeStacktrace(usock, slaveNode, clientFile)
 		return
 	}
+	defer clientFile.Close()
+
+	stderrFile, err := receiveTTY(usock, err)
+
+	if err == nil && slaveNode.Error != "" {
+		writeStacktrace(usock, slaveNode, clientFile)
+		return
+	}
+	defer stderrFile.Close()
 
 	commandUsock, err := bootNewCommand(slaveNode, command, err)
 	if err != nil {
@@ -110,7 +117,7 @@ func handleClientConnection(tree *processtree.ProcessTree, usock *unixsocket.Uso
 	// Done! Hooray!
 }
 
-func writeStacktrace(usock *unixsocket.Usock, slaveNode *processtree.SlaveNode, clientFile *os.File) {
+func writeStacktrace(usock *unixsocket.Usock, slaveNode *processtree.SlaveNode, clientFile io.Writer) {
 	// Fake process ID / output / error codes:
 	// Write a fake pid (step 6)
 	usock.WriteMessage("0")
@@ -123,7 +130,7 @@ func writeStacktrace(usock *unixsocket.Usock, slaveNode *processtree.SlaveNode, 
 func receiveFileFromFD(usock *unixsocket.Usock) (*os.File, error) {
 	clientFd, err := usock.ReadFD()
 	if err != nil {
-		return nil, errors.New("Expected FD, none received!")
+		return nil, errors.New("Expected FD none received")
 	}
 	fileName := strconv.Itoa(rand.Int())
 	return os.NewFile(uintptr(clientFd), fileName), nil
@@ -157,7 +164,6 @@ func findCommandAndSlaveNodes(tree *processtree.ProcessTree, command string, err
 	if commandNode == nil {
 		return nil, nil, errors.New("ERROR: Node not found!: " + command)
 	}
-	command = commandNode.Name
 	slaveNode := commandNode.Parent
 
 	return commandNode, slaveNode, nil
