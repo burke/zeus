@@ -440,7 +440,7 @@ func (s *SlaveNode) forceKillPid(pid int) error {
 	}
 
 	if err := syscall.Kill(pid, syscall.SIGTERM); err != nil {
-		err = fmt.Errorf("Error killing pid %q: %v", pid, err)
+		err = fmt.Errorf("error killing pid %q: %v", pid, err)
 		s.trace(err.Error())
 		return err
 	}
@@ -464,7 +464,7 @@ func (s *SlaveNode) forceKillPid(pid int) error {
 	select {
 	case err := <-exited:
 		if err != nil && err != syscall.ESRCH {
-			err = fmt.Errorf("Error sending signal to pid %q: %v", pid, err)
+			err = fmt.Errorf("error sending signal to pid %q: %v", pid, err)
 			s.trace(err.Error())
 			return err
 		}

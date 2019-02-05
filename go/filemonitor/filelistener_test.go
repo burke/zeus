@@ -124,7 +124,7 @@ func checkWrite(files <-chan []string, conn net.Conn) error {
 	for i, want := range cases {
 		conn.SetWriteDeadline(time.Now().Add(100 * time.Millisecond))
 		if _, err := conn.Write([]byte(want + "\n")); err != nil {
-			return fmt.Errorf("Error writing %d: %v", i, err)
+			return fmt.Errorf("error writing %d: %v", i, err)
 		}
 	}
 
