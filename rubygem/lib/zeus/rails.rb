@@ -95,6 +95,7 @@ module Zeus
 
     def default_bundle
       Bundler.require(:default)
+      require 'zeus/pry' if defined?(Pry)
       Zeus::LoadTracking.add_feature('./Gemfile.lock')
     end
 

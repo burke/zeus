@@ -1,6 +1,5 @@
-begin
-  require "pry"
-
+# Only patch Pry if it is loaded by the app.
+if defined?(Pry::Pager)
   class Pry::Pager
     def best_available
       # Versions of Pry prior to 0.13 define `Pry::Pager#_pry_`
@@ -10,7 +9,4 @@ begin
       NullPager.new(pry.output)
     end
   end
-
-rescue LoadError => e
-  # pry is not available, so no need to patch it
 end
