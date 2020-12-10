@@ -54,7 +54,7 @@ func ErrorConfigCommandCrashed(output string) {
 // The config file is loaded before any goroutines are launched that require cleanup,
 // and our exitNow goroutine has not been spawned yet, so we will just explicitly exit
 // in the json-related errors..
-func ErrorConfigFileInvalidJson() {
+func ErrorConfigFileInvalidJSON() {
 	if slog.Red("The config file {yellow}zeus.json{red} contains invalid JSON and could not be parsed.") {
 		os.Exit(1)
 	}

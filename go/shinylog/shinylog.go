@@ -213,7 +213,7 @@ func (l *ShinyLogger) colorized(callDepth int, msg string, options loggerOptions
 		msg = l.formatColors(msg)
 
 		if l == DefaultLogger() {
-			callDepth += 1 // this was called through a proxy method
+			callDepth++ // this was called through a proxy method
 		}
 		if options.isError {
 			if options.includeLocation {

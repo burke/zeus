@@ -38,7 +38,7 @@ func NewFromFile(f *os.File) (*Usock, error) {
 
 	unixConn, ok := fileConn.(*net.UnixConn)
 	if !ok {
-		return nil, errors.New(fmt.Sprintf("unexpected FileConn type; expected UnixConn, got %T", unixConn))
+		return nil, fmt.Errorf("unexpected FileConn type; expected UnixConn, got %T", unixConn)
 	}
 
 	return New(unixConn), nil

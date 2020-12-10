@@ -54,9 +54,8 @@ func Run(configFile string, fileChangeDelay time.Duration, simpleStatus bool) in
 		case sig := <-c:
 			if sig == syscall.SIGINT {
 				return 0
-			} else {
-				return 1
 			}
+			return 1
 		}
 	}
 }

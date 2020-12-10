@@ -18,7 +18,7 @@ import (
 	"github.com/burke/zeus/go/zeusversion"
 )
 
-var color bool = true
+var color = true
 
 func main() {
 	args := os.Args[1:]
