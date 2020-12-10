@@ -1,5 +1,5 @@
 {
-  "command": "ruby -rubygems -rzeus/rails -eZeus.go",
+  "command": "ruby -rrubygems -rzeus/rails -eZeus.go",
 
   "plan": {
     "boot": {
