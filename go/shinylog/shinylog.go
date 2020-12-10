@@ -131,7 +131,7 @@ func (l *ShinyLogger) ColorizedSansNl(msg string) (printed bool) {
 }
 
 // If we send SIGTERM rather than explicitly exiting,
-// the signal can be handled and the master can clean up.
+// the signal can be handled and the coordinator can clean up.
 // This is a workaround for Go not having `atexit` :(.
 func terminate() {
 	proc, _ := os.FindProcess(os.Getpid())

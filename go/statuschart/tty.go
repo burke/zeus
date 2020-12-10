@@ -57,7 +57,7 @@ func (s *StatusChart) draw() {
 
 	if s.drawnInitial {
 		lengthOfOutput := s.lengthOfOutput()
-		numberOfOutputLines := s.numberOfSlaves + len(s.Commands) + lengthOfOutput + 3
+		numberOfOutputLines := s.numberOfWorkers + len(s.Commands) + lengthOfOutput + 3
 		fmt.Printf("\033[%dA", numberOfOutputLines)
 	} else {
 		s.drawnInitial = true
@@ -66,7 +66,7 @@ func (s *StatusChart) draw() {
 	log := theChart.directLogger
 
 	log.Colorized("\x1b[4m{green}[ready] {red}[crashed] {blue}[running] {magenta}[connecting] {yellow}[waiting]\033[K")
-	s.drawSubtree(s.RootSlave, "", "")
+	s.drawSubtree(s.RootWorker, "", "")
 
 	log.Colorized("\033[K\n\x1b[4mAvailable Commands: {yellow}[waiting] {red}[crashed] {green}[ready]\033[K")
 	s.drawCommands()
@@ -127,14 +127,14 @@ func (s *StatusChart) drawCommands() {
 	}
 }
 
-func (s *StatusChart) drawSubtree(node *processtree.SlaveNode, myIndentation, childIndentation string) {
+func (s *StatusChart) drawSubtree(node *processtree.WorkerNode, myIndentation, childIndentation string) {
 	printStateInfo(myIndentation, node.Name, node.State(), false, true)
 
-	for i, slave := range node.Slaves {
-		if i == len(node.Slaves)-1 {
-			s.drawSubtree(slave, childIndentation+lineL, childIndentation+lineX)
+	for i, worker := range node.Workers {
+		if i == len(node.Workers)-1 {
+			s.drawSubtree(worker, childIndentation+lineL, childIndentation+lineX)
 		} else {
-			s.drawSubtree(slave, childIndentation+lineT, childIndentation+lineI)
+			s.drawSubtree(worker, childIndentation+lineT, childIndentation+lineI)
 		}
 	}
 }

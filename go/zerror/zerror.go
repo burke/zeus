@@ -33,8 +33,8 @@ func Error(msg string) {
 	})
 }
 
-func ErrorCantConnectToMaster() {
-	slog.StdErrorString("Can't connect to master. Run {yellow}zeus start{red} first.\r")
+func ErrorCantConnectToCoordinator() {
+	slog.StdErrorString("Can't connect to coordinator. Run {yellow}zeus start{red} first.\r")
 }
 
 func ErrorConfigCommandCouldntStart(msg, output string) {

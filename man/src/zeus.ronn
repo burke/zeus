@@ -13,7 +13,7 @@ To use Zeus with Ruby on Rails 3.0+, Just run `zeus start` in your
 project directory. It will output a list of available commands, including
 tasks to spawn consoles, servers, tests, and rake tasks.
 
-See `https://github.com/burke/zeus/blob/master/docs/ruby/modifying.md`
+See `https://github.com/burke/zeus/blob/coordinator/docs/ruby/modifying.md`
 for information on modifying the boot process that Zeus uses by default
 and adding custom tasks.
 
@@ -41,7 +41,7 @@ parts of it when dependencies change, to keep everything up-to-date.
 
 ## WAY MORE TECHNICAL DESCRIPTION
 
-See `https://github.com/burke/zeus/blob/master/docs/overview.md`
+See `https://github.com/burke/zeus/blob/coordinator/docs/overview.md`
 
 ## OPTIONS
 

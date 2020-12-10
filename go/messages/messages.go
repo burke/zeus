@@ -46,7 +46,7 @@ func ParseActionResponseMessage(msg string) (string, error) {
 	return parts[1], nil
 }
 
-func CreateSpawnSlaveMessage(identifier string) string {
+func CreateSpawnWorkerMessage(identifier string) string {
 	return "S:" + identifier
 }
 

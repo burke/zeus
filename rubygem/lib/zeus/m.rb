@@ -25,7 +25,7 @@ module Zeus
   #
   #[![m ci](https://secure.travis-ci.org/qrush/m.png)](http://travis-ci.org/qrush/m)
   #
-  #![Rush is a heavy metal band. Look it up on Wikipedia.](https://raw.github.com/qrush/m/master/rush.jpg)
+  #![Rush is a heavy metal band. Look it up on Wikipedia.](https://raw.github.com/qrush/m/coordinator/rush.jpg)
   #
   #<sub>[Rush at the Bristol Colston Hall May 1979](http://www.flickr.com/photos/8507625@N02/3468299995/)</sub>
   ### Install

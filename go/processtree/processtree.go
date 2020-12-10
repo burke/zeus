@@ -5,16 +5,16 @@ import (
 )
 
 type ProcessTree struct {
-	Root         *SlaveNode
-	ExecCommand  string
-	SlavesByName map[string]*SlaveNode
-	Commands     []*CommandNode
-	StateChanged chan bool
+	Root          *WorkerNode
+	ExecCommand   string
+	WorkersByName map[string]*WorkerNode
+	Commands      []*CommandNode
+	StateChanged  chan bool
 }
 
 type ProcessTreeNode struct {
 	mu     sync.RWMutex
-	Parent *SlaveNode
+	Parent *WorkerNode
 	Name   string
 }
 
@@ -24,7 +24,7 @@ type CommandNode struct {
 	Aliases []string
 }
 
-func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *SlaveNode) *CommandNode {
+func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *WorkerNode) *CommandNode {
 	x := &CommandNode{}
 	x.Parent = parent
 	x.Name = name
@@ -33,11 +33,11 @@ func (tree *ProcessTree) NewCommandNode(name string, aliases []string, parent *S
 	return x
 }
 
-func (tree *ProcessTree) FindSlaveByName(name string) *SlaveNode {
+func (tree *ProcessTree) FindWorkerByName(name string) *WorkerNode {
 	if name == "" {
 		return tree.Root
 	}
-	return tree.SlavesByName[name]
+	return tree.WorkersByName[name]
 }
 
 func (tree *ProcessTree) FindCommand(requested string) *CommandNode {
@@ -75,7 +75,7 @@ func (tree *ProcessTree) RestartNodesWithFeatures(files []string) {
 }
 
 // Serialized: restartMutex is always held when this is called.
-func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files []string) {
+func (node *WorkerNode) restartNodesWithFeatures(tree *ProcessTree, files []string) {
 	for _, file := range files {
 		if node.HasFeature(file) {
 			node.trace("restarting for %q", file)
@@ -83,7 +83,7 @@ func (node *SlaveNode) restartNodesWithFeatures(tree *ProcessTree, files []strin
 			return
 		}
 	}
-	for _, s := range node.Slaves {
+	for _, s := range node.Workers {
 		s.restartNodesWithFeatures(tree, files)
 	}
 }

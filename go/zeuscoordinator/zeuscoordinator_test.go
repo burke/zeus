@@ -1,4 +1,4 @@
-package zeusmaster_test
+package zeuscoordinator_test
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ import (
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/unixsocket"
 	"github.com/burke/zeus/go/zeusclient"
-	"github.com/burke/zeus/go/zeusmaster"
+	"github.com/burke/zeus/go/zeuscoordinator"
 )
 
 var testFiles = map[string]string{
@@ -197,7 +197,7 @@ func TestZeusBoots(t *testing.T) {
 	enableTracing()
 	zexit := make(chan int)
 	go func() {
-		zexit <- zeusmaster.Run(filepath.Join(dir, "zeus.json"), filemonitor.DefaultFileChangeDelay, false)
+		zexit <- zeuscoordinator.Run(filepath.Join(dir, "zeus.json"), filemonitor.DefaultFileChangeDelay, false)
 	}()
 
 	expects := map[string]string{
@@ -277,7 +277,7 @@ func TestZeusBoots(t *testing.T) {
 		t.Errorf("expected stderr %q, got %q", want, have)
 	}
 
-	// The zeusmaster catches the interrupt and exits gracefully
+	// The zeuscoordinator catches the interrupt and exits gracefully
 	me.Signal(os.Interrupt)
 	if code := <-zexit; code != 0 {
 		t.Fatalf("Zeus exited with %d", code)

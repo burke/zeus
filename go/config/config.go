@@ -21,7 +21,7 @@ type config struct {
 func BuildProcessTree(configFile string, monitor filemonitor.FileMonitor) *processtree.ProcessTree {
 	conf := parseConfig(configFile)
 	tree := &processtree.ProcessTree{}
-	tree.SlavesByName = make(map[string]*processtree.SlaveNode)
+	tree.WorkersByName = make(map[string]*processtree.WorkerNode)
 	tree.StateChanged = make(chan bool, 16)
 
 	tree.ExecCommand = conf.Command
@@ -39,15 +39,15 @@ func iteratePlan(
 	tree *processtree.ProcessTree,
 	plan map[string]interface{},
 	monitor filemonitor.FileMonitor,
-	parent *processtree.SlaveNode,
+	parent *processtree.WorkerNode,
 ) {
 	for name, v := range plan {
 		if subPlan, ok := v.(map[string]interface{}); ok {
-			newNode := tree.NewSlaveNode(name, parent, monitor)
+			newNode := tree.NewWorkerNode(name, parent, monitor)
 			if parent == nil {
 				tree.Root = newNode
 			} else {
-				parent.Slaves = append(parent.Slaves, newNode)
+				parent.Workers = append(parent.Workers, newNode)
 			}
 			iteratePlan(tree, subPlan, monitor, newNode)
 		} else {
