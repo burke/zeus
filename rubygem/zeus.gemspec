@@ -29,5 +29,5 @@ Gem::Specification.new do |gem|
 
   gem.add_runtime_dependency "method_source", ">= 0.6.7"
 
-  gem.add_development_dependency "bundler", '~> 1.6'
+  gem.add_development_dependency "bundler", '~> 2.3'
 end
