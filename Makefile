@@ -11,7 +11,7 @@ VAGRANT_SRC=$(shell find vagrant -name '*.rb')
 
 ifeq ($(shell uname -s),Darwin)
 	VAGRANT_WRAPPERS += vagrant/build/fsevents-wrapper
-	BINARIES += zeus-darwin-amd64
+	BINARIES += zeus-darwin-amd64 zeus-darwin-arm64
 endif
 
 CXX=g++
@@ -69,6 +69,7 @@ vagrant/ext/fsevents/build/Release/fsevents-wrapper: vagrant/ext/fsevents/main.m
 rubygem/build/zeus-%: go/zeusversion/zeusversion.go install-gox $(GO_SRC)
 	mkdir -p rubygem/build
 	gox -osarch="$(subst -,/,$*)" \
+		$(shell if grep -q darwin <<<"$*"; then echo '-cgo'; fi) \
 		-output="rubygem/build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
