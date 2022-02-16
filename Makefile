@@ -66,9 +66,8 @@ vagrant/build/fsevents-wrapper: vagrant/ext/fsevents/build/Release/fsevents-wrap
 vagrant/ext/fsevents/build/Release/fsevents-wrapper: vagrant/ext/fsevents/main.m
 	cd vagrant/ext/fsevents && xcodebuild
 
-rubygem/build/zeus-%: go/zeusversion/zeusversion.go $(GO_SRC)
+rubygem/build/zeus-%: go/zeusversion/zeusversion.go install-gox $(GO_SRC)
 	mkdir -p rubygem/build
-	go get github.com/mitchellh/gox
 	gox -osarch="$(subst -,/,$*)" \
 		-output="rubygem/build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
@@ -92,6 +91,9 @@ install: $(GEM)
 
 Gemfile.lock: Gemfile bundler
 	bundle check || bundle install
+
+install-gox:
+	go install github.com/mitchellh/gox@latest
 
 clean:
 	rm -rf vagrant/ext/fsevents/build man/build go/zeusversion
