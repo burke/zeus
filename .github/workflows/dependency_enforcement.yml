@@ -1,0 +1,21 @@
+# For most projects, this workflow file will not need changing; you simply need
+# to commit it to your repository.
+#
+# Reach out on Slack at '#secrity-support' to get help.
+# Link to the action: https://github.com/actions/dependency-review-action
+
+name: "Dependency Review"
+on: [pull_request]
+permissions:
+  contents: read
+jobs:
+  dependency-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout Repository"
+        uses: actions/checkout@v3
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v3
+        with:
+          fail-on-severity: critical
+          
