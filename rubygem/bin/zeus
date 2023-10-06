@@ -2,9 +2,10 @@
 platform = `uname -sm`
 
 exe = case platform
-      when /^Darwin/    ; "zeus-darwin-amd64"
-      when /^Linux.*64/ ; "zeus-linux-amd64"
-      when /^Linux.*/   ; "zeus-linux-386"
+      when /^Darwin.*arm64/; "zeus-darwin-arm64"
+      when /^Darwin/       ; "zeus-darwin-amd64"
+      when /^Linux.*64/    ; "zeus-linux-amd64"
+      when /^Linux.*/      ; "zeus-linux-386"
       else
         puts "Zeus is not supported on your platform."
         puts "It's not likely to ever be possible on Windows."

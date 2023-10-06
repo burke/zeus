@@ -40,7 +40,7 @@ describe Zeus do
         begin
           Zeus.go
         rescue Interrupt
-          return
+          next
         rescue => e
           STDERR.puts "Zeus terminated with exception: #{e.message}"
           STDERR.puts e.backtrace.map {|line| " #{line}"}

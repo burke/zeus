@@ -11,24 +11,27 @@ VAGRANT_SRC=$(shell find vagrant -name '*.rb')
 
 ifeq ($(shell uname -s),Darwin)
 	VAGRANT_WRAPPERS += vagrant/build/fsevents-wrapper
-	BINARIES += zeus-darwin-amd64
+	BINARIES += zeus-darwin-amd64 zeus-darwin-arm64
 endif
 
 CXX=g++
 CXXFLAGS=-O3 -g -Wall
 
-.PHONY: default all clean fmt test test-go test-rubygem install govendor bundler
+.PHONY: default all clean fmt test test-go test-rubygem install mod-download bundler
 default: all
 
 all: test fmt man/build $(GEM) $(VAGRANT_PLUGIN)
 
-fmt: govendor
-	govendor fmt +local
+mod-download:
+	go mod download
+
+fmt:
+	go fmt ./...
 
 test: test-go test-rubygem
 
-test-go: go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb govendor
-	ZEUS_TEST_GEMPATH="$(GEMPATH)" GO15VENDOREXPERIMENT=1 govendor test +local
+test-go: go/zeusversion/zeusversion.go rubygem/lib/zeus/version.rb mod-download
+	ZEUS_TEST_GEMPATH="$(GEMPATH)" go test ./...
 
 test-rubygem: rubygem/lib/zeus/version.rb rubygem/Gemfile.lock
 	cd rubygem && bin/rspec
@@ -63,10 +66,10 @@ vagrant/build/fsevents-wrapper: vagrant/ext/fsevents/build/Release/fsevents-wrap
 vagrant/ext/fsevents/build/Release/fsevents-wrapper: vagrant/ext/fsevents/main.m
 	cd vagrant/ext/fsevents && xcodebuild
 
-rubygem/build/zeus-%: go/zeusversion/zeusversion.go $(GO_SRC)
+rubygem/build/zeus-%: go/zeusversion/zeusversion.go install-gox $(GO_SRC)
 	mkdir -p rubygem/build
-	go get github.com/mitchellh/gox
-	GO15VENDOREXPERIMENT=1 gox -osarch="$(subst -,/,$*)" \
+	gox -osarch="$(subst -,/,$*)" \
+		$(shell if grep -q darwin <<<"$*"; then echo '-cgo'; fi) \
 		-output="rubygem/build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
@@ -90,13 +93,13 @@ install: $(GEM)
 Gemfile.lock: Gemfile bundler
 	bundle check || bundle install
 
+install-gox:
+	go install github.com/mitchellh/gox@latest
+
 clean:
 	rm -rf vagrant/ext/fsevents/build man/build go/zeusversion
 	rm -rf rubygem/{man,build,pkg,examples,lib/zeus/version.rb,MANIFEST}
 	rm -rf vagrant/{build,pkg,lib/vagrant-zeus/version.rb,MANIFEST}
-
-govendor:
-	go get github.com/kardianos/govendor
 
 bundler:
 	bundle -v || gem install bundler --no-rdoc --no-ri

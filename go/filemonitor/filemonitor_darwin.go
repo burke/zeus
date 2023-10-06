@@ -1,3 +1,4 @@
+//go:build darwin
 // +build darwin
 
 package filemonitor
@@ -25,7 +26,7 @@ func NewFileMonitor(fileChangeDelay time.Duration) (FileMonitor, error) {
 			Paths:   []string{},
 			Latency: fileChangeDelay,
 			Flags:   fsevents.FileEvents,
-			EventID: fsevents.EventIDSinceNow,
+			EventID: uint64(0xFFFFFFFFFFFFFFFF),
 		},
 		// Restarting FSEvents can take ~100ms so buffer adds
 		// in the channel so they can be grouped together.
