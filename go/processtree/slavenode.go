@@ -418,7 +418,7 @@ func (s *SlaveNode) babysitRootProcess(cmd *exec.Cmd) {
 
 // We want to make this the single interface point with the socket.
 // we want to republish unneeded messages to channels so other modules
-//can pick them up. (notably, clienthandler.)
+// can pick them up. (notably, clienthandler.)
 func (s *SlaveNode) handleMessages(featurePipe *os.File) {
 	reader := bufio.NewReader(featurePipe)
 	for {
