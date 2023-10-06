@@ -1,6 +1,16 @@
 # Next
 
-https://github.com/burke/zeus/compare/v0.15.14...master
+https://github.com/burke/zeus/compare/v0.16.0...master
+
+# 0.16.0
+
+https://github.com/burke/zeus/compare/v0.15.14...0.16.0
+
+* Add Apple Silicon (M1/M2) support (macOS 12+)
+* Drop 32-bit macOS support
+* Bump Ruby build version to 2.7
+* Improve pry integration
+* Support Rails 5
 
 # 0.15.14
 
