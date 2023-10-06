@@ -14,7 +14,7 @@ import (
 	"github.com/burke/zeus/go/filemonitor"
 	slog "github.com/burke/zeus/go/shinylog"
 	"github.com/burke/zeus/go/zeusclient"
-	"github.com/burke/zeus/go/zeusmaster"
+	"github.com/burke/zeus/go/zeuscoordinator"
 	"github.com/burke/zeus/go/zeusversion"
 )
 
@@ -79,7 +79,7 @@ func main() {
 	} else if args[0] == "version" {
 		printVersion()
 	} else if args[0] == "start" {
-		os.Exit(zeusmaster.Run(configFile, fileChangeDelay, simpleStatus))
+		os.Exit(zeuscoordinator.Run(configFile, fileChangeDelay, simpleStatus))
 	} else if args[0] == "init" {
 		zeusInit()
 	} else if args[0] == "commands" {
@@ -88,7 +88,7 @@ func main() {
 		tree := config.BuildProcessTree(configFile, nil)
 		for _, name := range tree.AllCommandsAndAliases() {
 			if args[0] == name {
-				// Don't confuse the master by sending *full* args to
+				// Don't confuse the coordinator by sending *full* args to
 				// it; just those that are not zeus-specific.
 				os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout, os.Stderr))
 			}

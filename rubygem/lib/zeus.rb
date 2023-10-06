@@ -16,7 +16,7 @@ require 'zeus/version'
 
 module Zeus
   class << self
-    attr_accessor :plan, :dummy_tty, :master_socket
+    attr_accessor :plan, :dummy_tty, :coordinator_socket
 
     # this is totally asinine, but readline gets super confused when it's
     # required at a time when stdin or stdout is not connected to a TTY,
@@ -26,19 +26,20 @@ module Zeus
     # Yup.
     def setup_dummy_tty!
       return if self.dummy_tty
-      master, self.dummy_tty = PTY.send(:open)
+      coordinator, self.dummy_tty = PTY.send(:open)
       Thread.new {
-        loop { master.read(1024) }
+        loop { coordinator.read(1024) }
       }
       STDIN.reopen(dummy_tty)
       STDOUT.reopen(dummy_tty)
     end
 
-    def setup_master_socket!
-      return master_socket if master_socket
+    def setup_coordinator_socket!
+      return coordinator_socket if coordinator_socket
 
-      fd = ENV['ZEUS_MASTER_FD'].to_i
-      self.master_socket = UNIXSocket.for_fd(fd)
+      # compatibility in case someone ends up with a new ruby but an old zeus
+      fd = (ENV['ZEUS_COORDINATOR_FD'] || ENV['ZEUS_MASTER_FD']).to_i
+      self.coordinator_socket = UNIXSocket.for_fd(fd)
     end
 
     def go(identifier=:boot)
@@ -54,17 +55,17 @@ module Zeus
     def boot_steps(identifier)
       while true
         boot_step = catch(:boot_step) do
-          $0 = "zeus slave: #{identifier}"
+          $0 = "zeus worker: #{identifier}"
 
           setup_dummy_tty!
-          master = setup_master_socket!
+          coordinator = setup_coordinator_socket!
           feature_pipe_r, feature_pipe_w = IO.pipe
 
-          # I need to give the master a way to talk to me exclusively
+          # I need to give the coordinator a way to talk to me exclusively
           local, remote = UNIXSocket.pair(Socket::SOCK_STREAM)
-          master.send_io(remote)
+          coordinator.send_io(remote)
 
-          # Now I need to tell the master about my PID and ID
+          # Now I need to tell the coordinator about my PID and ID
           local.write "P:#{Process.pid}:#{@parent_pid || 0}:#{identifier}\0"
           local.send_io(feature_pipe_r)
           feature_pipe_r.close
@@ -78,9 +79,9 @@ module Zeus
           while true
             messages = local.recv(2**16)
 
-            # Reap any child runners or slaves that might have exited in
+            # Reap any child runners or workers that might have exited in
             # the meantime. Note that reaping them like this can leave <=1
-            # zombie process per slave around while the slave waits for a
+            # zombie process per worker around while the worker waits for a
             # new command.
             children.each do |pid|
               children.delete(pid) if Process.waitpid(pid, Process::WNOHANG)
@@ -185,7 +186,7 @@ module Zeus
       }
     end
 
-    def report_error_to_master(local, error)
+    def report_error_to_coordinator(local, error)
       str = "R:"
       str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
       error.backtrace[1..-1].each do |line|
@@ -196,7 +197,7 @@ module Zeus
     end
 
     def run_action(socket, identifier)
-      # Now we run the action and report its success/fail status to the master.
+      # Now we run the action and report its success/fail status to the coordinator.
       begin
         Zeus::LoadTracking.track_features_loaded_by do
           plan.after_fork unless identifier == :boot
@@ -205,7 +206,7 @@ module Zeus
 
         socket.write "R:OK\0"
       rescue => err
-        report_error_to_master(socket, err)
+        report_error_to_coordinator(socket, err)
         raise
       end
     end

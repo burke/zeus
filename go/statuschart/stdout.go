@@ -27,7 +27,7 @@ func (s *StatusChart) logChanges() {
 	log := theChart.directLogger
 
 	log.ColorizedSansNl("{reset}Status: ")
-	s.logSubtree(s.RootSlave)
+	s.logSubtree(s.RootWorker)
 	log.Colorized("{reset}")
 	s.logCommands()
 }
@@ -75,20 +75,20 @@ func (s *StatusChart) logCommands() {
 	}
 }
 
-func (s *StatusChart) logSubtree(node *processtree.SlaveNode) {
+func (s *StatusChart) logSubtree(node *processtree.WorkerNode) {
 	log := theChart.directLogger
 	printStateInfo("", node.Name, node.State(), true, false)
 
-	if len(node.Slaves) > 0 {
+	if len(node.Workers) > 0 {
 		log.ColorizedSansNl("{reset}(")
 	}
-	for i, slave := range node.Slaves {
+	for i, worker := range node.Workers {
 		if i != 0 {
 			log.ColorizedSansNl("{reset}, ")
 		}
-		s.logSubtree(slave)
+		s.logSubtree(worker)
 	}
-	if len(node.Slaves) > 0 {
+	if len(node.Workers) > 0 {
 		log.ColorizedSansNl("{reset})")
 	}
 }

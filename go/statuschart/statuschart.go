@@ -14,13 +14,13 @@ import (
 const updateDebounceInterval = 1 * time.Millisecond
 
 type StatusChart struct {
-	RootSlave *processtree.SlaveNode
-	update    chan bool
+	RootWorker *processtree.WorkerNode
+	update     chan bool
 
-	numberOfSlaves int
-	Commands       []*processtree.CommandNode
-	L              sync.Mutex
-	drawnInitial   bool
+	numberOfWorkers int
+	Commands        []*processtree.CommandNode
+	L               sync.Mutex
+	drawnInitial    bool
 
 	directLogger *slog.ShinyLogger
 
@@ -36,8 +36,8 @@ func Start(tree *processtree.ProcessTree, done chan bool, simple bool) chan bool
 	quit := make(chan bool)
 
 	theChart = &StatusChart{}
-	theChart.RootSlave = tree.Root
-	theChart.numberOfSlaves = len(tree.SlavesByName)
+	theChart.RootWorker = tree.Root
+	theChart.numberOfWorkers = len(tree.WorkersByName)
 	theChart.Commands = tree.Commands
 	theChart.update = make(chan bool)
 	theChart.directLogger = slog.NewShinyLogger(os.Stdout, os.Stderr)
@@ -68,11 +68,11 @@ func startLineOutput(tree *processtree.ProcessTree, done, quit chan bool) {
 				done <- true
 				return
 			case <-theChart.update:
-				for name, slave := range tree.SlavesByName {
+				for name, worker := range tree.WorkersByName {
 					state, found := states[name]
-					if !found || (state != slave.State()) {
-						fmt.Println("environment: " + name + " status: " + slave.HumanReadableState())
-						states[name] = slave.State()
+					if !found || (state != worker.State()) {
+						fmt.Println("environment: " + name + " status: " + worker.HumanReadableState())
+						states[name] = worker.State()
 					}
 				}
 			}
