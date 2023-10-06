@@ -16,7 +16,7 @@ More generally, Zeus is a language-agnostic application checkpointer for non-mul
 
 ## Requirements (for use with Rails)
 
-* OS X 10.7+ *OR* Linux 2.6.13+
+* macOS 13+ *OR* Linux 2.6.13+
 * Rails 3.x or 4.x
 * Compatible Ruby installation
   * Ruby 2.0+
