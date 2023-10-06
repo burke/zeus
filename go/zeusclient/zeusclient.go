@@ -27,6 +27,7 @@ const (
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
+// Run runs the main Zeus command.
 func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
@@ -117,7 +118,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 		}()
 	}
 
-	var exitStatus int = -1
+	exitStatus := -1
 	if len(parts) > 2 {
 		exitStatus, err = strconv.Atoi(parts[0])
 		if err != nil {
@@ -128,7 +129,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 
 	var endOfIO sync.WaitGroup
 
-	err, oldTerminalStateStdout := forwardOutput(localStdout, output, endOfIO)
+	oldTerminalStateStdout, err := forwardOutput(localStdout, output, endOfIO)
 	if oldTerminalStateStdout != nil {
 		defer ttyutils.RestoreTerminalState(output.Fd(), oldTerminalStateStdout)
 	}
@@ -137,7 +138,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 		return 1
 	}
 
-	err, oldTerminalStateStderr := forwardOutput(localStderr, stderr, endOfIO)
+	oldTerminalStateStderr, err := forwardOutput(localStderr, stderr, endOfIO)
 	if oldTerminalStateStderr != nil {
 		defer ttyutils.RestoreTerminalState(stderr.Fd(), oldTerminalStateStderr)
 	}
@@ -232,7 +233,7 @@ func socketsForOutput(out *os.File) (local, remote *os.File, outIsTerminal bool,
 	return
 }
 
-func forwardOutput(from, to *os.File, signalEnd sync.WaitGroup) (err error, oldTerminalState *ttyutils.Termios) {
+func forwardOutput(from, to *os.File, signalEnd sync.WaitGroup) (oldTerminalState *ttyutils.Termios, err error) {
 	ttyutils.MirrorWinsize(to, from)
 
 	if ttyutils.IsTerminal(to.Fd()) {

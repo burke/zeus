@@ -51,7 +51,7 @@ func extractFileDescriptorFromOOB(oob []byte) (int, error) {
 		return -1, err
 	}
 	if len(scms) != 1 {
-		return -1, errors.New(fmt.Sprintf("expected 1 SocketControlMessage; got scms = %#v", scms))
+		return -1, fmt.Errorf("expected 1 SocketControlMessage; got scms = %#v", scms)
 	}
 	scm := scms[0]
 	gotFds, err := syscall.ParseUnixRights(&scm)
@@ -59,7 +59,7 @@ func extractFileDescriptorFromOOB(oob []byte) (int, error) {
 		return -1, err
 	}
 	if len(gotFds) != 1 {
-		return -1, errors.New(fmt.Sprintf("wanted 1 fd; got %#v", gotFds))
+		return -1, fmt.Errorf("wanted 1 fd; got %#v", gotFds)
 	}
 	return gotFds[0], nil
 }

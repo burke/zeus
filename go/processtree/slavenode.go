@@ -488,10 +488,10 @@ func (s *SlaveNode) trace(format string, args ...interface{}) {
 	} else {
 		prefix = fmt.Sprintf("[%s:%d] %s/(no PID)", file, line, s.Name)
 	}
-	new_args := make([]interface{}, len(args)+1)
-	new_args[0] = prefix
+	newArgs := make([]interface{}, len(args)+1)
+	newArgs[0] = prefix
 	for i, v := range args {
-		new_args[i+1] = v
+		newArgs[i+1] = v
 	}
-	slog.Trace("%s "+format, new_args...)
+	slog.Trace("%s "+format, newArgs...)
 }
