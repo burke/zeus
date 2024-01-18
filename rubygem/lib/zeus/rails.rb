@@ -1,6 +1,6 @@
 def find_rails_path(root_path)
   paths = %w(spec/dummy test/dummy .)
-  paths.find { |path| File.exists?(File.expand_path(path, root_path)) }
+  paths.find { |path| File.exist?(File.expand_path(path, root_path)) }
 end
 
 ROOT_PATH = File.expand_path(Dir.pwd)
@@ -210,13 +210,13 @@ module Zeus
       if ENV['RAILS_TEST_HELPER']
         require ENV['RAILS_TEST_HELPER']
       else
-        if File.exists?(ROOT_PATH + "/spec/rails_helper.rb")
+        if File.exist?(ROOT_PATH + "/spec/rails_helper.rb")
           # RSpec >= 3.0+
           require 'rails_helper'
-        elsif File.exists?(ROOT_PATH + "/spec/spec_helper.rb")
+        elsif File.exist?(ROOT_PATH + "/spec/spec_helper.rb")
           # RSpec < 3.0
           require 'spec_helper'
-        elsif File.exists?(ROOT_PATH + "/test/minitest_helper.rb")
+        elsif File.exist?(ROOT_PATH + "/test/minitest_helper.rb")
           require 'minitest_helper'
         else
           require 'test_helper'
