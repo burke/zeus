@@ -10,7 +10,7 @@ require "zeus/m/test_method"
 # To avoid possible "you've activated X; gemfile specifies Y" errors, we actually scan
 # Gemfile.lock for a specific version, and require exactly that version if present.
 gemfile_lock = ROOT_PATH + "/Gemfile.lock"
-if File.exists?(gemfile_lock)
+if File.exist?(gemfile_lock)
   version = File.read(ROOT_PATH + "/Gemfile.lock").
     scan(/\bmethod_source\s*\(([\d\.]+)\)/).flatten[0]
 
