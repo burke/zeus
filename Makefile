@@ -85,7 +85,7 @@ vagrant/lib/vagrant-zeus/version.rb: VERSION
 
 
 install: $(GEM)
-	gem install $< --no-ri --no-rdoc
+	gem install $< --no-document
 
 %/Gemfile.lock: $*Gemfile bundler
 	cd $* && bundle check || bundle install
@@ -102,4 +102,4 @@ clean:
 	rm -rf vagrant/{build,pkg,lib/vagrant-zeus/version.rb,MANIFEST}
 
 bundler:
-	bundle -v || gem install bundler --no-rdoc --no-ri
+	bundle -v || gem install bundler --no-document
