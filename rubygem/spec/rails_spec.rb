@@ -5,7 +5,7 @@ module Zeus
     subject(:rails) { Rails.new }
 
     def mock_file_existence(file, result)
-      expect(File).to receive(:exists?).with(file).and_return(result)
+      expect(File).to receive(:exist?).with(file).and_return(result)
     end
 
     describe "#test_helper" do
