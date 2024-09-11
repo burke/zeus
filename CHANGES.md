@@ -1,6 +1,13 @@
 # Next
 
-https://github.com/burke/zeus/compare/v0.16.0...master
+https://github.com/burke/zeus/compare/v0.17.0...master
+
+# 0.17.0
+
+https://github.com/burke/zeus/compare/v0.16.0...v0.17.0
+
+* Add Ruby 3.2+ support
+* Fix File.exists? deprecation warning
 
 # 0.16.0
 
