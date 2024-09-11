@@ -195,7 +195,8 @@ module Zeus
         # directly run the tests from here and exit with the status of the tests passing or failing
         case framework
         when :minitest5, :minitest_old
-          exit MiniTest::Unit.runner.run(test_arguments).to_i
+          ARGV.replace(test_arguments)
+          exit
         when :testunit1, :testunit2
           exit Test::Unit::AutoRunner.run(false, nil, test_arguments)
         else
