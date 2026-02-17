@@ -1,15 +1,8 @@
 # Zeus
 
-[![Join the chat at https://gitter.im/zeus-application-preloader/Lobby](https://badges.gitter.im/zeus-application-preloader/Lobby.svg)](https://gitter.im/zeus-application-preloader/Lobby?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![Build Status](https://travis-ci.org/burke/zeus.svg?branch=master)](https://travis-ci.org/burke/zeus)
-
 Zeus preloads your Rails app so that your normal development tasks such as `console`, `server`, `generate`, and specs/tests take **less than one second**.
 
-This screencast gives a quick overview of how to use zeus with Rails.
-
-[![Watch the screencast!](http://s3.amazonaws.com/burkelibbey/vimeo-zeus.png)](http://vimeo.com/burkelibbey/zeus)
-
-Zeus is also covered in [RailsCasts episode 412](http://railscasts.com/episodes/412-fast-rails-commands).
+Zeus is covered in [RailsCasts episode 412](http://railscasts.com/episodes/412-fast-rails-commands).
 
 More generally, Zeus is a language-agnostic application checkpointer for non-multithreaded applications. Currently only ruby is targeted, but explicit support for other languages is possible.
 
@@ -17,9 +10,9 @@ More generally, Zeus is a language-agnostic application checkpointer for non-mul
 ## Requirements (for use with Rails)
 
 * macOS 13+ *OR* Linux 2.6.13+
-* Rails 3.x or 4.x
+* Rails 3.2, 4.x, 5.x, 6.x
 * Compatible Ruby installation
-  * Ruby 2.0+
+  * Ruby 2.7+, 3.x+
   * Rubinius
 
 **Please note**: Zeus requires your project to be running on a file system that supports FSEvents or inotify. This means no NFS, CIFS, Samba, or VBox/VMWare shared folders.
