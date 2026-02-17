@@ -187,12 +187,16 @@ module Zeus
 
     def report_error_to_master(local, error)
       str = "R:"
-      str << "#{error.backtrace[0]}: #{error.message} (#{error.class})\n"
-      error.backtrace[1..-1].each do |line|
+      backtrace = error.backtrace || []
+      str << "#{backtrace[0] || '(no backtrace)'}: #{error.message} (#{error.class})\n"
+      backtrace[1..-1].each do |line|
         str << "\tfrom #{line}\n"
       end
       str << "\0"
       local.write str
+    rescue Exception
+      # If building or writing the error message itself fails, there is nothing
+      # we can do — the master will see EOF and mark the slave as crashed.
     end
 
     def run_action(socket, identifier)
@@ -204,7 +208,7 @@ module Zeus
         end
 
         socket.write "R:OK\0"
-      rescue => err
+      rescue Exception => err
         report_error_to_master(socket, err)
         raise
       end
