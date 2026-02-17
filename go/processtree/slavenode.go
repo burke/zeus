@@ -193,7 +193,15 @@ func (s *SlaveNode) doUnbootedState(monitor *SlaveMonitor) string { // -> {SBoot
 		parts := strings.Split(monitor.tree.ExecCommand, " ")
 		cmd := exec.Command(parts[0], parts[1:]...)
 		file := monitor.remoteMasterFile
-		cmd.Env = append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", file.Fd()))
+		env := append(os.Environ(), fmt.Sprintf("ZEUS_MASTER_FD=%d", file.Fd()))
+		// On macOS, loading native gems (e.g. curb/libcurl) in a forked child
+		// triggers CoreFoundation/ObjC class initialization, which the ObjC runtime
+		// aborts with "crashed on child side of fork pre-exec". This env var must
+		// be set before libobjc initializes (i.e. before the Ruby process starts).
+		if runtime.GOOS == "darwin" {
+			env = append(env, "OBJC_DISABLE_INITIALIZE_FORK_SAFETY=YES")
+		}
+		cmd.Env = env
 		cmd.ExtraFiles = []*os.File{file}
 		go s.babysitRootProcess(cmd)
 		s.L.Unlock()

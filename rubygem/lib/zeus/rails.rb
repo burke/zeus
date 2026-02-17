@@ -9,6 +9,24 @@ ENV_PATH  = File.expand_path('config/environment',  RAILS_PATH)
 BOOT_PATH = File.expand_path('config/boot',  RAILS_PATH)
 APP_PATH  = File.expand_path('config/application',  RAILS_PATH) unless defined? APP_PATH
 
+# Set up Bundler's gem environment before loading any gems to prevent version
+# conflicts (e.g. default gem versions conflicting with the app's Gemfile).
+# We must do this before `require 'zeus'` so that gems like json/ostruct are
+# activated at the Gemfile-pinned versions from the start.
+#
+# Bundler#setup may strip zeus's own lib path from $LOAD_PATH if zeus isn't
+# listed in the app's Gemfile, so we capture it first and restore it after.
+_zeus_lib_path = File.expand_path('../../', __FILE__)
+begin
+  require 'bundler/setup'
+rescue LoadError
+  # Bundler not installed; continue without it.
+rescue => e
+  # Bundler setup failed (e.g. no Gemfile, gem conflict); continue without it.
+ensure
+  $LOAD_PATH.unshift(_zeus_lib_path) unless $LOAD_PATH.include?(_zeus_lib_path)
+end
+
 require 'zeus'
 
 def gem_is_bundled?(gem)
@@ -76,10 +94,10 @@ module Zeus
     end
 
     def boot
-      _monkeypatch_rake
       $LOAD_PATH.unshift "./lib"
 
       require BOOT_PATH
+      _monkeypatch_rake
       # config/application.rb normally requires 'rails/all'.
       # Some 'alternative' ORMs such as Mongoid give instructions to switch this require
       # out for a list of railties, not including ActiveRecord.

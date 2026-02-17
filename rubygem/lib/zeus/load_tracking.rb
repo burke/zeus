@@ -53,15 +53,19 @@ module Zeus
       private
 
       def notify_features(features)
-        unless @feature_pipe
-          raise "Attempted to report features to Zeus when not running as part of a Zeus process"
-        end
+        return unless @feature_pipe
 
         @feature_mutex.synchronize do
           features.each do |t|
             @feature_pipe.puts(t)
+          rescue Errno::EPIPE, Errno::EBADF, IOError
+            break
           end
         end
+      rescue Errno::EPIPE, Errno::EBADF, IOError
+        # Feature pipe is broken; skip tracking. This must not raise because
+        # notify_features is called from ensure blocks and an exception here
+        # would replace the original exception being propagated.
       end
     end
   end
