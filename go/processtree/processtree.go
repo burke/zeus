@@ -58,9 +58,7 @@ func (tree *ProcessTree) AllCommandsAndAliases() []string {
 	var values []string
 	for _, command := range tree.Commands {
 		values = append(values, command.Name)
-		for _, alias := range command.Aliases {
-			values = append(values, alias)
-		}
+		values = append(values, command.Aliases...)
 	}
 	return values
 }
