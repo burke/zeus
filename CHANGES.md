@@ -1,6 +1,12 @@
 # Next
 
-https://github.com/burke/zeus/compare/v0.17.0...master
+https://github.com/burke/zeus/compare/v0.18.0...master
+
+# 0.18.0
+
+https://github.com/burke/zeus/compare/v0.17.0...v0.18.0
+
+* Fix crashing of forked child processes on macOS
 
 # 0.17.0
 
@@ -11,7 +17,7 @@ https://github.com/burke/zeus/compare/v0.16.0...v0.17.0
 
 # 0.16.0
 
-https://github.com/burke/zeus/compare/v0.15.14...0.16.0
+https://github.com/burke/zeus/compare/v0.15.14...v0.16.0
 
 * Add Apple Silicon (M1/M2) support (macOS 12+)
 * Drop 32-bit macOS support
