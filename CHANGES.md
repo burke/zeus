@@ -1,6 +1,15 @@
 # Next
 
-https://github.com/burke/zeus/compare/v0.18.0...master
+https://github.com/burke/zeus/compare/v0.19.0...master
+
+# 0.19.0
+
+https://github.com/burke/zeus/compare/v0.18.0...v0.19.0
+
+* Add `--tty` / `--no-tty` flags to override TTY detection (like `ssh -t`/`-T`)
+* Fix zeusclient for piped/non-TTY environments (AI tool compatibility)
+* Fix `sync.WaitGroup` pass-by-value bug and broken synchronization in `forwardOutput`
+* Don't SIGKILL command after exit — prevents loss of buffered output with socket pairs
 
 # 0.18.0
 
