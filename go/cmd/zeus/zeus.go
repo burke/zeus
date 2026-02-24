@@ -25,6 +25,7 @@ func main() {
 	configFile := "zeus.json"
 	simpleStatus := false
 	fileChangeDelay := filemonitor.DefaultFileChangeDelay
+	ttyMode := "auto"
 
 	for ; args != nil && len(args) > 0 && args[0][0] == '-'; args = args[1:] {
 		switch args[0] {
@@ -34,6 +35,10 @@ func main() {
 		case "--simple-status":
 			slog.DisableColor()
 			simpleStatus = true
+		case "--tty", "-t":
+			ttyMode = "force"
+		case "--no-tty", "-T":
+			ttyMode = "none"
 		case "--log":
 			tracefile, err := os.OpenFile(args[1], os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
 			if err == nil {
@@ -90,7 +95,7 @@ func main() {
 			if args[0] == name {
 				// Don't confuse the master by sending *full* args to
 				// it; just those that are not zeus-specific.
-				os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout, os.Stderr))
+				os.Exit(zeusclient.Run(args, os.Stdin, os.Stdout, os.Stderr, ttyMode))
 			}
 		}
 
