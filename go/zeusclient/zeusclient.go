@@ -28,7 +28,7 @@ const (
 var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGPIPE, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
 
 // Run runs the main Zeus command.
-func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
+func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMode string) int {
 	if os.Getenv("RAILS_ENV") != "" {
 		println("Warning: Specifying a Rails environment via RAILS_ENV has no effect for commands run with zeus.")
 		println("As a safety precaution to protect you from nuking your development database,")
@@ -37,7 +37,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 	}
 
 	// setup stdout
-	localStdout, remoteStdout, outputIsTerminal, err := socketsForOutput(output)
+	localStdout, remoteStdout, outputIsTerminal, err := socketsForOutput(output, ttyMode)
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
@@ -46,7 +46,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 	defer remoteStdout.Close()
 
 	// setup stderr
-	localStderr, remoteStderr, _, err := socketsForOutput(stderr)
+	localStderr, remoteStderr, _, err := socketsForOutput(stderr, ttyMode)
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
@@ -129,7 +129,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 
 	var endOfIO sync.WaitGroup
 
-	oldTerminalStateStdout, err := forwardOutput(localStdout, output, endOfIO)
+	oldTerminalStateStdout, err := forwardOutput(localStdout, output, &endOfIO)
 	if oldTerminalStateStdout != nil {
 		defer ttyutils.RestoreTerminalState(output.Fd(), oldTerminalStateStdout)
 	}
@@ -138,7 +138,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File) int {
 		return 1
 	}
 
-	oldTerminalStateStderr, err := forwardOutput(localStderr, stderr, endOfIO)
+	oldTerminalStateStderr, err := forwardOutput(localStderr, stderr, &endOfIO)
 	if oldTerminalStateStderr != nil {
 		defer ttyutils.RestoreTerminalState(stderr.Fd(), oldTerminalStateStderr)
 	}
@@ -221,8 +221,15 @@ func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
 	return nil
 }
 
-func socketsForOutput(out *os.File) (local, remote *os.File, outIsTerminal bool, err error) {
-	outIsTerminal = ttyutils.IsTerminal(out.Fd())
+func socketsForOutput(out *os.File, ttyMode string) (local, remote *os.File, outIsTerminal bool, err error) {
+	switch ttyMode {
+	case "force":
+		outIsTerminal = true
+	case "none":
+		outIsTerminal = false
+	default:
+		outIsTerminal = ttyutils.IsTerminal(out.Fd())
+	}
 
 	if outIsTerminal {
 		local, remote, err = pty.Open()
@@ -233,8 +240,10 @@ func socketsForOutput(out *os.File) (local, remote *os.File, outIsTerminal bool,
 	return
 }
 
-func forwardOutput(from, to *os.File, signalEnd sync.WaitGroup) (oldTerminalState *ttyutils.Termios, err error) {
-	ttyutils.MirrorWinsize(to, from)
+func forwardOutput(from, to *os.File, signalEnd *sync.WaitGroup) (oldTerminalState *ttyutils.Termios, err error) {
+	if ttyutils.IsTerminal(to.Fd()) {
+		ttyutils.MirrorWinsize(to, from)
+	}
 
 	if ttyutils.IsTerminal(to.Fd()) {
 		oldTerminalState, err = ttyutils.MakeTerminalRaw(to.Fd())
