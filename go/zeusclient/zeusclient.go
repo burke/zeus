@@ -7,7 +7,6 @@ import (
 	"os/signal"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 
 	"github.com/burke/ttyutils"
@@ -43,7 +42,6 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 		return 1
 	}
 	defer localStdout.Close()
-	defer remoteStdout.Close()
 
 	// setup stderr
 	localStderr, remoteStderr, _, err := socketsForOutput(stderr, ttyMode)
@@ -52,7 +50,6 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 		return 1
 	}
 	defer localStderr.Close()
-	defer remoteStderr.Close()
 
 	addr, err := net.ResolveUnixAddr("unixgram", unixsocket.ZeusSockName())
 	if err != nil {
@@ -77,6 +74,12 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 
 	usock.WriteFD(int(remoteStdout.Fd()))
 	usock.WriteFD(int(remoteStderr.Fd()))
+
+	// Close client's copies of the remote ends now that they've been sent
+	// to the server. Otherwise the local ends never get EOF when the
+	// command exits, because these fds keep the socket pairs alive.
+	remoteStdout.Close()
+	remoteStderr.Close()
 
 	msg, err = usock.ReadMessage()
 	if err != nil {
@@ -127,9 +130,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 		}
 	}
 
-	var endOfIO sync.WaitGroup
-
-	oldTerminalStateStdout, err := forwardOutput(localStdout, output, &endOfIO)
+	oldTerminalStateStdout, err := forwardOutput(localStdout, output)
 	if oldTerminalStateStdout != nil {
 		defer ttyutils.RestoreTerminalState(output.Fd(), oldTerminalStateStdout)
 	}
@@ -138,7 +139,7 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 		return 1
 	}
 
-	oldTerminalStateStderr, err := forwardOutput(localStderr, stderr, &endOfIO)
+	oldTerminalStateStderr, err := forwardOutput(localStderr, stderr)
 	if oldTerminalStateStderr != nil {
 		defer ttyutils.RestoreTerminalState(stderr.Fd(), oldTerminalStateStderr)
 	}
@@ -148,12 +149,17 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 	}
 
 	go func() {
-		endOfIO.Add(1)
 		buf := make([]byte, 8192)
 		for {
 			n, err := input.Read(buf)
 			if err != nil {
-				endOfIO.Done()
+				// Signal EOF to the remote process. For socket pairs,
+				// shut down the write direction so the command's stdin
+				// gets EOF instead of blocking forever (e.g. when
+				// stdin is /dev/null from an AI tool).
+				if !outputIsTerminal {
+					syscall.Shutdown(int(localStdout.Fd()), syscall.SHUT_WR)
+				}
 				break
 			}
 			if outputIsTerminal {
@@ -173,8 +179,6 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 		}
 	}()
 
-	endOfIO.Wait()
-
 	if exitStatus == -1 {
 		msg, err = usock.ReadMessage()
 		if err != nil {
@@ -188,6 +192,12 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 			return 1
 		}
 	}
+
+	// Command has exited and reported its status. Clear commandPid so
+	// the defer doesn't SIGKILL it — the process may still be flushing
+	// buffered stdout (especially with socket pairs where Ruby uses
+	// full buffering). Killing it here loses output.
+	commandPid = 0
 
 	return exitStatus
 }
@@ -240,7 +250,7 @@ func socketsForOutput(out *os.File, ttyMode string) (local, remote *os.File, out
 	return
 }
 
-func forwardOutput(from, to *os.File, signalEnd *sync.WaitGroup) (oldTerminalState *ttyutils.Termios, err error) {
+func forwardOutput(from, to *os.File) (oldTerminalState *ttyutils.Termios, err error) {
 	if ttyutils.IsTerminal(to.Fd()) {
 		ttyutils.MirrorWinsize(to, from)
 	}
@@ -253,7 +263,6 @@ func forwardOutput(from, to *os.File, signalEnd *sync.WaitGroup) (oldTerminalSta
 	}
 
 	go func() {
-		signalEnd.Add(1)
 		for {
 			buf := make([]byte, 1024)
 			n, err := from.Read(buf)
@@ -261,7 +270,6 @@ func forwardOutput(from, to *os.File, signalEnd *sync.WaitGroup) (oldTerminalSta
 			if err == nil || (err == io.EOF && n > 0) {
 				to.Write(buf[:n])
 			} else {
-				signalEnd.Done()
 				break
 			}
 		}
