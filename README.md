@@ -73,6 +73,18 @@ Run some commands in another shell:
     zeus rake -T
     zeus runner omg.rb
 
+## Restarting Zeus
+
+If Zeus gets into a bad state (e.g. after switching branches with a different Ruby version or Gemfile.lock), you can reboot it without stopping the server:
+
+    zeus restart
+
+This sends `SIGUSR1` to the running master process, which tears down all slave processes, the client socket, and file monitors, then rebuilds everything from scratch. You can also signal it directly:
+
+    kill -USR1 $(cat .zeus.pid)
+
+This is particularly useful for AI agents and automated tooling that can't easily stop and restart a foreground `zeus start` process.
+
 ## Limitations
 
 You need to restart zeus if you make changes to various initialization files. Examples of these files include:
