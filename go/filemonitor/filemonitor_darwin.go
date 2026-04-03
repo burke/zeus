@@ -40,8 +40,12 @@ func NewFileMonitor(fileChangeDelay time.Duration) (FileMonitor, error) {
 }
 
 func (f *fsEventsMonitor) Add(file string) error {
-	f.add <- file
-	return nil
+	select {
+	case <-f.stop:
+		return nil // Monitor is closed
+	case f.add <- file:
+		return nil
+	}
 }
 
 func (f *fsEventsMonitor) Close() error {
@@ -50,7 +54,6 @@ func (f *fsEventsMonitor) Close() error {
 		return nil // Already stopped
 	default:
 		close(f.stop)
-		close(f.add)
 	}
 
 	return nil
@@ -88,11 +91,22 @@ func (f *fsEventsMonitor) handleAdd() {
 	// We don't want to add individual files to watch here but figure out the
 	// directory to watch and watch it instead.
 
-	for file := range f.add {
+	defer func() {
+		if started {
+			f.stream.Stop()
+		}
+	}()
+
+	for {
+		var file string
+		select {
+		case <-f.stop:
+			return
+		case file = <-f.add:
+		}
+
 		path, err := pathToMonitor(file)
 		if err != nil {
-			// can't access the file for some reason, best to ignore, probably should
-			// log something here
 			continue
 		}
 
@@ -106,6 +120,8 @@ func (f *fsEventsMonitor) handleAdd() {
 		done := false
 		for !done {
 			select {
+			case <-f.stop:
+				return
 			case file := <-f.add:
 				path, err := pathToMonitor(file)
 				if err != nil {
@@ -138,10 +154,6 @@ func (f *fsEventsMonitor) handleAdd() {
 			go f.watch()
 			started = true
 		}
-	}
-
-	if started {
-		f.stream.Stop()
 	}
 }
 
