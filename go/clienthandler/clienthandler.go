@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"time"
 
 	"github.com/burke/zeus/go/messages"
 	"github.com/burke/zeus/go/processtree"
@@ -22,6 +21,7 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 	quit := make(chan bool)
 	go func() {
 		path, _ := filepath.Abs(unixsocket.ZeusSockName())
+		os.Remove(path) // Clean up stale socket from previous session
 		addr, err := net.ResolveUnixAddr("unix", path)
 		if err != nil {
 			zerror.Error("Can't open socket.")
@@ -34,12 +34,11 @@ func Start(tree *processtree.ProcessTree, done chan bool) chan bool {
 		connections := make(chan *unixsocket.Usock)
 		go func() {
 			for {
-				if conn, err := listener.AcceptUnix(); err != nil {
-					zerror.ErrorUnableToAcceptSocketConnection()
-					time.Sleep(500 * time.Millisecond)
-				} else {
-					connections <- unixsocket.New(conn)
+				conn, err := listener.AcceptUnix()
+				if err != nil {
+					return // listener was closed
 				}
+				connections <- unixsocket.New(conn)
 			}
 		}()
 

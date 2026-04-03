@@ -5,6 +5,7 @@ import (
 	"io"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"syscall"
 
@@ -87,6 +88,8 @@ func main() {
 		os.Exit(zeusmaster.Run(configFile, fileChangeDelay, simpleStatus))
 	} else if args[0] == "init" {
 		zeusInit()
+	} else if args[0] == "restart" {
+		zeusRestart()
 	} else if args[0] == "commands" {
 		zeusCommands(configFile)
 	} else {
@@ -196,6 +199,29 @@ func generalHelpRequested(args []string) bool {
 		}
 	}
 	return false
+}
+
+func zeusRestart() {
+	pidBytes, err := os.ReadFile(zeusmaster.PidFile)
+	if err != nil {
+		println(red() + "Zeus doesn't appear to be running (no " + zeusmaster.PidFile + " file)." + reset())
+		os.Exit(1)
+	}
+	pid, err := strconv.Atoi(strings.TrimSpace(string(pidBytes)))
+	if err != nil {
+		println(red() + "Invalid pid in " + zeusmaster.PidFile + "." + reset())
+		os.Exit(1)
+	}
+	proc, err := os.FindProcess(pid)
+	if err != nil {
+		println(red() + "Could not find Zeus process." + reset())
+		os.Exit(1)
+	}
+	if err := proc.Signal(syscall.SIGUSR1); err != nil {
+		println(red() + "Could not signal Zeus process: " + err.Error() + reset())
+		os.Exit(1)
+	}
+	println("Zeus is rebooting...")
 }
 
 func printVersion() {

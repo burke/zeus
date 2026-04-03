@@ -1,6 +1,12 @@
 # Next
 
-https://github.com/burke/zeus/compare/v0.19.0...master
+https://github.com/burke/zeus/compare/v0.20.0...master
+
+# 0.20.0
+
+https://github.com/burke/zeus/compare/v0.19.0...v0.20.0
+
+* Add `zeus restart` / SIGUSR1-based full reboot mechanism
 
 # 0.19.0
 

@@ -23,41 +23,66 @@ const listenerPortVar = "ZEUS_NETWORK_FILE_MONITOR_PORT"
 
 // man signal | grep 'terminate process' | awk '{print $2}' | xargs -I '{}' echo -n "syscall.{}, "
 // Leaving out SIGPIPE as that is a signal the master receives if a client process is killed.
-var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR1, syscall.SIGUSR2}
+var terminatingSignals = []os.Signal{syscall.SIGHUP, syscall.SIGINT, syscall.SIGKILL, syscall.SIGALRM, syscall.SIGTERM, syscall.SIGXCPU, syscall.SIGXFSZ, syscall.SIGVTALRM, syscall.SIGPROF, syscall.SIGUSR2}
+
+const PidFile = ".zeus.pid"
 
 func Run(configFile string, fileChangeDelay time.Duration, simpleStatus bool) int {
 	slog.Colorized("{green}Starting {yellow}Z{red}e{blue}u{magenta}s{green} server v" + zeusversion.VERSION)
 
 	zerror.Init()
+	writePidFile()
+	defer os.Remove(PidFile)
 
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, terminatingSignals...)
+	signal.Notify(c, syscall.SIGUSR1)
+
+	for {
+		code, restart := runSession(configFile, fileChangeDelay, simpleStatus, c)
+		if !restart {
+			slog.Suppress()
+			zerror.PrintFinalOutput()
+			return code
+		}
+		slog.Colorized("{green}Rebooting {yellow}Z{red}e{blue}u{magenta}s{green} server v" + zeusversion.VERSION)
+		zerror.Init()
+	}
+}
+
+func writePidFile() {
+	os.WriteFile(PidFile, []byte(strconv.Itoa(os.Getpid())), 0644)
+}
+
+func runSession(configFile string, fileChangeDelay time.Duration, simpleStatus bool, c <-chan os.Signal) (int, bool) {
 	monitor, err := buildFileMonitor(fileChangeDelay)
 	if err != nil {
-		return 2
+		return 2, false
 	}
 
 	var tree = config.BuildProcessTree(configFile, monitor)
 
 	done := make(chan bool)
 
-	defer exit(processtree.StartSlaveMonitor(tree, monitor.Listen(), done), done)
-	defer exit(clienthandler.Start(tree, done), done)
-	defer monitor.Close()
-	defer slog.Suppress()
-	defer zerror.PrintFinalOutput()
-	defer exit(statuschart.Start(tree, done, simpleStatus), done)
+	statusChartQuit := statuschart.Start(tree, done, simpleStatus)
+	clientHandlerQuit := clienthandler.Start(tree, done)
+	slaveMonitorQuit := processtree.StartSlaveMonitor(tree, monitor.Listen(), done)
 
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, terminatingSignals...)
+	sig := <-c
 
-	for {
-		select {
-		case sig := <-c:
-			if sig == syscall.SIGINT {
-				return 0
-			}
-			return 1
-		}
+	// Tear down in reverse startup order
+	exit(slaveMonitorQuit, done)
+	exit(clientHandlerQuit, done)
+	monitor.Close()
+	exit(statusChartQuit, done)
+
+	if sig == syscall.SIGUSR1 {
+		return 0, true
 	}
+	if sig == syscall.SIGINT {
+		return 0, false
+	}
+	return 1, false
 }
 
 func exit(quit, done chan bool) {
