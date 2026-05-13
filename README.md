@@ -55,6 +55,14 @@ To:
 
 _More helpful set up hints at [this very nice guide put together by Thoughtbot](https://robots.thoughtbot.com/improving-rails-boot-time-with-zeus)_
 
+### Known Issues
+
+On macOS, the pg gem has a [known issue](https://github.com/ged/ruby-pg/issues/538) that can cause an opaque crash when starting zeus. You can solve it by setting the following ENV variable:
+
+```
+export PGGSSENCMODE="disable"
+```
+
 ## Usage
 
 Start the server:
