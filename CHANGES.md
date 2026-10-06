@@ -1,6 +1,12 @@
 # Next
 
-https://github.com/burke/zeus/compare/v0.20.0...master
+https://github.com/burke/zeus/compare/v0.21.0...master
+
+# 0.21.0
+
+https://github.com/burke/zeus/compare/v0.20.0...v0.21.0
+
+* Fix intermittent `Argument count mismatch` (client killed with SIGTERM) on macOS: the client closed its copy of the args socket while it was still in transit to the master, which discards the buffered arguments. The client now keeps it open until the master replies with the command pid.
 
 # 0.20.0
 

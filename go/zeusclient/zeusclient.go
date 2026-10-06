@@ -66,11 +66,12 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 
 	msg := messages.CreateCommandAndArgumentsMessage(args, os.Getpid())
 	usock.WriteMessage(msg)
-	err = sendCommandLineArguments(usock, args)
+	remoteArgs, err := sendCommandLineArguments(usock, args)
 	if err != nil {
 		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
+	defer remoteArgs.Close()
 
 	usock.WriteFD(int(remoteStdout.Fd()))
 	usock.WriteFD(int(remoteStderr.Fd()))
@@ -86,6 +87,16 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 		slog.ErrorString(err.Error() + "\r")
 		return 1
 	}
+
+	// The master has now received every fd we sent it (see
+	// docs/client_master_handshake.md, step 6), so it is safe to drop our
+	// copy of the args socket. We must NOT close it any earlier: on macOS,
+	// closing the sender's copy of a socket while it is still in transit
+	// (sent via SCM_RIGHTS but not yet received) discards any data already
+	// buffered in it. The master would then read empty arguments, the
+	// runner would raise "Argument count mismatch", and the client would be
+	// SIGTERMed. See TestSendCommandLineArgumentsSlowReceiver.
+	remoteArgs.Close()
 
 	parts := strings.Split(msg, "\000")
 	commandPid, err := strconv.Atoi(parts[0])
@@ -202,33 +213,39 @@ func Run(args []string, input io.Reader, output *os.File, stderr *os.File, ttyMo
 	return exitStatus
 }
 
-func sendCommandLineArguments(usock *unixsocket.Usock, args []string) error {
-	master, slave, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
+// sendCommandLineArguments creates a socket pair, sends one end to the master
+// over usock, and writes the command-line arguments into the other end.
+//
+// It returns the client's copy of the end that was sent to the master. The
+// caller must keep it open until the master has acknowledged receipt (i.e.
+// until the command pid has been read back), and close it afterwards. On
+// macOS, closing it while the fd is still in transit loses the arguments
+// buffered in the socket.
+func sendCommandLineArguments(usock *unixsocket.Usock, args []string) (*os.File, error) {
+	local, remote, err := unixsocket.Socketpair(syscall.SOCK_STREAM)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	usock.WriteFD(int(slave.Fd()))
-	if err != nil {
-		return err
+	if err := usock.WriteFD(int(remote.Fd())); err != nil {
+		local.Close()
+		remote.Close()
+		return nil, err
 	}
-	slave.Close()
 
 	go func() {
-		defer master.Close()
+		defer local.Close()
 		argAsBytes := []byte{}
 		for _, arg := range args[1:] {
 			argAsBytes = append(argAsBytes, []byte(arg)...)
 			argAsBytes = append(argAsBytes, byte(0))
 		}
-		_, err = master.Write(argAsBytes)
-		if err != nil {
+		if _, err := local.Write(argAsBytes); err != nil {
 			slog.ErrorString("Could not send arguments across: " +
 				err.Error() + "\r")
-			return
 		}
 	}()
 
-	return nil
+	return remote, nil
 }
 
 func socketsForOutput(out *os.File, ttyMode string) (local, remote *os.File, outIsTerminal bool, err error) {
