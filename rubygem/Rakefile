@@ -9,14 +9,26 @@ RUBYGEM_PATH = Pathname.new(File.expand_path("../", __FILE__))
 task build: [:manifest]
 task default: :build
 
+# Binaries that bin/zeus knows how to exec. Anything else under build/ is a
+# stale artifact and must not ship. Keep in sync with bin/zeus and the
+# BINARIES list in the top-level Makefile.
+SHIPPED_BINARIES = %w[
+  zeus-darwin-arm64
+  zeus-darwin-amd64
+  zeus-linux-amd64
+  zeus-linux-386
+].map { |b| "build/#{b}" }
+
 task :manifest do
   files = `find . -type f | sed 's|^\./||'`.lines.map(&:chomp)
   exceptions = [
-    /.gitignore$/,
+    /\.gitignore$/,
     /^MANIFEST$/,
     /^pkg\//,
+    /\.gem$/,
   ]
   files.reject! { |f| exceptions.any? {|ex| f =~ ex }}
+  files.reject! { |f| f.start_with?("build/") && !SHIPPED_BINARIES.include?(f) }
   File.open('MANIFEST', 'w') {|f| f.puts files.join("\n") }
 end
 

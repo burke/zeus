@@ -70,6 +70,7 @@ rubygem/build/zeus-%: go/zeusversion/zeusversion.go install-gox $(GO_SRC)
 	mkdir -p rubygem/build
 	gox -osarch="$(subst -,/,$*)" \
 		$(shell if grep -q darwin <<<"$*"; then echo '-cgo'; fi) \
+		-ldflags="-s -w" \
 		-output="rubygem/build/zeus-{{.OS}}-{{.Arch}}" \
 		$(PACKAGE)/go/cmd/zeus
 
